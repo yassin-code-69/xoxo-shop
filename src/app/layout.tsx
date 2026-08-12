@@ -34,8 +34,8 @@ export default function RootLayout({
                     <div className="absolute -top-1 -right-1 w-2 h-2 bg-purple-600 rounded-full"></div>
                   </div>
                   <div className="flex flex-col leading-none">
-                    <span className="text-black font-black text-[18px]">OFFER</span>
-                    <span className="text-[#6b46c1] font-black text-[14px]">TOPUP</span>
+                    <span className="text-black font-black text-[18px]">XoXo</span>
+                    <span className="text-[#6b46c1] font-black text-[14px]">Shop</span>
                   </div>
                 </div>
               </div>
