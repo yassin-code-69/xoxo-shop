@@ -1,6 +1,24 @@
+"use client";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import { XCircle, Send, Users, RefreshCw, CheckCircle2, Clock } from "lucide-react";
 
 export default function Home() {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const slides = [
+    "/FF/B1.jpg",
+    "/FF/B2.jpg",
+    "/FF/B3.jpg",
+    "/FF/B4.jpg",
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, [slides.length]);
+
   return (
     <div className="flex flex-col gap-6 py-6 px-4">
       {/* Notice Bar */}
@@ -14,14 +32,35 @@ export default function Home() {
         </button>
       </div>
 
-      {/* Hero Banner */}
-      <div className="w-full rounded bg-white mt-1 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] relative border border-slate-100 overflow-hidden">
-        {/* Placeholder for the banner image to match exactly */}
-        <div className="w-full h-[140px] md:h-[260px] bg-slate-50 relative flex items-center justify-center">
-            <img src="https://placehold.co/1200x400/eeeeee/cccccc?text=Banner+Image" alt="Banner" className="w-full h-full object-cover opacity-50" />
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400">
-                <span className="font-bold text-xl">Banner Image</span>
+      {/* Hero Banner Slider */}
+      <div className="w-full mt-1 flex flex-col items-center">
+        <div className="w-full rounded bg-white shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] relative border border-slate-100 overflow-hidden">
+          <div className="w-full h-[180px] sm:h-[240px] md:h-[320px] lg:h-[380px] bg-slate-50 relative flex items-center justify-center overflow-hidden">
+            <div 
+              className="flex w-full h-full transition-transform duration-500 ease-out" 
+              style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+            >
+              {slides.map((slide, idx) => (
+                <div key={idx} className="w-full h-full flex-shrink-0">
+                  <img src={slide} alt={`Slide ${idx + 1}`} className="w-full h-full object-cover" />
+                </div>
+              ))}
             </div>
+          </div>
+        </div>
+        
+        {/* Pagination Dots */}
+        <div className="flex justify-center gap-1.5 mt-3">
+          {slides.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentSlide(idx)}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                currentSlide === idx ? "w-4 bg-slate-600" : "w-2 bg-slate-300"
+              }`}
+              aria-label={`Go to slide ${idx + 1}`}
+            />
+          ))}
         </div>
       </div>
 
@@ -48,66 +87,82 @@ export default function Home() {
       </div>
 
       {/* Special Offer */}
-      <div className="mt-8">
-        <h2 className="text-center text-[#1e3a8a] text-xl font-bold mb-8">SPECIAL OFFER</h2>
-        <div className="flex flex-col items-center w-max">
-          <div className="w-[100px] h-[100px] rounded-lg overflow-hidden relative shadow-md">
-            <div className="absolute inset-0 bg-gradient-to-b from-[#140b2e] to-[#0a0517]"></div>
-            <div className="absolute inset-0 flex flex-col p-1.5 gap-1.5 z-10">
-                <div className="bg-blue-600 rounded flex flex-col items-center justify-center py-1">
-                    <span className="text-[9px] font-bold text-white">১৪৫ টাকা</span>
-                    <span className="text-[10px] font-black text-white">WEEKLY</span>
-                </div>
-                <div className="bg-orange-500 rounded flex flex-col items-center justify-center py-1">
-                    <span className="text-[9px] font-bold text-white">৭২৫ টাকা</span>
-                    <span className="text-[10px] font-black text-white">MONTHLY</span>
-                </div>
+      <div className="mt-4 md:mt-8">
+        <h2 className="text-center text-[#1e3a8a] text-xl font-bold mb-4 md:mb-8 uppercase">Special Offer</h2>
+        <div className="flex flex-col items-center w-max group cursor-pointer">
+          <div className="w-[100px] h-[100px] md:w-[110px] md:h-[110px] rounded-xl overflow-hidden relative shadow-md group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300 bg-[#150a2b] border border-purple-900/30">
+            {/* Top Left Badge */}
+            <div className="absolute top-1.5 left-1.5 w-3.5 h-3.5 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm z-20">
+                <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
             </div>
+            
+            {/* Full Card Image (Replace src with your actual graphic) */}
+            <img 
+              src="/FF/0.jpg" 
+              alt="Special Offer" 
+              className="w-full h-full object-cover relative z-10" 
+            />
           </div>
-          <span className="text-[#1e3a8a] font-bold text-[10px] mt-3 uppercase tracking-wider">COMING SOON</span>
+          <span className="text-[#1e3a8a] font-bold text-[10px] mt-3 uppercase tracking-wider group-hover:text-purple-700 transition-colors">COMING SOON</span>
         </div>
       </div>
 
       {/* Topup Section */}
-      <div className="mt-12">
-        <h2 className="text-center text-[#1e3a8a] text-xl font-bold mb-8">TOPUP</h2>
-        <div className="flex flex-wrap justify-center gap-x-12 gap-y-8">
+      <div className="mt-4 md:mt-12 px-1 md:px-0">
+        <h2 className="text-center text-[#1e3a8a] text-xl font-bold mb-4 md:mb-8">TOPUP</h2>
+        <div className="grid grid-cols-3 md:flex md:flex-wrap justify-items-center md:justify-start gap-x-2 gap-y-6 md:gap-x-16 md:gap-y-12">
           {[
-            { name: 'FF LIKES', bg: 'from-[#31115e] to-[#14062b]' },
-            { name: 'UID TOPUP (BD)', bg: 'from-[#3a1372] to-[#16052c]' },
-            { name: 'WEEKLY/MONTHLY', bg: 'from-[#220d4f] to-[#0d041e]' },
-            { name: 'WEEKLY LITE', bg: 'from-[#1a1c5e] to-[#090a2a]' },
-            { name: 'LEVEL UP PASS', bg: 'from-[#35105a] to-[#130522]' },
-            { name: 'INDONESIA SERVER', bg: 'from-[#42115e] to-[#180424]' },
-          ].map((item, idx) => (
-            <div key={idx} className="flex flex-col items-center w-[90px]">
-              <div className={`w-[90px] h-[90px] rounded-xl bg-gradient-to-b ${item.bg} flex items-center justify-center text-white shadow-md relative overflow-hidden`}>
-                <div className="absolute top-1 right-1 w-4 h-4 bg-white/20 rounded-full flex items-center justify-center">
-                    <div className="w-2 h-2 bg-white rounded-full"></div>
+            { name: 'FF LIKES', img: '/FF/1.jpg', href: '#' },
+            { name: 'UID TOPUP (BD)', img: '/FF/2.jpg', href: '/uid-topup' },
+            { name: 'WEEKLY/MONTHLY', img: '/FF/3.jpg', href: '#' },
+            { name: 'WEEKLY LITE', img: '/FF/4.jpg', href: '#' },
+            { name: 'LEVEL UP PASS', img: '/FF/5.jpg', href: '#' },
+            { name: 'INDONESIA SERVER', img: '/FF/6.jpg', href: '#' },
+          ].map((item, idx) => {
+            const cardContent = (
+              <div className="flex flex-col items-center w-[90px] md:w-[100px] group cursor-pointer">
+                <div className="w-[90px] h-[90px] md:w-[100px] md:h-[100px] rounded-xl bg-[#150a2b] shadow-md relative overflow-hidden border border-purple-900/30 group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300 flex items-center justify-center">
+                  {/* Top Right Badge */}
+                  <div className="absolute top-1.5 right-1.5 w-3.5 h-3.5 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm z-20">
+                      <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                  </div>
+                  
+                  {/* Full Card Image */}
+                  <img 
+                    src={item.img} 
+                    alt={item.name} 
+                    className="w-full h-full object-cover relative z-10" 
+                  />
                 </div>
-                <div className="font-bold text-center text-sm z-10 px-1 leading-tight">
-                    {/* Placeholder content inside cards */}
-                    <div className="w-10 h-10 border border-white/20 rounded opacity-50"></div>
-                </div>
+                <span className="text-[#1e3a8a] font-bold text-[9px] md:text-[10px] mt-3 text-center uppercase tracking-wider">{item.name}</span>
               </div>
-              <span className="text-[#1e3a8a] font-bold text-[10px] mt-3 text-center uppercase tracking-wider">{item.name}</span>
-            </div>
-          ))}
+            );
+
+            return item.href !== '#' ? (
+              <Link href={item.href} key={idx}>
+                {cardContent}
+              </Link>
+            ) : (
+              <div key={idx}>
+                {cardContent}
+              </div>
+            );
+          })}
         </div>
       </div>
 
       {/* Recent Orders Section */}
-      <div className="mt-16 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden relative">
+      <div className="mt-6 md:mt-16 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden relative">
         <div className="absolute top-0 left-0 w-24 h-24 bg-pink-100 rounded-br-[100px] opacity-50 -z-10"></div>
         <div className="p-5 border-b border-slate-50 flex justify-between items-start relative z-10">
           <div className="flex items-start gap-4">
             <div className="w-10 h-10 bg-pink-50 text-pink-500 rounded-xl flex items-center justify-center border border-pink-100">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
             </div>
             <div className="pt-0.5">
               <h2 className="text-xl font-black text-[#0b132b] tracking-tight">Recent Orders</h2>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="w-2 h-2 bg-[#00d084] rounded-full"></span>
+                <span className="w-2.5 h-2.5 bg-[#00d084] rounded-full"></span>
                 <span className="text-[#00d084] font-bold text-xs tracking-wider">Live</span>
                 <svg className="w-5 h-3 text-[#00d084]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M2 12h4l3-9 5 18 3-9h5"/></svg>
               </div>
@@ -123,41 +178,45 @@ export default function Home() {
 
         <div className="divide-y divide-slate-100">
           {[
-            { name: 'sujon Islam', product: '200 FF LIKE- প্রতিদিন ১ আইডিতে ১বার - ৳30', status: 'Pending', color: 'bg-slate-500' },
-            { name: 'Shakil Ahmed', product: 'MONTHLY - ৳790', status: 'Done', color: 'bg-teal-500' },
-            { name: 'SHOVO GAMER', product: 'MONTHLY - ৳790', status: 'Done', img: true },
-            { name: 'DJ MIX 9X9', product: '355 Diamond - ৳237', status: 'Done', img: true },
-            { name: 'DJ MIX 9X9', product: '1240 Diamond - ৳800', status: 'Done', img: true },
-            { name: 'Monika Rosario', product: 'WEEKLY - ৳158', status: 'Done', color: 'bg-purple-500' },
-            { name: 'Apurba Hrishi', product: 'MONTHLY - ৳790', status: 'Done', img: true },
-            { name: 'Jaki usai 5112', product: 'Level Up Package - Level 30 - ৳105', status: 'Done', img: true },
-            { name: 'Jannat Apu', product: '25 Diamond - ৳22', status: 'Done', color: 'bg-teal-600' },
-            { name: 'Md Rifat', product: '50 Diamond - ৳36', status: 'Done', img: true },
+            { name: 'Mehedi', product: '200 FF LIKE- প্রতিদিন ১ আইডিতে ১বার - ৳30', status: 'Pending', avatarType: 'icon', color: 'bg-[#f0f4ff] text-[#6366f1]' },
+            { name: 'SK TAHMID', product: '115 Diamond - ৳79', status: 'Done', avatarType: 'text', avatar: 'SK', color: 'bg-[#004d40] text-white' },
+            { name: 'Rm Ridoy', product: '5060 Diamond - ৳3220', status: 'Done', avatarType: 'text', avatar: 'Rm', color: 'bg-[#f06292] text-white' },
+            { name: 'Altaf Vai', product: '3X Weekly Lite - ৳135', status: 'Done', avatarType: 'text', avatar: 'A', color: 'bg-[#455a64] text-white' },
+            { name: 'Md Ariyan', product: 'WEEKLY - ৳158', status: 'Done', avatarType: 'text', avatar: 'Md', color: 'bg-[#5c6bc0] text-white' },
+            { name: 'Siyam Ahmmad', product: 'WEEKLY - ৳158', status: 'Done', avatarType: 'img', src: 'https://cdn-icons-png.flaticon.com/512/3176/3176294.png' },
+            { name: 'MD JAHID', product: 'WEEKLY - ৳158', status: 'Done', avatarType: 'img', src: 'https://i.pravatar.cc/150?u=jahid' },
+            { name: 'Sk Anik', product: '2X WEEKLY - ৳316', status: 'Done', avatarType: 'img', src: 'https://i.pravatar.cc/150?u=anik' },
+            { name: 'MD Bijoy', product: 'WEEKLY - ৳158', status: 'Done', avatarType: 'img', src: 'https://i.pravatar.cc/150?u=bijoy' },
+            { name: 'nirob Chowdhury', product: '355 Diamond - ৳237', status: 'Done', avatarType: 'text', avatar: 'n', color: 'bg-[#78909c] text-white' },
           ].map((order, idx) => (
             <div key={idx} className="px-5 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors">
               <div className="flex items-center gap-3.5">
-                {order.img ? (
-                  <div className="w-9 h-9 rounded-full bg-slate-200 overflow-hidden shrink-0">
-                    <img src={`https://i.pravatar.cc/150?u=${idx}`} alt={order.name} className="w-full h-full object-cover" />
+                {order.avatarType === 'img' ? (
+                  <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden shrink-0">
+                    <img src={order.src} alt={order.name} className="w-full h-full object-cover" />
+                  </div>
+                ) : order.avatarType === 'icon' ? (
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${order.color}`}>
+                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                   </div>
                 ) : (
-                  <div className={`w-9 h-9 rounded-full text-white flex items-center justify-center font-bold text-sm shrink-0 ${order.color}`}>
-                    {order.name.charAt(0).toUpperCase()}
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-[15px] shrink-0 ${order.color}`}>
+                    {order.avatar}
                   </div>
                 )}
                 <div className="flex flex-col">
-                  <h4 className="font-bold text-[13px] text-slate-800 leading-none mb-1">{order.name}</h4>
-                  <p className="text-[11px] text-slate-500">{order.product}</p>
+                  <h4 className="font-bold text-[13px] text-[#0b132b] leading-none mb-1.5">{order.name}</h4>
+                  <p className="text-[11px] text-slate-500 leading-none">{order.product}</p>
                 </div>
               </div>
               <div>
                 {order.status === 'Pending' ? (
-                  <div className="bg-blue-50 text-blue-500 px-3 py-1.5 rounded-full text-[11px] font-bold flex items-center gap-1.5">
-                    <div className="w-3.5 h-3.5 rounded-full bg-blue-500 flex items-center justify-center text-white"><Clock size={9} strokeWidth={3} /></div> {order.status}
+                  <div className="bg-[#eff6ff] text-[#3b82f6] px-3 py-1.5 rounded-full text-[11px] font-bold flex items-center gap-1.5">
+                    <div className="w-4 h-4 rounded-full bg-[#3b82f6] flex items-center justify-center text-white"><Clock size={10} strokeWidth={3} /></div> {order.status}
                   </div>
                 ) : (
                   <div className="bg-[#e6f9f0] text-[#00d084] px-3 py-1.5 rounded-full text-[11px] font-bold flex items-center gap-1.5">
-                    <div className="w-3.5 h-3.5 rounded-full bg-[#00d084] flex items-center justify-center text-white"><CheckCircle2 size={10} strokeWidth={3} /></div> {order.status}
+                    <div className="w-4 h-4 rounded-full bg-[#00d084] flex items-center justify-center text-white"><CheckCircle2 size={11} strokeWidth={3} /></div> {order.status}
                   </div>
                 )}
               </div>
@@ -167,15 +226,11 @@ export default function Home() {
       </div>
 
       {/* Download App */}
-      <div className="mt-16 mb-4 flex flex-col items-center text-center">
-        <h2 className="text-black text-sm font-black mb-4 uppercase tracking-wide">DOWNLOAD OUR MOBILE APP</h2>
-        <div className="bg-black rounded-lg py-2 px-4 inline-flex items-center gap-3 cursor-pointer hover:scale-105 transition-transform w-[180px] justify-center shadow-lg">
-          <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M3 20.5V3.5C3 2.91 3.34 2.39 3.84 2.15L13.69 12L3.84 21.85C3.34 21.61 3 21.09 3 20.5ZM14.81 10.88L5.54 5.53L14 12L5.54 18.47L14.81 13.12C15.17 12.91 15.17 12.59 14.81 12.38V10.88ZM15.8 13.68L20.16 11.16C20.9 10.73 20.9 10.02 20.16 9.59L15.8 7.07L14.47 8.4L18.06 10.46L14.47 12.52L15.8 13.68Z"/></svg>
-          <div className="flex flex-col items-start leading-[1.1]">
-            <span className="text-[10px] text-white">GET IT ON</span>
-            <span className="text-[17px] font-semibold text-white">Google Play</span>
-          </div>
-        </div>
+      <div className="mt-16 mb-8 flex flex-col items-center text-center">
+        <h2 className="text-black text-lg md:text-xl font-black mb-6 uppercase tracking-wider">DOWNLOAD OUR MOBILE APP</h2>
+        <a href="#" className="hover:scale-105 transition-transform cursor-pointer inline-block">
+          <img src="/FF/google-play.nDtcExnl.png" alt="Get it on Google Play" className="w-[220px] md:w-[280px] object-contain drop-shadow-xl" />
+        </a>
       </div>
 
     </div>
