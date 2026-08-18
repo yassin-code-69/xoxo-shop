@@ -112,12 +112,12 @@ export default function Home() {
         <h2 className="text-center text-[#1e3a8a] text-xl font-bold mb-4 md:mb-8">TOPUP</h2>
         <div className="grid grid-cols-3 md:flex md:flex-wrap justify-items-center md:justify-start gap-x-2 gap-y-6 md:gap-x-16 md:gap-y-12">
           {[
-            { name: 'FF LIKES', img: '/FF/1.jpg', href: '#' },
+            { name: 'FF LIKES', img: '/FF/1.jpg', href: '/ff-likes' },
             { name: 'UID TOPUP (BD)', img: '/FF/2.jpg', href: '/uid-topup' },
-            { name: 'WEEKLY/MONTHLY', img: '/FF/3.jpg', href: '#' },
-            { name: 'WEEKLY LITE', img: '/FF/4.jpg', href: '#' },
-            { name: 'LEVEL UP PASS', img: '/FF/5.jpg', href: '#' },
-            { name: 'INDONESIA SERVER', img: '/FF/6.jpg', href: '#' },
+            { name: 'WEEKLY/MONTHLY', img: '/FF/3.jpg', href: '/weekly-monthly' },
+            { name: 'WEEKLY LITE', img: '/FF/4.jpg', href: '/weekly-lite' },
+            { name: 'LEVEL UP PASS', img: '/FF/5.jpg', href: '/level-up-pass' },
+            { name: 'INDONESIA SERVER', img: '/FF/6.jpg', href: '/indonesia-server' },
           ].map((item, idx) => {
             const cardContent = (
               <div className="flex flex-col items-center w-[90px] md:w-[100px] group cursor-pointer">
