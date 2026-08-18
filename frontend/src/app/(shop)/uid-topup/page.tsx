@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Zap, Info, ShieldCheck } from "lucide-react";
 
 export default function Page() {
@@ -113,9 +114,12 @@ export default function Page() {
                 </div>
               </div>
 
-              <button className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black py-4 rounded-xl text-sm transition-all shadow-lg hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 uppercase tracking-wider">
+              <Link
+                href="/login"
+                className="w-full bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black py-4 rounded-xl text-sm transition-all shadow-lg hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 uppercase tracking-wider"
+              >
                 Login to Purchase
-              </button>
+              </Link>
             </div>
           </div>
         </div>

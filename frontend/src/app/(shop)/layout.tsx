@@ -92,9 +92,9 @@ export default function RootLayout({
                   />
                 </div>
                 <ThemeToggle />
-                <button className="bg-primary-600 hover:bg-purple-700 text-white px-5 py-2 rounded-full font-bold text-sm transition-all shadow-md hover:shadow-lg">
+                <Link href="/login" className="bg-primary-600 hover:bg-primary-700 text-white px-5 py-2 rounded-full font-bold text-sm transition-all shadow-md hover:shadow-lg inline-flex items-center justify-center">
                   Login
-                </button>
+                </Link>
               </div>
             </div>
           </header>
@@ -136,7 +136,7 @@ export default function RootLayout({
                     Our Mobile App
                   </h3>
                   <a
-                    href="/"
+                    href="#"
                     className="hover:scale-110 hover:drop-shadow-[0_0_20px_rgba(255,255,255,0.4)] transition-all cursor-pointer inline-block"
                   >
                     <img
