@@ -6,6 +6,7 @@ import { Send, Mail, Home, PlaySquare, LayoutGrid, Headset, Search } from "lucid
 import { FaFacebook, FaInstagram, FaYoutube } from "react-icons/fa";
 import { ThemeProvider } from "../../components/ThemeProvider";
 import { ThemeToggle } from "../../components/ThemeToggle";
+import NextTopLoader from "nextjs-toploader";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -33,6 +34,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <NextTopLoader color="#9333ea" showSpinner={false} />
           {/* Navbar */}
           <header className="bg-white dark:bg-slate-950 sticky top-0 z-50 shadow-sm border-b border-slate-100 dark:border-slate-800 transition-colors duration-300">
             <div className="container mx-auto px-4 max-w-6xl h-20 flex items-center justify-between">

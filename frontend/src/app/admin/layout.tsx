@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "../globals.css";
 import Link from "next/link";
 import { LayoutDashboard, Users, ShoppingBag, Settings, LogOut } from "lucide-react";
+import NextTopLoader from "nextjs-toploader";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -18,6 +19,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <html lang="en">
       <body className={`${inter.variable} antialiased bg-slate-50 text-slate-800 font-sans`}>
+        <NextTopLoader color="#9333ea" showSpinner={false} />
         <div className="flex h-screen overflow-hidden">
           {/* Sidebar */}
           <div className="w-64 bg-white border-r border-slate-200 flex flex-col shrink-0">
