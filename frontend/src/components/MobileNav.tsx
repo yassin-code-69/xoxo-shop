@@ -25,7 +25,7 @@ export function MobileNav() {
     },
     {
       name: "Support",
-      href: "/#contact",
+      href: "/contact",
       icon: Headset,
     },
   ];
@@ -34,16 +34,17 @@ export function MobileNav() {
     <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 z-50 rounded-t-[1.5rem] shadow-[0_-8px_20px_rgba(0,0,0,0.06)] pt-3 pb-[env(safe-area-inset-bottom,1.25rem)] px-2 transition-colors duration-300">
       <div className="flex items-center justify-around">
         {navItems.map((item) => {
-          const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+          const isActive =
+            pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
           const Icon = item.icon;
-          
+
           return (
             <Link
               key={item.name}
               href={item.href}
               className={`flex flex-col items-center gap-1.5 transition-colors ${
-                isActive 
-                  ? "text-primary-600 dark:text-primary-400" 
+                isActive
+                  ? "text-primary-600 dark:text-primary-400"
                   : "text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400"
               }`}
             >

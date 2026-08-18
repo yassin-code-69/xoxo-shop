@@ -72,7 +72,7 @@ export default function RootLayout({
                   <LayoutGrid size={16} /> Topup
                 </Link>
                 <Link
-                  href="/#contact"
+                  href="/contact"
                   className="text-sm font-bold text-slate-700 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-2"
                 >
                   <Headset size={16} /> Contact Us
