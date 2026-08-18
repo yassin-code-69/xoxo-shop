@@ -25,7 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} antialiased bg-[#f4f6fb] dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans transition-colors duration-300`}
+        className={`${inter.variable} antialiased bg-slate-50 dark:bg-slate-950 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans transition-colors duration-300`}
       >
         <ThemeProvider
           attribute="class"
@@ -48,7 +48,7 @@ export default function RootLayout({
                       <span className="text-black dark:text-white font-black text-[18px] transition-colors">
                         XoXo
                       </span>
-                      <span className="text-[#6b46c1] font-black text-[14px]">Shop</span>
+                      <span className="text-primary-600 font-black text-[14px]">Shop</span>
                     </div>
                   </div>
                 </div>
@@ -58,19 +58,19 @@ export default function RootLayout({
               <nav className="hidden md:flex items-center gap-8">
                 <Link
                   href="/"
-                  className="text-sm font-bold text-slate-700 dark:text-slate-300 hover:text-[#6b46c1] dark:hover:text-[#9f7aea] transition-colors flex items-center gap-2"
+                  className="text-sm font-bold text-slate-700 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-2"
                 >
                   <Home size={16} /> Home
                 </Link>
                 <Link
-                  href="/"
-                  className="text-sm font-bold text-slate-700 dark:text-slate-300 hover:text-[#6b46c1] dark:hover:text-[#9f7aea] transition-colors flex items-center gap-2"
+                  href="/uid-topup"
+                  className="text-sm font-bold text-slate-700 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-2"
                 >
                   <LayoutGrid size={16} /> Topup
                 </Link>
                 <Link
-                  href="/"
-                  className="text-sm font-bold text-slate-700 dark:text-slate-300 hover:text-[#6b46c1] dark:hover:text-[#9f7aea] transition-colors flex items-center gap-2"
+                  href="/#contact"
+                  className="text-sm font-bold text-slate-700 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center gap-2"
                 >
                   <Headset size={16} /> Contact Us
                 </Link>
@@ -86,11 +86,11 @@ export default function RootLayout({
                   <input
                     type="text"
                     placeholder="Search..."
-                    className="pl-9 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[#6b46c1] dark:text-white transition-all w-48"
+                    className="pl-9 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary-600 dark:text-white transition-all w-48"
                   />
                 </div>
                 <ThemeToggle />
-                <button className="bg-[#6b46c1] hover:bg-purple-700 text-white px-5 py-2 rounded-full font-bold text-sm transition-all shadow-md hover:shadow-lg">
+                <button className="bg-primary-600 hover:bg-purple-700 text-white px-5 py-2 rounded-full font-bold text-sm transition-all shadow-md hover:shadow-lg">
                   Login
                 </button>
               </div>
@@ -101,7 +101,7 @@ export default function RootLayout({
           <main className="flex-1 w-full max-w-6xl mx-auto">{children}</main>
 
           {/* Footer */}
-          <footer className="bg-gradient-to-br from-[#6b46c1] to-[#452787] text-white pt-16 pb-28 md:pb-8 mt-16 relative overflow-hidden shadow-inner">
+          <footer className="bg-gradient-to-br from-primary-600 to-primary-900 text-white pt-16 pb-28 md:pb-8 mt-16 relative overflow-hidden shadow-inner">
             {/* Decorative background elements */}
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 via-pink-500 to-purple-400 opacity-70"></div>
             <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
@@ -134,7 +134,7 @@ export default function RootLayout({
                     Our Mobile App
                   </h3>
                   <a
-                    href="#"
+                    href="/"
                     className="hover:scale-110 hover:drop-shadow-[0_0_20px_rgba(255,255,255,0.4)] transition-all cursor-pointer inline-block"
                   >
                     <img
@@ -150,7 +150,7 @@ export default function RootLayout({
                     Support Center
                   </h3>
                   <div className="bg-white/10 border border-white/20 rounded-xl p-3 flex items-center gap-3 w-[240px] backdrop-blur-sm hover:bg-white/15 transition-colors shadow-lg">
-                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-[#6b46c1] shadow-inner">
+                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-primary-600 shadow-inner">
                       <Send size={18} className="ml-0.5" />
                     </div>
                     <div className="flex flex-col text-left leading-tight">
@@ -180,27 +180,27 @@ export default function RootLayout({
           {/* Mobile Bottom Navigation */}
           <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 z-50 rounded-t-[1.5rem] shadow-[0_-8px_20px_rgba(0,0,0,0.06)] pt-3 pb-5 transition-colors duration-300">
             <div className="flex items-center justify-around px-2">
-              <Link href="/" className="flex flex-col items-center gap-1.5 text-[#6b46c1]">
+              <Link href="/" className="flex flex-col items-center gap-1.5 text-primary-600">
                 <Home size={22} strokeWidth={2.5} />
                 <span className="text-[11px] font-bold leading-none">Home</span>
               </Link>
               <Link
-                href="#"
-                className="flex flex-col items-center gap-1.5 text-slate-500 hover:text-[#6b46c1] transition-colors"
+                href="/"
+                className="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary-600 transition-colors"
               >
                 <PlaySquare size={22} strokeWidth={2} />
                 <span className="text-[11px] font-bold leading-none">Tutorial</span>
               </Link>
               <Link
                 href="/"
-                className="flex flex-col items-center gap-1.5 text-slate-500 hover:text-[#6b46c1] transition-colors"
+                className="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary-600 transition-colors"
               >
                 <LayoutGrid size={22} strokeWidth={2} />
                 <span className="text-[11px] font-bold leading-none">TopUp</span>
               </Link>
               <Link
-                href="#"
-                className="flex flex-col items-center gap-1.5 text-slate-500 hover:text-[#6b46c1] transition-colors"
+                href="/"
+                className="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary-600 transition-colors"
               >
                 <Headset size={22} strokeWidth={2} />
                 <span className="text-[11px] font-bold leading-none">Contact Us</span>

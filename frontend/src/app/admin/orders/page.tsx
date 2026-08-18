@@ -3,7 +3,7 @@ export default function OrdersPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-800">Orders Management</h1>
-        <button className="bg-[#6b46c1] hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+        <button className="bg-primary-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
           Export CSV
         </button>
       </div>
@@ -13,9 +13,9 @@ export default function OrdersPage() {
           <input
             type="text"
             placeholder="Search orders..."
-            className="px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#6b46c1] w-64"
+            className="px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-600 w-64"
           />
-          <select className="px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#6b46c1]">
+          <select className="px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-600">
             <option>All Status</option>
             <option>Pending</option>
             <option>Completed</option>

@@ -22,7 +22,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* Sidebar */}
           <div className="w-64 bg-white border-r border-slate-200 flex flex-col shrink-0">
             <div className="h-16 flex items-center px-6 border-b border-slate-200">
-              <span className="text-xl font-black text-[#6b46c1]">Admin Panel</span>
+              <span className="text-xl font-black text-primary-600">Admin Panel</span>
             </div>
             <div className="flex-1 py-4 flex flex-col gap-1 px-3">
               <Link
@@ -65,7 +65,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0">
               <h2 className="font-bold text-slate-800">Admin Dashboard</h2>
               <div className="flex items-center gap-4">
-                <div className="w-8 h-8 rounded-full bg-[#6b46c1] flex items-center justify-center font-bold text-white">
+                <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center font-bold text-white">
                   A
                 </div>
               </div>

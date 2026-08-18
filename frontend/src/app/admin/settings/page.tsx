@@ -11,7 +11,7 @@ export default function SettingsPage() {
                 Notice Bar Text
               </label>
               <textarea
-                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#6b46c1]"
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-600"
                 rows={2}
               >
                 ১৮ বছরের নিচে কেউ অর্ডার করবেন না! বাবা/মা বা ফ্যামিলির টাকা চুরি করে অর্ডার করলে তার বিরুদ্ধে আইনগত
@@ -24,7 +24,7 @@ export default function SettingsPage() {
               </label>
               <input
                 type="text"
-                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#6b46c1]"
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-600"
                 defaultValue="https://t.me/support"
               />
             </div>
@@ -32,11 +32,11 @@ export default function SettingsPage() {
               <label className="block text-sm font-medium text-slate-700 mb-1">Group Link</label>
               <input
                 type="text"
-                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#6b46c1]"
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary-600"
                 defaultValue="https://t.me/group"
               />
             </div>
-            <button className="bg-[#6b46c1] hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            <button className="bg-primary-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
               Save Changes
             </button>
           </div>
