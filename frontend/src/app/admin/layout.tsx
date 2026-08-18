@@ -25,21 +25,36 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <span className="text-xl font-black text-[#6b46c1]">Admin Panel</span>
             </div>
             <div className="flex-1 py-4 flex flex-col gap-1 px-3">
-              <Link href="/admin" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 text-slate-700 font-medium">
+              <Link
+                href="/admin"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 text-slate-700 font-medium"
+              >
                 <LayoutDashboard size={18} /> Dashboard
               </Link>
-              <Link href="/admin/orders" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 text-slate-700 font-medium">
+              <Link
+                href="/admin/orders"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 text-slate-700 font-medium"
+              >
                 <ShoppingBag size={18} /> Orders
               </Link>
-              <Link href="/admin/users" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 text-slate-700 font-medium">
+              <Link
+                href="/admin/users"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 text-slate-700 font-medium"
+              >
                 <Users size={18} /> Users
               </Link>
-              <Link href="/admin/settings" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 text-slate-700 font-medium">
+              <Link
+                href="/admin/settings"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 text-slate-700 font-medium"
+              >
                 <Settings size={18} /> Settings
               </Link>
             </div>
             <div className="p-4 border-t border-slate-200">
-              <Link href="/" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-red-50 text-red-600 font-medium transition-colors">
+              <Link
+                href="/"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-red-50 text-red-600 font-medium transition-colors"
+              >
                 <LogOut size={18} /> Back to Site
               </Link>
             </div>
@@ -50,12 +65,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0">
               <h2 className="font-bold text-slate-800">Admin Dashboard</h2>
               <div className="flex items-center gap-4">
-                <div className="w-8 h-8 rounded-full bg-[#6b46c1] flex items-center justify-center font-bold text-white">A</div>
+                <div className="w-8 h-8 rounded-full bg-[#6b46c1] flex items-center justify-center font-bold text-white">
+                  A
+                </div>
               </div>
             </header>
-            <main className="flex-1 overflow-auto p-6 bg-slate-50">
-              {children}
-            </main>
+            <main className="flex-1 overflow-auto p-6 bg-slate-50">{children}</main>
           </div>
         </div>
       </body>

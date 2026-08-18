@@ -2,19 +2,42 @@ import { ShoppingCart, Users, DollarSign, Activity } from "lucide-react";
 
 export default function AdminDashboard() {
   const stats = [
-    { title: "Total Revenue", value: "৳ 45,231", icon: DollarSign, color: "bg-blue-50 text-blue-600" },
-    { title: "Total Orders", value: "+2350", icon: ShoppingCart, color: "bg-purple-50 text-purple-600" },
-    { title: "Active Users", value: "+12,234", icon: Users, color: "bg-emerald-50 text-emerald-600" },
-    { title: "Conversion Rate", value: "4.3%", icon: Activity, color: "bg-orange-50 text-orange-600" },
+    {
+      title: "Total Revenue",
+      value: "৳ 45,231",
+      icon: DollarSign,
+      color: "bg-blue-50 text-blue-600",
+    },
+    {
+      title: "Total Orders",
+      value: "+2350",
+      icon: ShoppingCart,
+      color: "bg-purple-50 text-purple-600",
+    },
+    {
+      title: "Active Users",
+      value: "+12,234",
+      icon: Users,
+      color: "bg-emerald-50 text-emerald-600",
+    },
+    {
+      title: "Conversion Rate",
+      value: "4.3%",
+      icon: Activity,
+      color: "bg-orange-50 text-orange-600",
+    },
   ];
 
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold text-slate-800">Overview</h1>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, i) => (
-          <div key={i} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
+          <div
+            key={i}
+            className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4"
+          >
             <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${stat.color}`}>
               <stat.icon size={24} />
             </div>
@@ -48,7 +71,9 @@ export default function AdminDashboard() {
                   <td className="p-4 text-slate-600">Customer {i}</td>
                   <td className="p-4 text-slate-600">WEEKLY T-UP</td>
                   <td className="p-4">
-                    <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-600 border border-emerald-200">Completed</span>
+                    <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-600 border border-emerald-200">
+                      Completed
+                    </span>
                   </td>
                   <td className="p-4 text-slate-800 font-medium">৳ 158</td>
                 </tr>

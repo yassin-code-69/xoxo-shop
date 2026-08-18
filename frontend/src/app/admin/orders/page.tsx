@@ -10,7 +10,11 @@ export default function OrdersPage() {
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-4 border-b border-slate-200 flex gap-4">
-          <input type="text" placeholder="Search orders..." className="px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#6b46c1] w-64" />
+          <input
+            type="text"
+            placeholder="Search orders..."
+            className="px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#6b46c1] w-64"
+          />
           <select className="px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#6b46c1]">
             <option>All Status</option>
             <option>Pending</option>
@@ -40,11 +44,17 @@ export default function OrdersPage() {
                   <td className="p-4 text-slate-800 font-mono">10293{i}847</td>
                   <td className="p-4 text-slate-600">UID TOPUP BD</td>
                   <td className="p-4">
-                    <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-600 border border-amber-200">Pending</span>
+                    <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-600 border border-amber-200">
+                      Pending
+                    </span>
                   </td>
                   <td className="p-4">
-                    <button className="text-blue-600 hover:underline font-medium text-xs mr-3">Complete</button>
-                    <button className="text-red-600 hover:underline font-medium text-xs">Cancel</button>
+                    <button className="text-blue-600 hover:underline font-medium text-xs mr-3">
+                      Complete
+                    </button>
+                    <button className="text-red-600 hover:underline font-medium text-xs">
+                      Cancel
+                    </button>
                   </td>
                 </tr>
               ))}
