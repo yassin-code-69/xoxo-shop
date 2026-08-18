@@ -1,134 +1,91 @@
 import Link from "next/link";
-import { Zap, Info } from "lucide-react";
+import { Zap, Info, ShieldCheck, CheckCircle2 } from "lucide-react";
 
-export default function UidTopup() {
+export default function Page() {
   return (
-    <div className="flex flex-col gap-6 py-6 px-4">
+    <div className="flex flex-col gap-8 py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       {/* Banner */}
-      <div className="bg-gradient-to-r from-purple-50 to-white rounded-xl shadow-sm border border-slate-100 p-6 flex items-center gap-6">
-        <div className="w-20 h-20 rounded-xl overflow-hidden shadow-md">
-          <img src="/FF/2.jpg" alt="UID TOPUP (BD)" className="w-full h-full object-cover" />
+      <div className="bg-gradient-to-r from-purple-900 to-indigo-900 rounded-3xl shadow-2xl p-8 flex flex-col md:flex-row items-center md:items-start gap-8 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+        <div className="w-32 h-32 md:w-40 md:h-40 rounded-2xl overflow-hidden shadow-2xl border-4 border-white/10 shrink-0 relative z-10">
+          <img src="/FF/2.jpg" alt="UID Topup (BD)" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?w=400&q=80' }} />
         </div>
-        <div className="flex flex-col">
-          <h1 className="text-2xl font-black text-[#0b132b] mb-2">UID TOPUP (BD)</h1>
-          <div className="bg-orange-50 text-orange-500 text-xs font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1 w-max border border-orange-100">
-            <Zap size={14} fill="currentColor" /> ২ সেকেন্ডে টপআপ
+        <div className="flex flex-col items-center md:items-start text-center md:text-left z-10">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="bg-green-500/20 text-green-400 text-[10px] font-black uppercase px-3 py-1 rounded-full border border-green-500/30 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span> Active
+            </span>
+            <span className="bg-purple-500/20 text-purple-300 text-[10px] font-black uppercase px-3 py-1 rounded-full border border-purple-500/30 flex items-center gap-1">
+              <Zap size={12} fill="currentColor" /> Instant Delivery
+            </span>
           </div>
+          <h1 className="text-3xl md:text-5xl font-black text-white mb-4 drop-shadow-md">UID Topup (BD)</h1>
+          <p className="text-purple-200 text-sm max-w-lg">Get your top-up instantly through our automated system. 100% safe, secure, and officially authorized by the game developers.</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Left Column - Select Recharge */}
-        <div className="lg:col-span-2 flex flex-col gap-4">
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-            <div className="bg-slate-50 border-b border-slate-100 p-4 flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-[#6b46c1] text-white flex items-center justify-center font-bold text-sm">1</div>
-              <h2 className="font-bold text-[#0b132b]">Select Recharge</h2>
+        <div className="lg:col-span-2 flex flex-col gap-6">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 p-5 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center font-black text-sm shadow-md">1</div>
+              <h2 className="font-bold text-lg text-slate-800 dark:text-white">Select Package</h2>
             </div>
-            <div className="p-4 grid grid-cols-2 md:grid-cols-3 gap-3">
-              {/* Packages */}
+            <div className="p-6 grid grid-cols-2 md:grid-cols-3 gap-4">
               {[
-                { name: 'WEEKLY', price: '158' },
-                { name: 'MONTHLY', price: '790' },
-                { name: '25 Diamond', price: '22' },
-                { name: '50 Diamond', price: '36' },
-                { name: '115 Diamond', price: '79' },
-                { name: '240 Diamond', price: '158' },
-                { name: '355 Diamond', price: '237' },
-                { name: '480 Diamond', price: '316' },
-                { name: '610 Diamond', price: '400' },
-                { name: '850 Diamond', price: '558' },
-                { name: '1240 Diamond', price: '800' },
-                { name: '2530 Diamond', price: '1610' },
-                { name: '5060 Diamond', price: '3220' },
-                { name: '10120 Diamond', price: '6440' },
+                { name: '115 Diamonds', price: '79' },{ name: '240 Diamonds', price: '158' },{ name: '355 Diamonds', price: '237' },{ name: '480 Diamonds', price: '316' },
               ].map((pkg, i) => (
-                <button key={i} className="border border-slate-200 rounded-lg py-3 flex flex-col items-center hover:border-[#6b46c1] hover:shadow-md transition-all group focus:border-[#6b46c1] focus:ring-1 focus:ring-[#6b46c1]">
-                  <span className="font-bold text-xs text-[#1e3a8a] group-hover:text-[#6b46c1] group-focus:text-[#6b46c1] uppercase">{pkg.name}</span>
-                  <span className="text-[10px] text-[#6b46c1] font-bold mt-1">BDT {pkg.price}</span>
+                <button key={i} className="bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl p-4 flex flex-col items-center hover:border-purple-500 dark:hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all group focus:border-purple-600 dark:focus:border-purple-500 focus:ring-4 focus:ring-purple-600/20 outline-none">
+                  <span className="font-black text-sm text-slate-800 dark:text-slate-200 group-hover:text-purple-700 dark:group-hover:text-purple-300 group-focus:text-purple-700 uppercase mb-2 text-center">{pkg.name}</span>
+                  <div className="bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 w-full text-center group-hover:border-purple-200 dark:group-hover:border-purple-800">
+                    <span className="text-xs text-purple-600 dark:text-purple-400 font-black">BDT {pkg.price}</span>
+                  </div>
                 </button>
               ))}
-            </div>
-            <div className="p-4 border-t border-slate-100">
-              <Link href="#" className="text-[#00d084] text-sm font-bold flex items-center gap-1 hover:underline w-max">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg> কিভাবে অর্ডার করবেন? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg>
-              </Link>
             </div>
           </div>
         </div>
 
         {/* Right Column - Account Info & Options */}
         <div className="flex flex-col gap-6">
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-            <div className="bg-slate-50 border-b border-slate-100 p-4 flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-[#6b46c1] text-white flex items-center justify-center font-bold text-sm">2</div>
-              <h2 className="font-bold text-[#0b132b]">Account Info</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 p-5 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center font-black text-sm shadow-md">2</div>
+              <h2 className="font-bold text-lg text-slate-800 dark:text-white">Player Details</h2>
             </div>
-            <div className="p-4 flex flex-col gap-3">
-              <label className="text-sm font-bold text-slate-700">এখানে গেমের আইডি কোড দিন</label>
-              <input type="text" placeholder="এখানে গেমের আইডি কোড দিন" className="w-full border border-blue-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#6b46c1] focus:ring-1 focus:ring-[#6b46c1]" />
-              <button className="w-full bg-[#6b46c1] hover:bg-purple-700 text-white font-bold py-2.5 rounded-lg text-sm transition-colors mt-2 shadow-sm">
-                আপনার গেম আইডির নাম চেক করুন
+            <div className="p-6 flex flex-col gap-4">
+              <div>
+                <label className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 block">Player ID / UID</label>
+                <div className="relative">
+                  <input type="text" placeholder="Enter your Player ID" className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-purple-500 dark:focus:border-purple-500 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-white" />
+                </div>
+              </div>
+              <button className="w-full bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2">
+                <ShieldCheck size={18} /> Verify ID Name
               </button>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-            <div className="bg-slate-50 border-b border-slate-100 p-4 flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-[#6b46c1] text-white flex items-center justify-center font-bold text-sm">3</div>
-              <h2 className="font-bold text-[#0b132b]">Select one option</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 p-5 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center font-black text-sm shadow-md">3</div>
+              <h2 className="font-bold text-lg text-slate-800 dark:text-white">Payment & Checkout</h2>
             </div>
-            <div className="p-4">
-              <div className="grid grid-cols-2 gap-3 mb-5">
-                <button className="border border-red-500 rounded-lg overflow-hidden relative group bg-white shadow-[0_0_0_1px_rgba(239,68,68,1)]">
-                  <div className="absolute top-0 left-0 bg-red-500 text-white w-6 h-6 flex items-center justify-center rounded-br-lg z-10"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-                  <div className="h-14 flex items-center justify-center bg-white p-2">
-                    <img src="/FF/p1.png" alt="Wallet Pay" className="h-full object-contain" />
-                  </div>
-                  <div className="bg-slate-100 border-t border-slate-200 text-[10px] font-bold text-left px-2 py-1.5 text-slate-500">Wallet Pay</div>
-                </button>
-                <button className="border border-slate-200 rounded-lg overflow-hidden relative group opacity-60 hover:opacity-100 transition-opacity">
-                  <div className="h-14 flex items-center justify-center bg-white p-2">
-                    <img src="/FF/p2.png" alt="Instant Pay" className="h-full object-contain" />
-                  </div>
-                  <div className="bg-slate-100 border-t border-slate-200 text-[10px] font-bold text-left px-2 py-1.5 text-slate-500">Instant Pay</div>
-                </button>
+            <div className="p-6 flex flex-col gap-5">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 flex items-start gap-3">
+                <Info className="text-blue-500 shrink-0 mt-0.5" size={18} />
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm font-bold text-blue-900 dark:text-blue-300">Login Required</span>
+                  <span className="text-xs text-blue-700 dark:text-blue-400">Please login to your account to complete this purchase securely.</span>
+                </div>
               </div>
               
-              <div className="flex flex-col gap-1.5 text-[11px] text-slate-500 mb-5 font-medium">
-                <p className="flex items-center gap-1.5"><Info size={14} /> প্রোডাক্ট কিনতে আপনার প্রয়োজন ০ টাকা।</p>
-                <p className="flex items-center gap-1.5 text-orange-500"><Info size={14} /> Please Login To Purchase</p>
-              </div>
-              
-              <button className="w-full bg-[#6b46c1] hover:bg-purple-700 text-white font-bold py-2.5 rounded-lg text-sm transition-colors shadow-sm">
-                Login
+              <button className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black py-4 rounded-xl text-sm transition-all shadow-lg hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 uppercase tracking-wider">
+                Login to Purchase
               </button>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Rules */}
-      <div className="mt-2 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="bg-slate-50 border-b border-slate-100 p-4 flex items-center gap-2">
-          <div className="text-[#6b46c1]"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></div>
-          <h2 className="font-bold text-[#0b132b] text-sm">Rules & Conditions</h2>
-        </div>
-        <div className="p-6">
-          <ul className="space-y-6 text-sm text-slate-700 font-medium">
-            <li className="flex items-start gap-2">
-              <span className="text-slate-400 mt-0.5 text-[10px]">◉</span> শুধুমাত্র Bangladesh সার্ভারে ID Code দিয়ে টপ আপ হবে
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-slate-400 mt-0.5 text-[10px]">◉</span> Player ID ভুল দিয়ে Diamond না পেলে Offer TopUp কর্তৃপক্ষ দায়ী নয়
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-slate-400 mt-0.5 text-[10px]">◉</span> Order কমপ্লিট হওয়ার পরেও আইডিতে ডায়মন্ড না গেলে চেক করার জন্য ID Pass দিতে হবে
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-slate-400 mt-0.5 text-[10px]">◉</span> অর্ডার Cancel হলে কি কারণে তা Cancel হয়েছে তা অর্ডার হিস্টরিতে দেওয়া থাকে অনুগ্রহ পূর্বক দেখে পুনরায় সঠিক তথ্য দিয়ে অর্ডার করবেন।
-            </li>
-          </ul>
         </div>
       </div>
     </div>

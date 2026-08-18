@@ -1,222 +1,220 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { XCircle, Send, Users, RefreshCw, CheckCircle2, Clock } from "lucide-react";
+import { XCircle, Send, Users, RefreshCw, CheckCircle2, Clock, ChevronRight, Star, Flame, Trophy } from "lucide-react";
 
 export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [showNotice, setShowNotice] = useState(true);
+  
   const slides = [
-    "/FF/B1.jpg",
-    "/FF/B2.jpg",
-    "/FF/B3.jpg",
-    "/FF/B4.jpg",
+    "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2070&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=2071&auto=format&fit=crop",
   ];
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 3000);
+    }, 4000);
     return () => clearInterval(timer);
   }, [slides.length]);
 
   return (
-    <div className="flex flex-col gap-6 py-6 px-4">
+    <div className="flex flex-col gap-8 py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       {/* Notice Bar */}
-      <div className="bg-[#7148c4] rounded flex flex-col md:flex-row justify-between items-start md:items-center shadow-sm relative overflow-hidden">
-        <div className="p-3.5 flex flex-col z-10 w-full pr-10 text-white">
-          <h3 className="font-bold text-sm mb-0.5">Notice:</h3>
-          <p className="text-[11px] font-medium text-white/90">১৮ বছরের নিচে কেউ অর্ডার করবেন না! বাবা/মা বা ফ্যামিলির টাকা চুরি করে অর্ডার করলে তার বিরুদ্ধে আইনগত ব্যবস্থা নেওয়া হবে!</p>
+      {showNotice && (
+        <div className="bg-gradient-to-r from-red-600 to-pink-600 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center shadow-lg relative overflow-hidden transform transition-all duration-300 hover:scale-[1.01]">
+          <div className="absolute top-0 right-0 w-64 h-full bg-white opacity-10 transform skew-x-12 translate-x-20"></div>
+          <div className="p-4 flex flex-col z-10 w-full pr-12 text-white">
+            <div className="flex items-center gap-2 mb-1">
+              <Flame size={18} className="text-yellow-300 animate-pulse" />
+              <h3 className="font-extrabold text-sm uppercase tracking-wider">Important Notice</h3>
+            </div>
+            <p className="text-xs sm:text-sm font-medium text-white/90">১৮ বছরের নিচে কেউ অর্ডার করবেন না! বাবা/মা বা ফ্যামিলির টাকা চুরি করে অর্ডার করলে তার বিরুদ্ধে আইনগত ব্যবস্থা নেওয়া হবে!</p>
+          </div>
+          <button onClick={() => setShowNotice(false)} className="text-white/70 hover:text-white hover:bg-white/10 p-2 rounded-full absolute right-3 top-1/2 -translate-y-1/2 z-10 transition-colors">
+            <XCircle size={20} />
+          </button>
         </div>
-        <button className="text-white/80 hover:text-white absolute right-3 top-4 md:top-auto z-10">
-          <XCircle size={18} />
-        </button>
-      </div>
+      )}
 
       {/* Hero Banner Slider */}
-      <div className="w-full mt-1 flex flex-col items-center">
-        <div className="w-full rounded bg-white shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)] relative border border-slate-100 overflow-hidden">
-          <div className="w-full h-[180px] sm:h-[240px] md:h-[320px] lg:h-[380px] bg-slate-50 relative flex items-center justify-center overflow-hidden">
+      <div className="w-full flex flex-col items-center group">
+        <div className="w-full rounded-2xl bg-white dark:bg-slate-900 shadow-xl relative overflow-hidden ring-1 ring-slate-200 dark:ring-slate-800">
+          <div className="w-full h-[200px] sm:h-[300px] md:h-[400px] lg:h-[450px] relative flex items-center justify-center overflow-hidden">
             <div 
-              className="flex w-full h-full transition-transform duration-500 ease-out" 
-              style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+              className="flex w-full h-full transition-transform duration-700 cubic-bezier(0.4, 0, 0.2, 1)" 
+              style={{ transform: \`translateX(-\${currentSlide * 100}%)\` }}
             >
               {slides.map((slide, idx) => (
-                <div key={idx} className="w-full h-full flex-shrink-0">
-                  <img src={slide} alt={`Slide ${idx + 1}`} className="w-full h-full object-cover" />
+                <div key={idx} className="w-full h-full flex-shrink-0 relative">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent z-10"></div>
+                  <img src={slide} alt={\`Featured Promotion \${idx + 1}\`} className="w-full h-full object-cover" />
+                  <div className="absolute bottom-6 sm:bottom-10 left-6 sm:left-10 z-20 text-white max-w-lg hidden sm:block">
+                    <span className="px-3 py-1 bg-purple-600 text-xs font-bold uppercase rounded-full mb-3 inline-block">Featured</span>
+                    <h2 className="text-3xl sm:text-4xl font-black mb-2 drop-shadow-md">Exclusive Weekly Offer</h2>
+                    <p className="text-white/80 text-sm sm:text-base font-medium">Get up to 30% bonus diamonds on your first top-up this week.</p>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
-        </div>
-        
-        {/* Pagination Dots */}
-        <div className="flex justify-center gap-1.5 mt-3">
-          {slides.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => setCurrentSlide(idx)}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                currentSlide === idx ? "w-4 bg-slate-600" : "w-2 bg-slate-300"
-              }`}
-              aria-label={`Go to slide ${idx + 1}`}
-            />
-          ))}
+          
+          {/* Slider Controls */}
+          <div className="absolute bottom-4 right-4 sm:bottom-6 sm:right-6 z-20 flex gap-2">
+            {slides.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentSlide(idx)}
+                className={\`h-2 rounded-full transition-all duration-300 \${
+                  currentSlide === idx ? "w-8 bg-white" : "w-2 bg-white/50 hover:bg-white/80"
+                }\`}
+                aria-label={\`Go to slide \${idx + 1}\`}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Action Buttons */}
-      <div className="grid grid-cols-2 gap-4 mt-2">
-        <button className="bg-[#7148c4] hover:bg-[#5f39a8] text-white rounded-md p-3 md:p-4 flex items-center gap-3 transition-colors shadow-sm">
-          <div className="bg-white rounded-full p-2 text-[#7148c4]">
-            <Send size={18} className="ml-0.5" />
+      <div className="grid grid-cols-2 gap-4 sm:gap-6">
+        <button className="bg-gradient-to-br from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-2xl p-4 sm:p-5 flex items-center gap-4 transition-all shadow-md hover:shadow-xl hover:-translate-y-1 group">
+          <div className="bg-white/20 backdrop-blur-md rounded-xl p-3 text-white group-hover:scale-110 transition-transform">
+            <Send size={24} className="ml-0.5" />
           </div>
           <div className="text-left flex flex-col">
-            <span className="text-[9px] uppercase font-bold text-white/70">Support</span>
-            <span className="font-bold text-sm leading-none mt-0.5">Telegram</span>
+            <span className="text-[10px] sm:text-xs uppercase font-bold text-white/70 tracking-wider">Live Support</span>
+            <span className="font-black text-sm sm:text-lg leading-none mt-1">Telegram Chat</span>
           </div>
         </button>
-        <button className="bg-[#7148c4] hover:bg-[#5f39a8] text-white rounded-md p-3 md:p-4 flex items-center gap-3 transition-colors shadow-sm">
-          <div className="bg-white rounded-full p-2 text-[#7148c4]">
-            <Users size={18} />
+        <button className="bg-gradient-to-br from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-2xl p-4 sm:p-5 flex items-center gap-4 transition-all shadow-md hover:shadow-xl hover:-translate-y-1 group">
+          <div className="bg-white/20 backdrop-blur-md rounded-xl p-3 text-white group-hover:scale-110 transition-transform">
+            <Users size={24} />
           </div>
           <div className="text-left flex flex-col">
-            <span className="text-[9px] uppercase font-bold text-white/70">Group</span>
-            <span className="font-bold text-sm leading-none mt-0.5">Join Group</span>
+            <span className="text-[10px] sm:text-xs uppercase font-bold text-white/70 tracking-wider">Community</span>
+            <span className="font-black text-sm sm:text-lg leading-none mt-1">Join FB Group</span>
           </div>
         </button>
       </div>
 
-      {/* Special Offer */}
-      <div className="mt-4 md:mt-8">
-        <h2 className="text-center text-[#1e3a8a] text-xl font-bold mb-4 md:mb-8 uppercase">Special Offer</h2>
-        <div className="flex flex-col items-center w-max group cursor-pointer">
-          <div className="w-[100px] h-[100px] md:w-[110px] md:h-[110px] rounded-xl overflow-hidden relative shadow-md group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300 bg-[#150a2b] border border-purple-900/30">
-            {/* Top Left Badge */}
-            <div className="absolute top-1.5 left-1.5 w-3.5 h-3.5 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm z-20">
-                <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-            </div>
-            
-            {/* Full Card Image (Replace src with your actual graphic) */}
-            <img 
-              src="/FF/0.jpg" 
-              alt="Special Offer" 
-              className="w-full h-full object-cover relative z-10" 
-            />
-          </div>
-          <span className="text-[#1e3a8a] font-bold text-[10px] mt-3 uppercase tracking-wider group-hover:text-purple-700 transition-colors">COMING SOON</span>
+      {/* Topup Categories */}
+      <div className="mt-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-black text-slate-800 dark:text-white flex items-center gap-2">
+            <Trophy className="text-purple-600 dark:text-purple-400" /> Popular Services
+          </h2>
+          <Link href="#" className="text-sm font-bold text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 flex items-center gap-1 group">
+            View All <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+          </Link>
         </div>
-      </div>
-
-      {/* Topup Section */}
-      <div className="mt-4 md:mt-12 px-1 md:px-0">
-        <h2 className="text-center text-[#1e3a8a] text-xl font-bold mb-4 md:mb-8">TOPUP</h2>
-        <div className="grid grid-cols-3 md:flex md:flex-wrap justify-items-center md:justify-start gap-x-2 gap-y-6 md:gap-x-16 md:gap-y-12">
+        
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
           {[
-            { name: 'FF LIKES', img: '/FF/1.jpg', href: '/ff-likes' },
-            { name: 'UID TOPUP (BD)', img: '/FF/2.jpg', href: '/uid-topup' },
-            { name: 'WEEKLY/MONTHLY', img: '/FF/3.jpg', href: '/weekly-monthly' },
-            { name: 'WEEKLY LITE', img: '/FF/4.jpg', href: '/weekly-lite' },
-            { name: 'LEVEL UP PASS', img: '/FF/5.jpg', href: '/level-up-pass' },
-            { name: 'INDONESIA SERVER', img: '/FF/6.jpg', href: '/indonesia-server' },
-          ].map((item, idx) => {
-            const cardContent = (
-              <div className="flex flex-col items-center w-[90px] md:w-[100px] group cursor-pointer">
-                <div className="w-[90px] h-[90px] md:w-[100px] md:h-[100px] rounded-xl bg-[#150a2b] shadow-md relative overflow-hidden border border-purple-900/30 group-hover:shadow-xl group-hover:-translate-y-1 transition-all duration-300 flex items-center justify-center">
-                  {/* Top Right Badge */}
-                  <div className="absolute top-1.5 right-1.5 w-3.5 h-3.5 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm z-20">
-                      <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+            { name: 'Free Fire LIKES', src: '/FF/1.jpg', href: '/ff-likes', tag: 'Hot' },
+            { name: 'UID TOPUP (BD)', src: '/FF/2.jpg', href: '/uid-topup', tag: 'Fast' },
+            { name: 'Weekly & Monthly', src: '/FF/3.jpg', href: '/weekly-monthly' },
+            { name: 'Weekly Lite', src: '/FF/4.jpg', href: '/weekly-lite' },
+            { name: 'Level Up Pass', src: '/FF/5.jpg', href: '/level-up-pass', tag: 'Value' },
+            { name: 'Indo Server', src: '/FF/6.jpg', href: '/indonesia-server' },
+          ].map((item, idx) => (
+            <Link href={item.href} key={idx} className="group">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 shadow-sm hover:shadow-xl ring-1 ring-slate-100 dark:ring-slate-700 transition-all duration-300 hover:-translate-y-2 flex flex-col h-full relative overflow-hidden">
+                {item.tag && (
+                  <div className="absolute top-0 right-0 bg-red-500 text-white text-[9px] font-black uppercase px-2 py-1 rounded-bl-lg z-20">
+                    {item.tag}
                   </div>
-                  
-                  {/* Full Card Image */}
-                  <img 
-                    src={item.img} 
-                    alt={item.name} 
-                    className="w-full h-full object-cover relative z-10" 
-                  />
+                )}
+                <div className="w-full aspect-square rounded-xl bg-slate-100 dark:bg-slate-700 mb-3 overflow-hidden relative">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <img src={item.src} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?w=400&q=80' }} />
                 </div>
-                <span className="text-[#1e3a8a] font-bold text-[9px] md:text-[10px] mt-3 text-center uppercase tracking-wider">{item.name}</span>
+                <h3 className="font-bold text-xs sm:text-sm text-center text-slate-800 dark:text-slate-200 group-hover:text-purple-600 dark:group-hover:text-purple-400 mt-auto">{item.name}</h3>
               </div>
-            );
-
-            return item.href !== '#' ? (
-              <Link href={item.href} key={idx}>
-                {cardContent}
-              </Link>
-            ) : (
-              <div key={idx}>
-                {cardContent}
-              </div>
-            );
-          })}
+            </Link>
+          ))}
         </div>
       </div>
 
-      {/* Recent Orders Section */}
-      <div className="mt-6 md:mt-16 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden relative">
-        <div className="absolute top-0 left-0 w-24 h-24 bg-pink-100 rounded-br-[100px] opacity-50 -z-10"></div>
-        <div className="p-5 border-b border-slate-50 flex justify-between items-start relative z-10">
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 bg-pink-50 text-pink-500 rounded-xl flex items-center justify-center border border-pink-100">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+      {/* Special Offer Highlight */}
+      <div className="mt-8 bg-gradient-to-r from-blue-900 to-indigo-900 rounded-3xl overflow-hidden shadow-2xl relative border border-blue-800">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500 rounded-full blur-3xl opacity-20 translate-y-1/2 -translate-x-1/2"></div>
+        
+        <div className="grid md:grid-cols-2 items-center gap-8 p-8 md:p-12 relative z-10">
+          <div className="flex flex-col items-start text-white">
+            <span className="bg-yellow-500 text-black text-xs font-black uppercase px-3 py-1 rounded-full mb-4 flex items-center gap-1"><Star size={14} fill="currentColor" /> Limited Time</span>
+            <h2 className="text-3xl md:text-5xl font-black mb-4 leading-tight">Mega Diamond <br/>Bundle Pack</h2>
+            <p className="text-blue-200 mb-8 max-w-md">Get up to 5000+ diamonds with exclusive gun skins and a legendary emote. Only available for the next 48 hours!</p>
+            <button className="bg-white text-blue-900 hover:bg-blue-50 font-black px-8 py-3.5 rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all hover:scale-105 active:scale-95">
+              Claim Offer Now
+            </button>
+          </div>
+          <div className="relative flex justify-center mt-8 md:mt-0">
+            <div className="w-64 h-64 md:w-80 md:h-80 relative group cursor-pointer">
+              <div className="absolute inset-0 bg-blue-500 rounded-3xl rotate-6 group-hover:rotate-12 transition-transform duration-500 opacity-50 blur-sm"></div>
+              <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&q=80" alt="Special Bundle" className="relative z-10 w-full h-full object-cover rounded-3xl shadow-2xl border-4 border-white/10 group-hover:scale-105 transition-transform duration-500" />
             </div>
-            <div className="pt-0.5">
-              <h2 className="text-xl font-black text-[#0b132b] tracking-tight">Recent Orders</h2>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="w-2.5 h-2.5 bg-[#00d084] rounded-full"></span>
-                <span className="text-[#00d084] font-bold text-xs tracking-wider">Live</span>
-                <svg className="w-5 h-3 text-[#00d084]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M2 12h4l3-9 5 18 3-9h5"/></svg>
+          </div>
+        </div>
+      </div>
+
+      {/* Live Recent Orders */}
+      <div className="mt-12 bg-white dark:bg-slate-900 rounded-3xl shadow-lg border border-slate-200 dark:border-slate-800 overflow-hidden relative group">
+        <div className="absolute -right-20 -top-20 w-64 h-64 bg-green-500 rounded-full blur-3xl opacity-5 dark:opacity-10 group-hover:opacity-10 transition-opacity"></div>
+        
+        <div className="p-6 md:p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-sm z-10 relative">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-2xl flex items-center justify-center shadow-inner">
+              <ActivityIcon />
+            </div>
+            <div>
+              <h2 className="text-xl md:text-2xl font-black text-slate-800 dark:text-white">Live Purchases</h2>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                </span>
+                <span className="text-green-600 dark:text-green-400 font-bold text-xs tracking-wider uppercase">Updating in real-time</span>
               </div>
             </div>
           </div>
-          <button className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:bg-slate-50 transition-colors">
-            <RefreshCw size={14} />
+          <button className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 hover:rotate-180 transition-all duration-500">
+            <RefreshCw size={16} />
           </button>
         </div>
 
-        {/* Thick gradient line separator */}
-        <div className="h-[3px] w-16 bg-gradient-to-r from-pink-500 to-pink-200 ml-5 -mt-[1px]"></div>
-
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-slate-100 dark:divide-slate-800">
           {[
-            { name: 'Mehedi', product: '200 FF LIKE- প্রতিদিন ১ আইডিতে ১বার - ৳30', status: 'Pending', avatarType: 'icon', color: 'bg-[#f0f4ff] text-[#6366f1]' },
-            { name: 'SK TAHMID', product: '115 Diamond - ৳79', status: 'Done', avatarType: 'text', avatar: 'SK', color: 'bg-[#004d40] text-white' },
-            { name: 'Rm Ridoy', product: '5060 Diamond - ৳3220', status: 'Done', avatarType: 'text', avatar: 'Rm', color: 'bg-[#f06292] text-white' },
-            { name: 'Altaf Vai', product: '3X Weekly Lite - ৳135', status: 'Done', avatarType: 'text', avatar: 'A', color: 'bg-[#455a64] text-white' },
-            { name: 'Md Ariyan', product: 'WEEKLY - ৳158', status: 'Done', avatarType: 'text', avatar: 'Md', color: 'bg-[#5c6bc0] text-white' },
-            { name: 'Siyam Ahmmad', product: 'WEEKLY - ৳158', status: 'Done', avatarType: 'img', src: 'https://cdn-icons-png.flaticon.com/512/3176/3176294.png' },
-            { name: 'MD JAHID', product: 'WEEKLY - ৳158', status: 'Done', avatarType: 'img', src: 'https://i.pravatar.cc/150?u=jahid' },
-            { name: 'Sk Anik', product: '2X WEEKLY - ৳316', status: 'Done', avatarType: 'img', src: 'https://i.pravatar.cc/150?u=anik' },
-            { name: 'MD Bijoy', product: 'WEEKLY - ৳158', status: 'Done', avatarType: 'img', src: 'https://i.pravatar.cc/150?u=bijoy' },
-            { name: 'nirob Chowdhury', product: '355 Diamond - ৳237', status: 'Done', avatarType: 'text', avatar: 'n', color: 'bg-[#78909c] text-white' },
+            { name: 'Mehedi Hasan', product: '200 FF LIKES - Daily limit', status: 'Pending', avatarColor: 'bg-indigo-100 text-indigo-600', time: 'Just now', amount: '৳30' },
+            { name: 'Tahmid SK', product: '115 Diamond Pack', status: 'Completed', avatarColor: 'bg-emerald-100 text-emerald-600', time: '2 mins ago', amount: '৳79' },
+            { name: 'Ridoy Rahman', product: '5060 Diamond Mega Pack', status: 'Completed', avatarColor: 'bg-rose-100 text-rose-600', time: '5 mins ago', amount: '৳3220' },
+            { name: 'Altaf Hossain', product: '3X Weekly Lite', status: 'Completed', avatarColor: 'bg-slate-100 text-slate-600', time: '12 mins ago', amount: '৳135' },
+            { name: 'Ariyan Khan', product: 'Weekly Membership', status: 'Completed', avatarColor: 'bg-blue-100 text-blue-600', time: '15 mins ago', amount: '৳158' },
           ].map((order, idx) => (
-            <div key={idx} className="px-5 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors">
-              <div className="flex items-center gap-3.5">
-                {order.avatarType === 'img' ? (
-                  <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden shrink-0">
-                    <img src={order.src} alt={order.name} className="w-full h-full object-cover" />
-                  </div>
-                ) : order.avatarType === 'icon' ? (
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${order.color}`}>
-                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                  </div>
-                ) : (
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-[15px] shrink-0 ${order.color}`}>
-                    {order.avatar}
-                  </div>
-                )}
+            <div key={idx} className="p-4 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+              <div className="flex items-center gap-4">
+                <div className={\`w-12 h-12 rounded-full flex items-center justify-center text-lg font-black shrink-0 shadow-sm \${order.avatarColor}\`}>
+                  {order.name.charAt(0)}
+                </div>
                 <div className="flex flex-col">
-                  <h4 className="font-bold text-[13px] text-[#0b132b] leading-none mb-1.5">{order.name}</h4>
-                  <p className="text-[11px] text-slate-500 leading-none">{order.product}</p>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-bold text-[15px] text-slate-800 dark:text-slate-200">{order.name}</h4>
+                    <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">• {order.time}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{order.product}</p>
                 </div>
               </div>
-              <div>
+              <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto pl-16 sm:pl-0">
+                <span className="font-black text-slate-800 dark:text-slate-200">{order.amount}</span>
                 {order.status === 'Pending' ? (
-                  <div className="bg-[#eff6ff] text-[#3b82f6] px-3 py-1.5 rounded-full text-[11px] font-bold flex items-center gap-1.5">
-                    <div className="w-4 h-4 rounded-full bg-[#3b82f6] flex items-center justify-center text-white"><Clock size={10} strokeWidth={3} /></div> {order.status}
+                  <div className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-3 py-1.5 rounded-full text-[11px] font-bold flex items-center gap-1.5 border border-blue-100 dark:border-blue-800">
+                    <Clock size={12} strokeWidth={2.5} /> {order.status}
                   </div>
                 ) : (
-                  <div className="bg-[#e6f9f0] text-[#00d084] px-3 py-1.5 rounded-full text-[11px] font-bold flex items-center gap-1.5">
-                    <div className="w-4 h-4 rounded-full bg-[#00d084] flex items-center justify-center text-white"><CheckCircle2 size={11} strokeWidth={3} /></div> {order.status}
+                  <div className="bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-3 py-1.5 rounded-full text-[11px] font-bold flex items-center gap-1.5 border border-green-100 dark:border-green-800">
+                    <CheckCircle2 size={12} strokeWidth={2.5} /> {order.status}
                   </div>
                 )}
               </div>
@@ -225,14 +223,14 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Download App */}
-      <div className="mt-16 mb-8 flex flex-col items-center text-center">
-        <h2 className="text-black text-lg md:text-xl font-black mb-6 uppercase tracking-wider">DOWNLOAD OUR MOBILE APP</h2>
-        <a href="#" className="hover:scale-105 transition-transform cursor-pointer inline-block">
-          <img src="/FF/google-play.nDtcExnl.png" alt="Get it on Google Play" className="w-[220px] md:w-[280px] object-contain drop-shadow-xl" />
-        </a>
-      </div>
-
     </div>
+  );
+}
+
+function ActivityIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+    </svg>
   );
 }

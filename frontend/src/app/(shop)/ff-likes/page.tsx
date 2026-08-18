@@ -1,37 +1,46 @@
 import Link from "next/link";
-import { Zap, Info } from "lucide-react";
+import { Zap, Info, ShieldCheck, CheckCircle2 } from "lucide-react";
 
 export default function Page() {
   return (
-    <div className="flex flex-col gap-6 py-6 px-4">
+    <div className="flex flex-col gap-8 py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       {/* Banner */}
-      <div className="bg-gradient-to-r from-purple-50 to-white rounded-xl shadow-sm border border-slate-100 p-6 flex items-center gap-6">
-        <div className="w-20 h-20 rounded-xl overflow-hidden shadow-md">
-          <img src="/FF/1.jpg" alt="FF LIKES" className="w-full h-full object-cover" />
+      <div className="bg-gradient-to-r from-purple-900 to-indigo-900 rounded-3xl shadow-2xl p-8 flex flex-col md:flex-row items-center md:items-start gap-8 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+        <div className="w-32 h-32 md:w-40 md:h-40 rounded-2xl overflow-hidden shadow-2xl border-4 border-white/10 shrink-0 relative z-10">
+          <img src="/FF/1.jpg" alt="Free Fire LIKES" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?w=400&q=80' }} />
         </div>
-        <div className="flex flex-col">
-          <h1 className="text-2xl font-black text-[#0b132b] mb-2">FF LIKES</h1>
-          <div className="bg-orange-50 text-orange-500 text-xs font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1 w-max border border-orange-100">
-            <Zap size={14} fill="currentColor" /> ২ সেকেন্ডে টপআপ
+        <div className="flex flex-col items-center md:items-start text-center md:text-left z-10">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="bg-green-500/20 text-green-400 text-[10px] font-black uppercase px-3 py-1 rounded-full border border-green-500/30 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span> Active
+            </span>
+            <span className="bg-purple-500/20 text-purple-300 text-[10px] font-black uppercase px-3 py-1 rounded-full border border-purple-500/30 flex items-center gap-1">
+              <Zap size={12} fill="currentColor" /> Instant Delivery
+            </span>
           </div>
+          <h1 className="text-3xl md:text-5xl font-black text-white mb-4 drop-shadow-md">Free Fire LIKES</h1>
+          <p className="text-purple-200 text-sm max-w-lg">Get your top-up instantly through our automated system. 100% safe, secure, and officially authorized by the game developers.</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Left Column - Select Recharge */}
-        <div className="lg:col-span-2 flex flex-col gap-4">
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-            <div className="bg-slate-50 border-b border-slate-100 p-4 flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-[#6b46c1] text-white flex items-center justify-center font-bold text-sm">1</div>
-              <h2 className="font-bold text-[#0b132b]">Select Recharge</h2>
+        <div className="lg:col-span-2 flex flex-col gap-6">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 p-5 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center font-black text-sm shadow-md">1</div>
+              <h2 className="font-bold text-lg text-slate-800 dark:text-white">Select Package</h2>
             </div>
-            <div className="p-4 grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="p-6 grid grid-cols-2 md:grid-cols-3 gap-4">
               {[
                 { name: '100 LIKES', price: '25' },{ name: '200 LIKES', price: '50' },{ name: '300 LIKES', price: '75' },
               ].map((pkg, i) => (
-                <button key={i} className="border border-slate-200 rounded-lg py-3 flex flex-col items-center hover:border-[#6b46c1] hover:shadow-md transition-all group focus:border-[#6b46c1] focus:ring-1 focus:ring-[#6b46c1]">
-                  <span className="font-bold text-xs text-[#1e3a8a] group-hover:text-[#6b46c1] group-focus:text-[#6b46c1] uppercase">{pkg.name}</span>
-                  <span className="text-[10px] text-[#6b46c1] font-bold mt-1">BDT {pkg.price}</span>
+                <button key={i} className="bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl p-4 flex flex-col items-center hover:border-purple-500 dark:hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all group focus:border-purple-600 dark:focus:border-purple-500 focus:ring-4 focus:ring-purple-600/20 outline-none">
+                  <span className="font-black text-sm text-slate-800 dark:text-slate-200 group-hover:text-purple-700 dark:group-hover:text-purple-300 group-focus:text-purple-700 uppercase mb-2 text-center">{pkg.name}</span>
+                  <div className="bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 w-full text-center group-hover:border-purple-200 dark:group-hover:border-purple-800">
+                    <span className="text-xs text-purple-600 dark:text-purple-400 font-black">BDT {pkg.price}</span>
+                  </div>
                 </button>
               ))}
             </div>
@@ -40,38 +49,40 @@ export default function Page() {
 
         {/* Right Column - Account Info & Options */}
         <div className="flex flex-col gap-6">
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-            <div className="bg-slate-50 border-b border-slate-100 p-4 flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-[#6b46c1] text-white flex items-center justify-center font-bold text-sm">2</div>
-              <h2 className="font-bold text-[#0b132b]">Account Info</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 p-5 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center font-black text-sm shadow-md">2</div>
+              <h2 className="font-bold text-lg text-slate-800 dark:text-white">Player Details</h2>
             </div>
-            <div className="p-4 flex flex-col gap-3">
-              <label className="text-sm font-bold text-slate-700">এখানে গেমের আইডি কোড দিন</label>
-              <input type="text" placeholder="এখানে গেমের আইডি কোড দিন" className="w-full border border-blue-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-[#6b46c1] focus:ring-1 focus:ring-[#6b46c1]" />
-              <button className="w-full bg-[#6b46c1] hover:bg-purple-700 text-white font-bold py-2.5 rounded-lg text-sm transition-colors mt-2 shadow-sm">
-                আপনার গেম আইডির নাম চেক করুন
+            <div className="p-6 flex flex-col gap-4">
+              <div>
+                <label className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 block">Player ID / UID</label>
+                <div className="relative">
+                  <input type="text" placeholder="Enter your Player ID" className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-purple-500 dark:focus:border-purple-500 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-white" />
+                </div>
+              </div>
+              <button className="w-full bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2">
+                <ShieldCheck size={18} /> Verify ID Name
               </button>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-            <div className="bg-slate-50 border-b border-slate-100 p-4 flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-[#6b46c1] text-white flex items-center justify-center font-bold text-sm">3</div>
-              <h2 className="font-bold text-[#0b132b]">Select one option</h2>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 p-5 flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center font-black text-sm shadow-md">3</div>
+              <h2 className="font-bold text-lg text-slate-800 dark:text-white">Payment & Checkout</h2>
             </div>
-            <div className="p-4">
-              <div className="grid grid-cols-2 gap-3 mb-5">
-                <button className="border border-red-500 rounded-lg overflow-hidden relative group bg-white shadow-[0_0_0_1px_rgba(239,68,68,1)]">
-                  <div className="absolute top-0 left-0 bg-red-500 text-white w-6 h-6 flex items-center justify-center rounded-br-lg z-10"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
-                  <div className="h-14 flex items-center justify-center bg-white p-2">
-                    <img src="/FF/p1.png" alt="Wallet Pay" className="h-full object-contain" />
-                  </div>
-                  <div className="bg-slate-100 border-t border-slate-200 text-[10px] font-bold text-left px-2 py-1.5 text-slate-500">Wallet Pay</div>
-                </button>
+            <div className="p-6 flex flex-col gap-5">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 flex items-start gap-3">
+                <Info className="text-blue-500 shrink-0 mt-0.5" size={18} />
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm font-bold text-blue-900 dark:text-blue-300">Login Required</span>
+                  <span className="text-xs text-blue-700 dark:text-blue-400">Please login to your account to complete this purchase securely.</span>
+                </div>
               </div>
               
-              <button className="w-full bg-[#6b46c1] hover:bg-purple-700 text-white font-bold py-2.5 rounded-lg text-sm transition-colors shadow-sm">
-                Login
+              <button className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black py-4 rounded-xl text-sm transition-all shadow-lg hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 uppercase tracking-wider">
+                Login to Purchase
               </button>
             </div>
           </div>
