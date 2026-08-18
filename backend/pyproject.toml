@@ -1,0 +1,20 @@
+[tool.pytest.ini_options]
+pythonpath = ["."]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP"]
+ignore = [
+    "F821",  # Forward references in SQLAlchemy relationship string types
+    "E501",  # Line length handled by formatter
+    "UP035", # typing.List / Dict in legacy annotations
+    "UP006", # list / dict generic annotations
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]

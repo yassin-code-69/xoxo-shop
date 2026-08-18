@@ -1,7 +1,35 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
-import { User, Mail, Lock, ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Mail, Lock, User, ArrowRight } from "lucide-react";
+import { useAuth } from "../../../lib/auth/AuthContext";
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const { loginWithMock } = useAuth();
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !fullName) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      await loginWithMock(email, fullName, "CUSTOMER");
+      router.push("/");
+    } catch (err: any) {
+      setError(err.message || "Failed to create account");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto min-h-[70vh]">
       <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
@@ -11,11 +39,17 @@ export default function RegisterPage() {
               Create Account
             </h1>
             <p className="text-slate-500 dark:text-slate-400 text-sm">
-              Join us and start shopping securely
+              Sign up to purchase diamonds and receive instant deliveries
             </p>
           </div>
 
-          <form className="space-y-5">
+          {error && (
+            <div className="mb-5 p-3 rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-semibold">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
                 Full Name
@@ -26,8 +60,10 @@ export default function RegisterPage() {
                 </div>
                 <input
                   type="text"
-                  placeholder="John Doe"
-                  className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-primary-500 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-white"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Your Name"
+                  className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-purple-500 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-white"
                   required
                 />
               </div>
@@ -43,8 +79,10 @@ export default function RegisterPage() {
                 </div>
                 <input
                   type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-primary-500 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-white"
+                  className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-purple-500 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-white"
                   required
                 />
               </div>
@@ -60,8 +98,10 @@ export default function RegisterPage() {
                 </div>
                 <input
                   type="password"
-                  placeholder="Create a strong password"
-                  className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-primary-500 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-white"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:border-purple-500 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-white"
                   required
                 />
               </div>
@@ -69,20 +109,22 @@ export default function RegisterPage() {
 
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black py-3.5 rounded-xl text-sm transition-all shadow-lg hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 mt-2"
+              disabled={isLoading}
+              className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black py-3.5 rounded-xl text-sm transition-all shadow-lg hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 mt-2 disabled:opacity-50"
             >
-              Create Account <ArrowRight size={16} />
+              {isLoading ? "Creating Account..." : "Create Account"} <ArrowRight size={16} />
             </button>
           </form>
         </div>
+
         <div className="bg-slate-50 dark:bg-slate-800/50 p-6 text-center border-t border-slate-200 dark:border-slate-800">
           <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
             Already have an account?{" "}
             <Link
               href="/login"
-              className="text-primary-600 hover:text-primary-700 dark:text-primary-400 font-bold"
+              className="text-purple-600 hover:text-purple-700 dark:text-purple-400 font-bold"
             >
-              Sign in
+              Sign In
             </Link>
           </p>
         </div>
