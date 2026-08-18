@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "../globals.css";
 import Link from "next/link";
-import { Send, Mail, Home, LayoutGrid, Headset, Search } from "lucide-react";
+import { Send, Mail, Home, LayoutGrid, Headset } from "lucide-react";
 import { FaFacebook, FaInstagram, FaYoutube } from "react-icons/fa";
 import { ThemeProvider } from "../../components/ThemeProvider";
 import { ThemeToggle } from "../../components/ThemeToggle";
@@ -29,7 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} antialiased bg-slate-50 dark:bg-slate-950 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans transition-colors duration-300`}
+        className={`${inter.variable} antialiased bg-slate-50 dark:bg-black text-slate-800 dark:text-[#ededed] min-h-screen flex flex-col font-sans transition-colors duration-300`}
       >
         <ThemeProvider
           attribute="class"
@@ -38,9 +38,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <NextTopLoader color="#9333ea" showSpinner={false} />
+            <NextTopLoader color="#663cbc" showSpinner={false} />
             {/* Navbar */}
-            <header className="bg-white dark:bg-slate-950 sticky top-0 z-50 shadow-sm border-b border-slate-100 dark:border-slate-800 transition-colors duration-300">
+            <header className="bg-white/90 dark:bg-black/90 backdrop-blur-md sticky top-0 z-50 shadow-sm border-b border-slate-100 dark:border-neutral-800/80 transition-colors duration-300">
               <div className="container mx-auto px-4 max-w-6xl h-20 flex items-center justify-between">
                 {/* Logo */}
                 <Link href="/" className="flex items-center gap-2">
@@ -84,17 +84,6 @@ export default function RootLayout({
 
                 {/* Actions */}
                 <div className="flex items-center gap-3">
-                  <div className="hidden md:flex relative mr-2">
-                    <Search
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                      size={16}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Search packages..."
-                      className="pl-9 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-purple-600 dark:text-white transition-all w-48"
-                    />
-                  </div>
                   <ThemeToggle />
                   <UserNav />
                 </div>

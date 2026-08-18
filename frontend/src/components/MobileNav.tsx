@@ -31,7 +31,7 @@ export function MobileNav() {
   ];
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 z-50 rounded-t-[1.5rem] shadow-[0_-8px_20px_rgba(0,0,0,0.06)] pt-3 pb-[env(safe-area-inset-bottom,1.25rem)] px-2 transition-colors duration-300">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-black/95 backdrop-blur-md border-t border-slate-100 dark:border-neutral-800/80 z-50 rounded-t-[1.5rem] shadow-[0_-8px_20px_rgba(0,0,0,0.3)] pt-3 pb-[env(safe-area-inset-bottom,1.25rem)] px-2 transition-colors duration-300">
       <div className="flex items-center justify-around">
         {navItems.map((item) => {
           const isActive =

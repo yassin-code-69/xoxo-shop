@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
-  XCircle,
+  X,
   Send,
   Users,
   RefreshCw,
@@ -86,22 +86,29 @@ export default function Home() {
 
   return (
     <div className="flex flex-col gap-8 py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      {/* Dynamic Announcement Notice Bar */}
+      {/* Dynamic Announcement Notice Bar (offertopup.com style) */}
       {showNotice && (
-        <div className="bg-gradient-to-r from-red-600 via-purple-600 to-indigo-600 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center shadow-lg relative overflow-hidden transform transition-all duration-300">
-          <div className="absolute top-0 right-0 w-64 h-full bg-white opacity-10 transform skew-x-12 translate-x-20"></div>
-          <div className="p-4 flex flex-col z-10 w-full pr-12 text-white">
-            <div className="flex items-center gap-2 mb-1">
-              <Flame size={18} className="text-yellow-300 animate-pulse" />
-              <h3 className="font-extrabold text-sm uppercase tracking-wider">Announcement</h3>
-            </div>
-            <p className="text-xs sm:text-sm font-medium text-white/95">{noticeText}</p>
+        <div className="bg-white dark:bg-[#0a0a0a] border border-slate-200/90 dark:border-[#1f1f1f] rounded-xl shadow-xs flex items-center h-11 sm:h-12 overflow-hidden relative transition-all">
+          {/* Left Attached NOTICE Badge */}
+          <div className="h-full px-4 sm:px-5 bg-[#7e22ce] text-white flex items-center gap-2 shrink-0 font-black text-xs uppercase tracking-wider shadow-[4px_0_12px_rgba(126,34,206,0.2)] z-10 select-none">
+            <span className="w-2.5 h-2.5 rounded-full bg-white ring-2 ring-white/40 inline-block animate-pulse shrink-0" />
+            <span>NOTICE</span>
           </div>
+
+          {/* Scrolling Marquee Message */}
+          <div className="flex-1 overflow-hidden relative flex items-center px-4">
+            <div className="animate-marquee whitespace-nowrap text-xs sm:text-sm font-semibold text-slate-800 dark:text-zinc-200">
+              {noticeText}
+            </div>
+          </div>
+
+          {/* Right Close Button */}
           <button
             onClick={() => setShowNotice(false)}
-            className="text-white/80 hover:text-white hover:bg-white/20 p-2 rounded-full absolute right-3 top-1/2 -translate-y-1/2 z-10 transition-colors"
+            aria-label="Close Notice"
+            className="w-6 h-6 rounded-full bg-[#7e22ce] hover:bg-[#6b21a8] text-white flex items-center justify-center shrink-0 mr-3 transition-transform hover:scale-105 shadow-xs z-10"
           >
-            <XCircle size={20} />
+            <X size={12} strokeWidth={2.5} />
           </button>
         </div>
       )}
@@ -171,9 +178,9 @@ export default function Home() {
           href={settings["support_telegram"] || "https://t.me/xoxoshop"}
           target="_blank"
           rel="noopener noreferrer"
-          className="bg-gradient-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-2xl p-4 sm:p-5 flex items-center gap-4 transition-all shadow-md hover:shadow-xl hover:-translate-y-0.5 group"
+          className="bg-gradient-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-2xl p-4 sm:p-5 flex items-center justify-center gap-4 transition-all shadow-md hover:shadow-xl hover:-translate-y-0.5 group"
         >
-          <div className="bg-white/20 backdrop-blur-md rounded-xl p-3 text-white group-hover:scale-110 transition-transform">
+          <div className="bg-white/20 backdrop-blur-md rounded-xl p-3 text-white group-hover:scale-110 transition-transform shrink-0">
             <Send size={24} className="ml-0.5" />
           </div>
           <div className="text-left flex flex-col">
@@ -188,9 +195,9 @@ export default function Home() {
 
         <Link
           href="/contact"
-          className="bg-gradient-to-br from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white rounded-2xl p-4 sm:p-5 flex items-center gap-4 transition-all shadow-md hover:shadow-xl hover:-translate-y-0.5 group"
+          className="bg-gradient-to-br from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white rounded-2xl p-4 sm:p-5 flex items-center justify-center gap-4 transition-all shadow-md hover:shadow-xl hover:-translate-y-0.5 group"
         >
-          <div className="bg-white/20 backdrop-blur-md rounded-xl p-3 text-white group-hover:scale-110 transition-transform">
+          <div className="bg-white/20 backdrop-blur-md rounded-xl p-3 text-white group-hover:scale-110 transition-transform shrink-0">
             <Users size={24} />
           </div>
           <div className="text-left flex flex-col">

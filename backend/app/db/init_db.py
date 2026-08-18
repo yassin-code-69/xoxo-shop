@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import logger
-from app.db.base import Base
+from app.db.models import Base
 from app.db.session import AsyncSessionLocal, async_engine
 from app.modules.banners.model import Banner
 from app.modules.games.model import Game

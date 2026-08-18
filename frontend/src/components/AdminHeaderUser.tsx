@@ -9,10 +9,10 @@ export function AdminHeaderUser() {
   return (
     <div className="flex items-center gap-3">
       <div className="flex flex-col text-right">
-        <span className="text-xs font-bold text-slate-800">
+        <span className="text-xs font-bold text-slate-800 dark:text-zinc-200">
           {profile?.full_name || "Admin User"}
         </span>
-        <span className="text-[10px] font-semibold text-purple-600">
+        <span className="text-[10px] font-semibold text-purple-600 dark:text-purple-400">
           {profile?.roles?.join(", ") || "ADMIN"}
         </span>
       </div>
@@ -22,7 +22,7 @@ export function AdminHeaderUser() {
       <button
         onClick={logout}
         title="Sign Out"
-        className="w-8 h-8 rounded-full bg-slate-100 hover:bg-red-50 hover:text-red-600 text-slate-600 flex items-center justify-center transition-colors ml-1"
+        className="w-8 h-8 rounded-full bg-slate-100 dark:bg-zinc-800 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 text-slate-600 dark:text-zinc-300 flex items-center justify-center transition-colors ml-1"
       >
         <LogOut size={15} />
       </button>
