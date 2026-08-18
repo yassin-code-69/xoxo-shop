@@ -1,3 +1,4 @@
+import { MobileNav } from "../../components/MobileNav";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "../globals.css";
@@ -180,35 +181,7 @@ export default function RootLayout({
           </footer>
 
           {/* Mobile Bottom Navigation */}
-          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 z-50 rounded-t-[1.5rem] shadow-[0_-8px_20px_rgba(0,0,0,0.06)] pt-3 pb-5 transition-colors duration-300">
-            <div className="flex items-center justify-around px-2">
-              <Link href="/" className="flex flex-col items-center gap-1.5 text-primary-600">
-                <Home size={22} strokeWidth={2.5} />
-                <span className="text-[11px] font-bold leading-none">Home</span>
-              </Link>
-              <Link
-                href="/"
-                className="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary-600 transition-colors"
-              >
-                <PlaySquare size={22} strokeWidth={2} />
-                <span className="text-[11px] font-bold leading-none">Tutorial</span>
-              </Link>
-              <Link
-                href="/"
-                className="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary-600 transition-colors"
-              >
-                <LayoutGrid size={22} strokeWidth={2} />
-                <span className="text-[11px] font-bold leading-none">TopUp</span>
-              </Link>
-              <Link
-                href="/"
-                className="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary-600 transition-colors"
-              >
-                <Headset size={22} strokeWidth={2} />
-                <span className="text-[11px] font-bold leading-none">Contact Us</span>
-              </Link>
-            </div>
-          </div>
+          <MobileNav />
         </ThemeProvider>
       </body>
     </html>
