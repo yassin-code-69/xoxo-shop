@@ -35,7 +35,7 @@ run_check() {
     echo "==============================================================="
     echo "  🔍 Running Code Quality Gates (Frontend & Backend)"
     echo "==============================================================="
-    
+
     echo "1/6 [Frontend] TypeScript typecheck (tsc --noEmit)..."
     (cd "$FRONTEND_DIR" && bun run typecheck)
 

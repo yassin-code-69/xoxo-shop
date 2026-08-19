@@ -20,7 +20,8 @@
     "nextjs-toploader": "^3.9.17",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "react-icons": "^5.7.0"
+    "react-icons": "^5.7.0",
+    "recharts": "^3.10.1"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.8",

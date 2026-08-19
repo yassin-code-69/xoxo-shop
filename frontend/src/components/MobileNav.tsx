@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, PlaySquare, LayoutGrid, Headset } from "lucide-react";
+import { Home, PlaySquare, LayoutGrid, Headset, User } from "lucide-react";
 
 export function MobileNav() {
   const pathname = usePathname();
@@ -14,19 +14,24 @@ export function MobileNav() {
       icon: Home,
     },
     {
-      name: "Tutorial",
-      href: "/tutorial", // change if tutorial route is different
-      icon: PlaySquare,
+      name: "TopUp",
+      href: "/uid-topup",
+      icon: LayoutGrid,
     },
     {
-      name: "TopUp",
-      href: "/uid-topup", // or /#topup
-      icon: LayoutGrid,
+      name: "Tutorial",
+      href: "/tutorial",
+      icon: PlaySquare,
     },
     {
       name: "Support",
       href: "/contact",
       icon: Headset,
+    },
+    {
+      name: "Profile",
+      href: "/profile",
+      icon: User,
     },
   ];
 
@@ -44,12 +49,12 @@ export function MobileNav() {
               href={item.href}
               className={`flex flex-col items-center gap-1.5 transition-colors ${
                 isActive
-                  ? "text-primary-600 dark:text-primary-400"
-                  : "text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400"
+                  ? "text-purple-600 dark:text-purple-400 font-bold"
+                  : "text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 font-medium"
               }`}
             >
-              <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-              <span className="text-[11px] font-bold leading-none">{item.name}</span>
+              <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+              <span className="text-[10px] leading-none">{item.name}</span>
             </Link>
           );
         })}

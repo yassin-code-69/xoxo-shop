@@ -177,3 +177,26 @@ export const getAdminAuditLogs = (params?: {
   if (params?.action && params.action !== "ALL") sp.set("action", params.action);
   return api.get<PaginatedResponse<AuditLog>>(`/admin/audit-logs?${sp.toString()}`);
 };
+
+export const getAdminAnalytics = (timeframe: string = "1W") =>
+  api.get<import("./types").DashboardAnalyticsResponse>(
+    `/admin/dashboard/analytics?timeframe=${encodeURIComponent(timeframe)}`,
+  );
+
+export const getAdminProviderStatus = () =>
+  api.get<import("./types").ProviderStatusResponse>("/admin/providers");
+
+export const testExternalDiamondApi = (apiUrl: string, apiKey?: string) =>
+  api.post<import("./types").TestExternalApiResponse>("/admin/providers/test-external-api", {
+    api_url: apiUrl,
+    api_key: apiKey,
+  });
+
+export const syncExternalDiamondProducts = (apiUrl?: string, apiKey?: string) =>
+  api.post<import("./types").SyncExternalProductsResponse>(
+    "/admin/providers/sync-external-products",
+    {
+      api_url: apiUrl,
+      api_key: apiKey,
+    },
+  );

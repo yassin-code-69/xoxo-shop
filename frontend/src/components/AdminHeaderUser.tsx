@@ -6,6 +6,12 @@ import { LogOut } from "lucide-react";
 export function AdminHeaderUser() {
   const { profile, logout } = useAuth();
 
+  const handleLogout = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    logout();
+  };
+
   return (
     <div className="flex items-center gap-3">
       <div className="flex flex-col text-right">
@@ -20,9 +26,10 @@ export function AdminHeaderUser() {
         {profile?.full_name?.charAt(0) || "A"}
       </div>
       <button
-        onClick={logout}
+        type="button"
+        onClick={handleLogout}
         title="Sign Out"
-        className="w-8 h-8 rounded-full bg-slate-100 dark:bg-zinc-800 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 text-slate-600 dark:text-zinc-300 flex items-center justify-center transition-colors ml-1"
+        className="w-8 h-8 rounded-full bg-slate-100 dark:bg-zinc-800 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 text-slate-600 dark:text-zinc-300 flex items-center justify-center transition-colors ml-1 cursor-pointer"
       >
         <LogOut size={15} />
       </button>

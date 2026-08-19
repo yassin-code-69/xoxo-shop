@@ -9,6 +9,7 @@ import { ThemeProvider } from "../../components/ThemeProvider";
 import { ThemeToggle } from "../../components/ThemeToggle";
 import { AuthProvider } from "../../lib/auth/AuthContext";
 import { UserNav } from "../../components/UserNav";
+import { FloatingChatBot } from "../../components/FloatingChatBot";
 import NextTopLoader from "nextjs-toploader";
 
 const inter = Inter({
@@ -166,6 +167,9 @@ export default function RootLayout({
                 </div>
               </div>
             </footer>
+
+            {/* Floating Gemini Chat Bot */}
+            <FloatingChatBot />
 
             {/* Mobile Bottom Navigation */}
             <MobileNav />

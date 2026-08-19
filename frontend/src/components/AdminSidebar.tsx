@@ -13,10 +13,20 @@ import {
   LogOut,
   Zap,
   Image as ImageIcon,
+  Store,
+  X,
+  ShieldCheck,
 } from "lucide-react";
+import { useAuth } from "../lib/auth/AuthContext";
 
-export function AdminSidebar() {
+interface AdminSidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export function AdminSidebar({ isOpen = false, onClose }: AdminSidebarProps) {
   const pathname = usePathname();
+  const { logout } = useAuth();
 
   const coreLinks = [
     { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
@@ -29,34 +39,51 @@ export function AdminSidebar() {
 
   const systemLinks = [
     { href: "/admin/users", label: "Customers", icon: Users },
+    { href: "/admin/settings", label: "Store & Diamond API", icon: Sliders },
     { href: "/admin/audit-logs", label: "Audit Logs", icon: FileText },
-    { href: "/admin/settings", label: "Store Settings", icon: Sliders },
   ];
 
   const isLinkActive = (href: string, exact = false) => {
     if (exact) return pathname === href;
-    return pathname === href || pathname.startsWith(`${href}/`);
+    return pathname.startsWith(href);
   };
 
-  return (
-    <aside className="w-64 bg-white dark:bg-[#0a0a0a] text-slate-600 dark:text-zinc-300 flex flex-col shrink-0 border-r border-slate-200/80 dark:border-[#1f1f1f] transition-colors duration-300">
-      {/* Brand Header */}
-      <div className="h-16 flex items-center gap-3 px-6 border-b border-slate-200/80 dark:border-[#1f1f1f] bg-white dark:bg-black">
-        <div className="w-8 h-8 rounded-xl bg-purple-600 flex items-center justify-center text-white font-black text-sm shadow-sm shadow-purple-600/30">
-          X
+  const handleLinkClick = () => {
+    if (onClose) {
+      onClose();
+    }
+  };
+
+  const sidebarContent = (
+    <div className="flex flex-col justify-between h-full bg-white dark:bg-[#0a0a0a]">
+      {/* Mobile Drawer Header */}
+      <div className="lg:hidden p-4 border-b border-slate-200 dark:border-[#1f1f1f] flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center font-black">
+            <ShieldCheck size={18} />
+          </div>
+          <div>
+            <span className="font-black text-slate-900 dark:text-white text-sm block">
+              XoXo Admin
+            </span>
+            <span className="text-[10px] text-purple-600 font-bold uppercase tracking-wider block">
+              Console Navigation
+            </span>
+          </div>
         </div>
-        <div className="flex flex-col leading-none">
-          <span className="text-base font-black text-slate-900 dark:text-white">XoXo Shop</span>
-          <span className="text-[10px] font-bold text-purple-600 uppercase tracking-wider mt-0.5">
-            Admin Console
-          </span>
-        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-[#171717] text-slate-600 dark:text-zinc-300 flex items-center justify-center hover:bg-slate-200 transition-colors cursor-pointer"
+        >
+          <X size={18} />
+        </button>
       </div>
 
-      {/* Nav List */}
-      <div className="flex-1 py-5 flex flex-col gap-1 px-3.5 overflow-y-auto">
-        <div className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-          Core Management
+      {/* Nav Links */}
+      <div className="p-4 space-y-1.5 overflow-y-auto flex-1">
+        <div className="px-3 py-1 text-[10px] font-bold tracking-wider text-slate-400 dark:text-zinc-500 uppercase">
+          Core Operations
         </div>
 
         {coreLinks.map((item) => {
@@ -66,6 +93,7 @@ export function AdminSidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={handleLinkClick}
               className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-semibold text-xs transition-all duration-200 ${
                 active
                   ? "bg-purple-50 text-purple-700 shadow-sm border border-purple-200/60 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800/60 font-bold"
@@ -85,8 +113,8 @@ export function AdminSidebar() {
           );
         })}
 
-        <div className="px-3 pt-5 pb-1.5 text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-          System & Logs
+        <div className="pt-4 pb-1 px-3 text-[10px] font-bold tracking-wider text-slate-400 dark:text-zinc-500 uppercase">
+          Administration
         </div>
 
         {systemLinks.map((item) => {
@@ -96,6 +124,7 @@ export function AdminSidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={handleLinkClick}
               className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-semibold text-xs transition-all duration-200 ${
                 active
                   ? "bg-purple-50 text-purple-700 shadow-sm border border-purple-200/60 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800/60 font-bold"
@@ -116,15 +145,53 @@ export function AdminSidebar() {
         })}
       </div>
 
-      {/* Footer Return Link */}
-      <div className="p-3.5 border-t border-slate-200/80 dark:border-[#1f1f1f] bg-slate-50/80 dark:bg-[#050505]">
+      {/* Footer Return Link & Logout Button */}
+      <div className="p-3.5 border-t border-slate-200/80 dark:border-[#1f1f1f] bg-slate-50/80 dark:bg-[#050505] space-y-1.5 shrink-0">
         <Link
           href="/"
-          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-600 dark:text-zinc-400 hover:bg-white hover:shadow-xs dark:hover:bg-[#171717] hover:text-purple-600 dark:hover:text-white font-semibold text-xs transition-all"
+          onClick={handleLinkClick}
+          className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-600 dark:text-zinc-400 hover:bg-white hover:shadow-xs dark:hover:bg-[#171717] hover:text-purple-600 dark:hover:text-white font-semibold text-xs transition-all cursor-pointer"
         >
-          <LogOut size={15} /> Back to Storefront
+          <Store size={15} /> Back to Storefront
         </Link>
+        <button
+          type="button"
+          onClick={() => {
+            if (onClose) onClose();
+            logout();
+          }}
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 font-semibold text-xs transition-all cursor-pointer text-left"
+        >
+          <LogOut size={15} /> Sign Out (Logout)
+        </button>
       </div>
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      {/* 1. Desktop Docked Sidebar (>= 1024px) */}
+      <aside className="hidden lg:flex w-64 border-r border-slate-200/80 dark:border-[#1f1f1f] flex-col justify-between h-[calc(100vh-4rem)] sticky top-16 select-none z-30 shrink-0">
+        {sidebarContent}
+      </aside>
+
+      {/* 2. Mobile Drawer Overlay Backdrop (< 1024px) */}
+      {isOpen && (
+        <div
+          onClick={onClose}
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 lg:hidden animate-in fade-in duration-200"
+          aria-hidden="true"
+        />
+      )}
+
+      {/* 3. Mobile Slide-over Drawer (< 1024px) */}
+      <div
+        className={`fixed top-0 bottom-0 left-0 w-72 max-w-[85vw] bg-white dark:bg-[#0a0a0a] z-50 shadow-2xl lg:hidden transform transition-transform duration-300 ease-in-out ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {sidebarContent}
+      </div>
+    </>
   );
 }

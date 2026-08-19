@@ -244,3 +244,64 @@ export interface OrderPublicFeedItem {
   order_status: string;
   created_at: string;
 }
+
+export interface AnalyticsDataPoint {
+  label: string;
+  date: string;
+  revenue: number;
+  orders: number;
+  diamonds: number;
+}
+
+export interface DistributionItem {
+  name: string;
+  count: number;
+  revenue: number;
+  percentage: number;
+}
+
+export interface AnalyticsSummary {
+  total_revenue: number;
+  total_orders: number;
+  avg_order_value: number;
+  success_rate: number;
+  growth_rate: number;
+  completed_orders: number;
+  pending_orders: number;
+  failed_orders: number;
+  total_diamonds: number;
+  days_pnl: number;
+}
+
+export interface DashboardAnalyticsResponse {
+  timeframe: string;
+  summary: AnalyticsSummary;
+  timeseries: AnalyticsDataPoint[];
+  category_distribution: DistributionItem[];
+  payment_distribution: DistributionItem[];
+}
+
+export interface ProviderStatusResponse {
+  provider_name: string;
+  active: boolean;
+  mock_mode: boolean;
+  mock_outcome: string;
+  base_url: string;
+  timeout_seconds: number;
+  diamond_api_url?: string;
+  diamond_api_mode: string;
+}
+
+export interface TestExternalApiResponse {
+  success: boolean;
+  status_code: number;
+  packages_found: number;
+  sample_data: any[];
+  message: string;
+}
+
+export interface SyncExternalProductsResponse {
+  success: boolean;
+  synced_count: number;
+  message: string;
+}

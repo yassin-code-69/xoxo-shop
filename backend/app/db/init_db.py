@@ -10,8 +10,9 @@ from app.modules.banners.model import Banner
 from app.modules.games.model import Game
 from app.modules.payment_methods.model import PaymentMethod
 from app.modules.products.model import TopupProduct
-from app.modules.roles.model import Role
+from app.modules.roles.model import Role, UserRole
 from app.modules.settings.model import SiteSetting
+from app.modules.users.model import Profile
 from app.shared.enums import RoleCode
 
 
@@ -389,10 +390,36 @@ async def seed_initial_data(db: AsyncSession):
         "support_telegram": "https://t.me/xoxoshop_support",
         "support_facebook_group": "https://facebook.com/groups/xoxoshop",
         "maintenance_mode": "false",
+        "diamond_api_url": "https://api.xoxotopup.com/v1/diamonds",
+        "diamond_api_key": "sk_live_xoxo_topup_api_key_8849",
+        "diamond_api_mode": "LOCAL",
+        "gemini_api_key": "",
+        "gemini_model": "gemini-2.5-flash",
     }
     for k, v in settings_to_seed.items():
         existing = await db.execute(select(SiteSetting).where(SiteSetting.key == k))
         if not existing.scalars().first():
             db.add(SiteSetting(key=k, value=v, is_public=True))
     await db.commit()
+
+    # 7. Seed Default Admin User
+    admin_email = "admin@xoxoshop.com"
+    admin_res = await db.execute(select(Profile).where(Profile.email == admin_email))
+    admin_profile = admin_res.scalars().first()
+    if not admin_profile:
+        admin_profile = Profile(
+            auth_user_id="admin-root-001",
+            email=admin_email,
+            full_name="Super Administrator",
+            phone="01700000000",
+            status="ACTIVE",
+            is_active=True,
+        )
+        db.add(admin_profile)
+        await db.flush()
+
+        db.add(UserRole(user_id=admin_profile.id, role_code=RoleCode.ADMIN.value))
+        db.add(UserRole(user_id=admin_profile.id, role_code=RoleCode.SUPER_ADMIN.value))
+        await db.commit()
+
     logger.info("Database initialized and seeded successfully.")

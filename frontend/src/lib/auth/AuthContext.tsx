@@ -28,12 +28,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const logout = useCallback(async () => {
-    if (isSupabaseConfigured) {
-      await supabase.auth.signOut().catch(() => {});
+    try {
+      if (isSupabaseConfigured) {
+        await supabase.auth.signOut().catch(() => {});
+      }
+    } catch (e) {
+      console.error("Logout error", e);
+    } finally {
+      localStorage.removeItem("xoxo_auth_token");
+      if (typeof sessionStorage !== "undefined") {
+        sessionStorage.clear();
+      }
+      setToken(null);
+      setProfile(null);
+      if (typeof window !== "undefined") {
+        if (
+          window.location.pathname.startsWith("/admin") ||
+          window.location.pathname === "/profile"
+        ) {
+          window.location.replace(window.location.origin + "/login");
+        }
+      }
     }
-    localStorage.removeItem("xoxo_auth_token");
-    setToken(null);
-    setProfile(null);
   }, []);
 
   const refreshProfile = useCallback(async () => {

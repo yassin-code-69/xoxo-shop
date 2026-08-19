@@ -3,18 +3,18 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
-  ShoppingCart,
-  DollarSign,
   Clock,
   AlertTriangle,
   CheckCircle2,
   Loader2,
   ArrowUpRight,
   RefreshCw,
+  Zap,
 } from "lucide-react";
 import { DashboardMetrics } from "../../lib/api/types";
 import { getAdminDashboard } from "../../lib/api/endpoints";
 import { useAuth } from "../../lib/auth/AuthContext";
+import { AdminAnalyticsChart } from "../../components/AdminAnalyticsChart";
 
 export default function AdminDashboard() {
   const { isAdmin, loginWithMock } = useAuth();
@@ -56,21 +56,21 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="flex flex-col gap-6 max-w-7xl mx-auto">
+    <div className="flex flex-col gap-8 max-w-7xl mx-auto pb-12">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900">Admin Dashboard</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Real-time store metrics, payments & fulfillment tracking
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900">Admin Dashboard</h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Real-time analytics, sales benchmarks, payments & automated Free Fire fulfillment
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 self-start sm:self-auto">
           {!isAdmin && (
             <button
               onClick={handleBootstrapAdmin}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow-sm"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow-sm cursor-pointer"
             >
               Sign in as Admin
             </button>
@@ -82,7 +82,7 @@ export default function AdminDashboard() {
               fetchDashboard(false);
             }}
             disabled={isRefreshing}
-            className="flex items-center gap-1.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-3.5 py-2 rounded-xl text-xs font-bold shadow-sm transition-all"
+            className="flex items-center gap-1.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-3.5 py-2 rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer"
           >
             <RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} /> Refresh
           </button>
@@ -95,58 +95,69 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-black">
-            <DollarSign size={24} />
-          </div>
-          <div>
-            <p className="text-xs font-bold uppercase text-slate-400">Revenue Today</p>
-            <h3 className="text-2xl font-black text-slate-800">
-              {data?.revenue_today || "৳ 0.00"}
-            </h3>
-          </div>
-        </div>
+      {/* Finora-Inspired Interactive Analytics Chart System */}
+      <AdminAnalyticsChart />
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-black">
-            <ShoppingCart size={24} />
-          </div>
-          <div>
-            <p className="text-xs font-bold uppercase text-slate-400">Orders Today</p>
-            <h3 className="text-2xl font-black text-slate-800">{data?.orders_today || 0}</h3>
-          </div>
-        </div>
-
+      {/* Secondary Quick Action Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <Link
           href="/admin/payments"
-          className="bg-white p-6 rounded-2xl border border-amber-200 hover:border-amber-400 shadow-sm flex items-center justify-between group transition-all"
+          className="bg-white p-5 rounded-2xl border border-amber-200 hover:border-amber-400 shadow-sm flex items-center justify-between group transition-all"
         >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-black">
-              <Clock size={24} />
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-black">
+              <Clock size={20} />
             </div>
             <div>
-              <p className="text-xs font-bold uppercase text-amber-600">Pending Verification</p>
-              <h3 className="text-2xl font-black text-slate-800">{data?.pending_payments || 0}</h3>
+              <p className="text-[11px] font-bold uppercase text-amber-600">Pending Verification</p>
+              <h3 className="text-xl font-black text-slate-800">{data?.pending_payments || 0}</h3>
             </div>
           </div>
           <ArrowUpRight
-            size={18}
+            size={16}
             className="text-slate-400 group-hover:text-amber-600 group-hover:translate-x-0.5 transition-all"
           />
         </Link>
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-green-50 text-green-600 flex items-center justify-center font-black">
-            <CheckCircle2 size={24} />
+        <Link
+          href="/admin/orders?fulfillmentStatus=PROCESSING"
+          className="bg-white p-5 rounded-2xl border border-blue-200 hover:border-blue-400 shadow-sm flex items-center justify-between group transition-all"
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-black">
+              <Zap size={20} />
+            </div>
+            <div>
+              <p className="text-[11px] font-bold uppercase text-blue-600">Processing Delivery</p>
+              <h3 className="text-xl font-black text-slate-800">
+                {data?.processing_fulfillment || 0}
+              </h3>
+            </div>
           </div>
-          <div>
-            <p className="text-xs font-bold uppercase text-slate-400">Completed Today</p>
-            <h3 className="text-2xl font-black text-slate-800">{data?.completed_today || 0}</h3>
+          <ArrowUpRight
+            size={16}
+            className="text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all"
+          />
+        </Link>
+
+        <Link
+          href="/admin/orders?fulfillmentStatus=COMPLETED"
+          className="bg-white p-5 rounded-2xl border border-emerald-200 hover:border-emerald-400 shadow-sm flex items-center justify-between group transition-all"
+        >
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black">
+              <CheckCircle2 size={20} />
+            </div>
+            <div>
+              <p className="text-[11px] font-bold uppercase text-emerald-600">Completed Today</p>
+              <h3 className="text-xl font-black text-slate-800">{data?.completed_today || 0}</h3>
+            </div>
           </div>
-        </div>
+          <ArrowUpRight
+            size={16}
+            className="text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-all"
+          />
+        </Link>
       </div>
 
       {/* Failed Fulfillment Warning Alert if any */}
@@ -169,11 +180,11 @@ export default function AdminDashboard() {
       )}
 
       {/* Recent Orders Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mt-2">
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-5 border-b border-slate-200 flex items-center justify-between">
           <div>
-            <h3 className="font-bold text-slate-800">Recent Orders</h3>
-            <p className="text-xs text-slate-400">Latest customer top-up transactions</p>
+            <h3 className="font-bold text-slate-800">Recent Customer Orders</h3>
+            <p className="text-xs text-slate-400">Latest Free Fire diamond top-up transactions</p>
           </div>
           <Link
             href="/admin/orders"

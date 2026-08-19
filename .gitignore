@@ -76,3 +76,6 @@ Thumbs.db
 *.swo
 *~
 *.log
+*.tmp
+t.txt
+
