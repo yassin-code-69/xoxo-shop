@@ -6,6 +6,9 @@ from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
+from app.modules.fulfillment.model import ProviderOrder  # noqa: F401
+from app.modules.payments.model import Payment  # noqa: F401
+from app.modules.users.model import Profile  # noqa: F401
 from app.shared.enums import FulfillmentStatus, OrderStatus, PaymentStatus
 from app.shared.time import utcnow
 
@@ -51,7 +54,7 @@ class Order(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Relationships
-    user: Mapped["Profile"] = relationship("Profile", back_populates="orders")
+    user: Mapped["Profile"] = relationship("Profile", back_populates="orders", lazy="selectin")
     payment: Mapped[Optional["Payment"]] = relationship(
         "Payment", back_populates="order", uselist=False, lazy="selectin"
     )

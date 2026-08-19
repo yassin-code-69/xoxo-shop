@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+import app.db.models  # noqa: F401
 from app.core.config import settings
 
 # Setup engine with appropriate connection parameters

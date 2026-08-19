@@ -129,6 +129,14 @@ async def get_admin_dashboard(
     )
 
 
+def to_utc(dt: datetime | None) -> datetime | None:
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=UTC)
+    return dt.astimezone(UTC)
+
+
 @router.get("/analytics", response_model=DashboardAnalyticsResponse)
 async def get_dashboard_analytics(
     timeframe: str = Query("1W", description="Timeframe: 1D, 1W, 1M, 1Y, ALL"),
@@ -192,14 +200,14 @@ async def get_dashboard_analytics(
         if o.order_status in [OrderStatus.PENDING_PAYMENT.value, OrderStatus.PAYMENT_SUBMITTED.value]
     )
     failed_orders = sum(1 for o in period_orders if o.order_status == OrderStatus.FAILED.value)
-    total_diamonds = sum(o.diamond_amount_snapshot for o in period_orders)
+    total_diamonds = sum(o.diamond_amount_snapshot or 0 for o in period_orders)
 
     success_rate = ((completed_orders / total_orders) * 100.0) if total_orders > 0 else 100.0
     growth_rate = (((total_rev - prev_rev) / prev_rev) * 100.0) if prev_rev > 0 else (18.4 if total_rev > 0 else 0.0)
 
     # Days PnL (Today's revenue)
     today_start = datetime.combine(now.date(), time.min, tzinfo=UTC)
-    today_rev = sum(float(o.total_amount) for o in period_orders if o.created_at >= today_start)
+    today_rev = sum(float(o.total_amount) for o in period_orders if o.created_at and to_utc(o.created_at) >= today_start)
 
     # Generate Timeseries Buckets
     timeseries: list[AnalyticsDataPoint] = []
@@ -207,9 +215,9 @@ async def get_dashboard_analytics(
         for h in range(24):
             b_time = today_start + timedelta(hours=h)
             b_end = b_time + timedelta(hours=1)
-            b_orders = [o for o in period_orders if b_time <= o.created_at < b_end]
+            b_orders = [o for o in period_orders if o.created_at and (b_time <= to_utc(o.created_at) < b_end)]
             b_rev = sum(float(o.total_amount) for o in b_orders)
-            b_dia = sum(o.diamond_amount_snapshot for o in b_orders)
+            b_dia = sum(o.diamond_amount_snapshot or 0 for o in b_orders)
             timeseries.append(
                 AnalyticsDataPoint(
                     label=f"{h:02d}:00",
@@ -224,9 +232,9 @@ async def get_dashboard_analytics(
         for d in range(days):
             b_time = (now - timedelta(days=days - 1 - d)).replace(hour=0, minute=0, second=0, microsecond=0)
             b_end = b_time + timedelta(days=1)
-            b_orders = [o for o in period_orders if b_time <= o.created_at < b_end]
+            b_orders = [o for o in period_orders if o.created_at and (b_time <= to_utc(o.created_at) < b_end)]
             b_rev = sum(float(o.total_amount) for o in b_orders)
-            b_dia = sum(o.diamond_amount_snapshot for o in b_orders)
+            b_dia = sum(o.diamond_amount_snapshot or 0 for o in b_orders)
             timeseries.append(
                 AnalyticsDataPoint(
                     label=b_time.strftime("%a") if tf == "1W" else b_time.strftime("%d %b"),
@@ -241,9 +249,9 @@ async def get_dashboard_analytics(
             # approximate 30 days per month bucket
             b_time = (now - timedelta(days=(11 - m) * 30)).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             b_end = (b_time + timedelta(days=32)).replace(day=1)
-            b_orders = [o for o in period_orders if b_time <= o.created_at < b_end]
+            b_orders = [o for o in period_orders if o.created_at and (b_time <= to_utc(o.created_at) < b_end)]
             b_rev = sum(float(o.total_amount) for o in b_orders)
-            b_dia = sum(o.diamond_amount_snapshot for o in b_orders)
+            b_dia = sum(o.diamond_amount_snapshot or 0 for o in b_orders)
             timeseries.append(
                 AnalyticsDataPoint(
                     label=b_time.strftime("%b"),
@@ -258,13 +266,14 @@ async def get_dashboard_analytics(
     cat_counts: dict[str, dict[str, Any]] = {}
     for o in period_orders:
         cat_name = "UID Topup"
-        if "Weekly" in o.product_name_snapshot or "Monthly" in o.product_name_snapshot:
+        product_name = o.product_name_snapshot or ""
+        if "Weekly" in product_name or "Monthly" in product_name:
             cat_name = "Weekly & Monthly"
-        elif "Level" in o.product_name_snapshot:
+        elif "Level" in product_name:
             cat_name = "Level Up Pass"
-        elif "Lite" in o.product_name_snapshot:
+        elif "Lite" in product_name:
             cat_name = "Weekly Lite"
-        elif "Like" in o.product_name_snapshot:
+        elif "Like" in product_name:
             cat_name = "FF Likes"
 
         if cat_name not in cat_counts:
