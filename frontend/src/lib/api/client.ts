@@ -56,6 +56,9 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
   }
 
   if (!response.ok) {
+    if (response.status === 401 && typeof window !== "undefined") {
+      localStorage.removeItem("xoxo_auth_token");
+    }
     let errorMessage = response.statusText || `Request failed with status ${response.status}`;
     let errorCode = `HTTP_${response.status}`;
     let errorDetails: unknown = null;
