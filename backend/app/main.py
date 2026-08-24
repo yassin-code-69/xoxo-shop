@@ -33,9 +33,12 @@ def create_app() -> FastAPI:
 
     # Middleware
     app.add_middleware(RequestCorrelationMiddleware)
+
+    cors_origins = [str(o).strip() for o in (settings.BACKEND_CORS_ORIGINS or []) if str(o).strip()]
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.BACKEND_CORS_ORIGINS or ["*"],
+        allow_origins=cors_origins if cors_origins else ["*"],
+        allow_origin_regex=r"^https:\/\/.*\.vercel\.app$|^https:\/\/.*\.up\.railway\.app$|^http:\/\/localhost(:\d+)?$|^http:\/\/127\.0\.0\.1(:\d+)?$",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
