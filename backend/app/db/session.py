@@ -11,12 +11,24 @@ import app.db.models  # noqa: F401
 from app.core.config import settings
 
 # Setup engine with appropriate connection parameters
+db_url = settings.DATABASE_URL
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
+elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+asyncpg://"):
+    db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
 engine_kwargs = {"echo": settings.DB_ECHO}
-if settings.DATABASE_URL.startswith("sqlite"):
+if db_url.startswith("sqlite"):
     engine_kwargs["connect_args"] = {"check_same_thread": False}
+elif "asyncpg" in db_url:
+    # Supabase connection pooler / PgBouncer compatibility
+    engine_kwargs["connect_args"] = {
+        "statement_cache_size": 0,
+        "prepared_statement_cache_size": 0,
+    }
 
 async_engine: AsyncEngine = create_async_engine(
-    settings.DATABASE_URL,
+    db_url,
     **engine_kwargs,
 )
 
