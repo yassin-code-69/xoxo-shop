@@ -55,7 +55,10 @@ export function UserNav() {
 
       <div className="flex items-center pl-1 border-l border-slate-200 dark:border-slate-700">
         <button
-          onClick={logout}
+          type="button"
+          onClick={() => {
+            void logout();
+          }}
           title="Logout"
           className="w-8 h-8 rounded-full bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 flex items-center justify-center hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors cursor-pointer"
         >

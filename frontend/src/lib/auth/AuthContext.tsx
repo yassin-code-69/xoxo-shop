@@ -17,7 +17,7 @@ interface AuthContextType {
   loginWithMock: (email: string, fullName: string, role?: RoleCode) => Promise<void>;
   loginWithSupabase: (email: string, password: string) => Promise<void>;
   registerWithSupabase: (email: string, password: string, fullName: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
 
@@ -27,14 +27,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const isLoggingOutRef = React.useRef(false);
 
   const logout = useCallback(async () => {
+    if (isLoggingOutRef.current) return;
+    isLoggingOutRef.current = true;
+
     try {
       if (isSupabaseConfigured) {
         await supabase.auth.signOut().catch(() => {});
       }
     } catch (e) {
-      console.error("Logout error", e);
+      console.error("Logout error:", e);
     } finally {
       localStorage.removeItem("xoxo_auth_token");
       if (typeof sessionStorage !== "undefined") {
@@ -42,10 +46,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       setToken(null);
       setProfile(null);
+      isLoggingOutRef.current = false;
+
       if (typeof window !== "undefined") {
+        const path = window.location.pathname;
         if (
-          window.location.pathname.startsWith("/admin") ||
-          window.location.pathname === "/profile"
+          path.startsWith("/admin") ||
+          path.startsWith("/profile") ||
+          path.startsWith("/orders") ||
+          path.startsWith("/settings")
         ) {
           window.location.replace(window.location.origin + "/login");
         }
@@ -104,7 +113,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.error("Profile sync error:", e);
           }
         } else if (event === "SIGNED_OUT") {
-          logout();
+          if (!isLoggingOutRef.current) {
+            void logout();
+          }
         }
       });
 

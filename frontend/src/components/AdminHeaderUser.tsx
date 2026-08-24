@@ -9,7 +9,7 @@ export function AdminHeaderUser() {
   const handleLogout = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    logout();
+    void logout();
   };
 
   const displayName = profile?.full_name || profile?.email?.split("@")[0] || "Administrator";

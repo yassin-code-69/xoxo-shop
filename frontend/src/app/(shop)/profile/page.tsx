@@ -221,7 +221,10 @@ export default function ProfilePage() {
               <Zap size={14} fill="currentColor" /> Quick Top-Up
             </Link>
             <button
-              onClick={logout}
+              type="button"
+              onClick={() => {
+                void logout();
+              }}
               className="bg-white/10 hover:bg-red-600/80 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl border border-white/20 transition-all flex items-center gap-1.5 cursor-pointer"
               title="Logout from account"
             >

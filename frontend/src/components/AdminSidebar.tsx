@@ -160,7 +160,7 @@ export function AdminSidebar({ isOpen = false, onClose }: AdminSidebarProps) {
           type="button"
           onClick={() => {
             if (onClose) onClose();
-            logout();
+            void logout();
           }}
           className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 font-semibold text-xs transition-all cursor-pointer text-left"
         >
