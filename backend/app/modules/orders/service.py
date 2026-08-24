@@ -238,6 +238,21 @@ class OrderService:
         items = [self.map_to_admin_read(o) for o in orders]
         return PaginatedResponse.create(items=items, total=total, page=params.page, page_size=params.page_size)
 
+    async def list_recent_admin_orders(self, limit: int = 5) -> list[OrderAdminRead]:
+        query = (
+            select(Order)
+            .options(
+                selectinload(Order.user),
+                selectinload(Order.payment),
+                selectinload(Order.provider_order),
+                selectinload(Order.status_history),
+            )
+            .order_by(Order.created_at.desc())
+            .limit(limit)
+        )
+        orders = (await self.db.execute(query)).scalars().all()
+        return [self.map_to_admin_read(o) for o in orders]
+
     async def get_public_feed(self, limit: int = 10) -> list[OrderPublicFeedItem]:
         query = select(Order).options(selectinload(Order.user)).order_by(Order.created_at.desc()).limit(limit)
         orders = (await self.db.execute(query)).scalars().all()
@@ -263,3 +278,27 @@ class OrderService:
                 )
             )
         return feed
+
+    async def cancel_order(
+        self, public_order_id: str, reason: str = "Cancelled by administrator", changed_by: str = "SYSTEM"
+    ) -> Order:
+        from app.shared.time import utcnow
+
+        order = await self.get_by_public_id(public_order_id=public_order_id, is_admin=True)
+        prev_status = order.order_status
+        order.order_status = OrderStatus.CANCELLED.value
+        order.cancelled_at = utcnow()
+
+        history = OrderStatusHistory(
+            order_id=order.id,
+            status_type="ORDER",
+            previous_status=prev_status,
+            new_status=OrderStatus.CANCELLED.value,
+            reason=reason,
+            changed_by=changed_by,
+        )
+        self.db.add(history)
+        await self.db.commit()
+        await self.db.refresh(order)
+        return order
+

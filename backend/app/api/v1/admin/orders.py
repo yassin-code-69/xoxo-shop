@@ -58,3 +58,19 @@ async def retry_order_fulfillment(
     fulfillment_service = FulfillmentService(db)
     provider_order = await fulfillment_service.execute_fulfillment(order_id=order.id, is_retry=True)
     return ProviderOrderRead.model_validate(provider_order)
+
+
+@router.post("/{public_order_id}/cancel", response_model=OrderAdminRead)
+async def cancel_admin_order(
+    public_order_id: str,
+    current_admin: AuthenticatedUser = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    order_service = OrderService(db)
+    order = await order_service.cancel_order(
+        public_order_id=public_order_id,
+        reason=f"Cancelled by admin ({current_admin.email})",
+        changed_by=current_admin.id,
+    )
+    return order_service.map_to_admin_read(order)
+

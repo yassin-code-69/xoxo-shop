@@ -1,11 +1,11 @@
 "use client";
 
 import { useAuth } from "../lib/auth/AuthContext";
-import { Loader2, ShieldAlert } from "lucide-react";
+import { Loader2, ShieldAlert, KeyRound, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isAdmin, isLoading, loginWithMock } = useAuth();
+  const { isAuthenticated, isAdmin, isSupport, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -18,33 +18,31 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isAuthenticated || !isAdmin) {
+  const hasAccess = isAuthenticated && (isAdmin || isSupport);
+
+  if (!hasAccess) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 max-w-md mx-auto text-center">
-        <div className="w-16 h-16 rounded-3xl bg-red-100 dark:bg-red-950/50 text-red-600 dark:text-red-400 flex items-center justify-center mb-4 shadow-sm">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 max-w-md mx-auto text-center animate-in fade-in zoom-in-95 duration-200">
+        <div className="w-16 h-16 rounded-3xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-4 shadow-sm border border-purple-200 dark:border-purple-800/60">
           <ShieldAlert size={32} />
         </div>
         <h2 className="text-xl font-black text-slate-900 dark:text-white mb-1">
-          Admin Access Required
+          Admin Authorization Required
         </h2>
         <p className="text-xs text-slate-500 dark:text-zinc-400 mb-6 leading-relaxed">
-          You are currently signed out. Please sign in with an Administrator account to access the
-          operations console.
+          Access to the XoXo Shop operations console requires Administrator or Support role
+          credentials.
         </p>
+
         <div className="flex flex-col gap-2.5 w-full">
           <Link
             href="/login"
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all shadow-md text-center cursor-pointer"
+            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer text-center"
           >
-            Go to Login Page
+            <KeyRound size={16} />
+            <span>Sign in with Admin Credentials</span>
+            <ArrowRight size={14} />
           </Link>
-          <button
-            type="button"
-            onClick={() => loginWithMock("admin@xoxoshop.com", "Super Administrator", "ADMIN")}
-            className="w-full bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 font-bold py-2.5 px-4 rounded-xl text-xs transition-all cursor-pointer"
-          >
-            Quick Sign In as Admin
-          </button>
         </div>
       </div>
     );

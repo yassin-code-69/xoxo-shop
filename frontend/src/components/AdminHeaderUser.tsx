@@ -12,18 +12,20 @@ export function AdminHeaderUser() {
     logout();
   };
 
+  const displayName = profile?.full_name || profile?.email?.split("@")[0] || "Administrator";
+  const displayRole = profile?.roles?.join(", ") || "ADMIN";
+  const initial = displayName.charAt(0).toUpperCase();
+
   return (
     <div className="flex items-center gap-3">
       <div className="flex flex-col text-right">
-        <span className="text-xs font-bold text-slate-800 dark:text-zinc-200">
-          {profile?.full_name || "Admin User"}
-        </span>
+        <span className="text-xs font-bold text-slate-800 dark:text-zinc-200">{displayName}</span>
         <span className="text-[10px] font-semibold text-purple-600 dark:text-purple-400">
-          {profile?.roles?.join(", ") || "ADMIN"}
+          {displayRole}
         </span>
       </div>
       <div className="w-9 h-9 rounded-full bg-purple-600 text-white font-black text-sm flex items-center justify-center shadow-sm">
-        {profile?.full_name?.charAt(0) || "A"}
+        {initial}
       </div>
       <button
         type="button"

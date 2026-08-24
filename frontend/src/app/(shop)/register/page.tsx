@@ -8,7 +8,7 @@ import { useAuth } from "../../../lib/auth/AuthContext";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { loginWithMock } = useAuth();
+  const { loginWithMock, registerWithSupabase, isSupabaseEnabled } = useAuth();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,10 +21,15 @@ export default function RegisterPage() {
     setIsLoading(true);
     setError(null);
     try {
-      await loginWithMock(email, fullName, "CUSTOMER");
+      if (isSupabaseEnabled && password) {
+        await registerWithSupabase(email, password, fullName);
+      } else {
+        await loginWithMock(email, fullName, "CUSTOMER");
+      }
       router.push("/");
-    } catch (err: any) {
-      setError(err.message || "Failed to create account");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to create account";
+      setError(msg);
     } finally {
       setIsLoading(false);
     }

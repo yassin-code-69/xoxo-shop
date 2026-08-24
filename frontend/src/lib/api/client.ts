@@ -31,7 +31,10 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
     ...(options.headers as Record<string, string>),
   };
 
-  if (token) {
+  // Only attach authorization header to relative endpoints or same API_BASE_URL
+  const isInternalUrl = endpoint.startsWith("/") || endpoint.startsWith(API_BASE_URL);
+
+  if (token && isInternalUrl) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
@@ -53,14 +56,54 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
   }
 
   if (!response.ok) {
-    const errorObj =
-      typeof data === "object" && data !== null
-        ? (data.error as Record<string, unknown> | undefined)
-        : undefined;
-    const errorCode = (errorObj?.code as string) || `HTTP_${response.status}`;
-    const errorMessage =
-      (errorObj?.message as string) || (typeof data === "string" ? data : response.statusText);
-    const errorDetails = errorObj?.details || null;
+    let errorMessage = response.statusText || `Request failed with status ${response.status}`;
+    let errorCode = `HTTP_${response.status}`;
+    let errorDetails: unknown = null;
+
+    if (typeof data === "object" && data !== null) {
+      const dataObj = data as Record<string, unknown>;
+
+      if (dataObj.error) {
+        if (typeof dataObj.error === "object" && dataObj.error !== null) {
+          const err = dataObj.error as Record<string, unknown>;
+          errorMessage = (err.message as string) || errorMessage;
+          errorCode = (err.code as string) || errorCode;
+          errorDetails = err.details !== undefined ? err.details : dataObj.error;
+        } else if (typeof dataObj.error === "string") {
+          errorMessage = dataObj.error;
+        }
+      } else if (dataObj.detail !== undefined) {
+        errorDetails = dataObj.detail;
+        if (typeof dataObj.detail === "string") {
+          errorMessage = dataObj.detail;
+        } else if (Array.isArray(dataObj.detail)) {
+          const messages = dataObj.detail.map((err) => {
+            if (typeof err === "string") return err;
+            if (err && typeof err === "object") {
+              const obj = err as Record<string, unknown>;
+              const loc = Array.isArray(obj.loc)
+                ? obj.loc.filter((l) => l !== "body").join(".")
+                : "";
+              const msg = (obj.msg as string) || (obj.message as string) || JSON.stringify(obj);
+              return loc ? `${loc}: ${msg}` : String(msg);
+            }
+            return String(err);
+          });
+          errorMessage = messages.filter(Boolean).join("; ") || errorMessage;
+        } else if (dataObj.detail && typeof dataObj.detail === "object") {
+          const detailObj = dataObj.detail as Record<string, unknown>;
+          errorMessage =
+            (detailObj.message as string) ||
+            (detailObj.msg as string) ||
+            JSON.stringify(dataObj.detail);
+        }
+      } else if (typeof dataObj.message === "string") {
+        errorMessage = dataObj.message;
+      }
+    } else if (typeof data === "string" && data.trim()) {
+      errorMessage = data;
+    }
+
     throw new ApiError(errorMessage, errorCode, response.status, errorDetails);
   }
 

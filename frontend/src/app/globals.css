@@ -121,11 +121,6 @@ body {
 }
 
 /* Global Admin & Components Pitch-Black Dark Theme */
-.dark .bg-white {
-  background-color: #0a0a0a !important;
-  color: #ededed;
-}
-
 .dark .bg-slate-50 {
   background-color: #121212 !important;
 }

@@ -58,3 +58,15 @@ class ProviderError(AppException):
         status_code = status.HTTP_503_SERVICE_UNAVAILABLE if is_temporary else status.HTTP_502_BAD_GATEWAY
         super().__init__(message=message, code=code, status_code=status_code, details=details)
         self.is_temporary = is_temporary
+
+
+class PaymentGatewayError(AppException):
+    def __init__(
+        self,
+        message: str = "Payment gateway error",
+        code: str = "PAYMENT_GATEWAY_ERROR",
+        status_code: int = status.HTTP_502_BAD_GATEWAY,
+        details: Any | None = None,
+    ):
+        super().__init__(message=message, code=code, status_code=status_code, details=details)
+

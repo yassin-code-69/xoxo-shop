@@ -44,3 +44,19 @@ class PaymentApproveRequest(BaseModel):
 
 class PaymentRejectRequest(BaseModel):
     reason: str = Field(..., min_length=3, max_length=255, description="Reason for rejection")
+
+
+class GatewayInitiateRequest(BaseModel):
+    gateway: str = Field(..., description="Gateway name: BKASH or NAGAD")
+
+
+class GatewayInitiateResponse(BaseModel):
+    gateway: str
+    redirect_url: str
+    payment_session_id: str
+    order_id: str
+    public_order_id: str
+    amount: Decimal
+    currency: str
+    is_mock: bool = False
+

@@ -18,6 +18,7 @@ import {
   ManualPaymentPayload,
   ProviderOrder,
   OrderPublicFeedItem,
+  GatewayInitiateResponse,
 } from "./types";
 
 // Public & Catalog APIs
@@ -44,6 +45,11 @@ export const getOrder = (publicOrderId: string) => api.get<Order>(`/orders/${pub
 
 export const submitManualPayment = (publicOrderId: string, data: ManualPaymentPayload) =>
   api.post<Payment>(`/orders/${publicOrderId}/manual-payment`, data);
+
+export const initiateGatewayPayment = (
+  publicOrderId: string,
+  gateway: "BKASH" | "NAGAD" | string,
+) => api.post<GatewayInitiateResponse>(`/payments/${publicOrderId}/initiate-gateway`, { gateway });
 
 export const getMyOrders = (page: number = 1, pageSize: number = 20) =>
   api.get<PaginatedResponse<Order>>(`/me/orders?page=${page}&page_size=${pageSize}`);
@@ -97,6 +103,9 @@ export const getAdminOrder = (publicOrderId: string) =>
 export const retryAdminOrderFulfillment = (publicOrderId: string, reason?: string) =>
   api.post<ProviderOrder>(`/admin/orders/${publicOrderId}/retry-fulfillment`, { reason });
 
+export const cancelAdminOrder = (publicOrderId: string) =>
+  api.post<OrderAdmin>(`/admin/orders/${publicOrderId}/cancel`, {});
+
 export const getAdminPayments = (params?: {
   page?: number;
   pageSize?: number;
@@ -146,6 +155,28 @@ export const getAdminCustomers = (params?: {
   if (params?.search) sp.set("search", params.search);
   return api.get<PaginatedResponse<CustomerAdmin>>(`/admin/customers?${sp.toString()}`);
 };
+
+export const updateAdminCustomer = (
+  userId: string,
+  data: {
+    full_name?: string;
+    phone?: string;
+    status?: string;
+    is_active?: boolean;
+    roles?: string[];
+  },
+) => api.patch<CustomerAdmin>(`/admin/customers/${userId}`, data);
+
+export const createAdminCustomer = (data: {
+  email: string;
+  full_name?: string;
+  phone?: string;
+  role?: string;
+  status?: string;
+}) => api.post<CustomerAdmin>("/admin/customers", data);
+
+export const deleteAdminCustomer = (userId: string) =>
+  api.delete<{ success: boolean; message: string }>(`/admin/customers/${userId}`);
 
 export const getAdminBanners = () => api.get<Banner[]>("/admin/banners");
 
@@ -200,3 +231,34 @@ export const syncExternalDiamondProducts = (apiUrl?: string, apiKey?: string) =>
       api_key: apiKey,
     },
   );
+
+export const submitContactMessage = (data: {
+  name: string;
+  email: string;
+  order_id?: string;
+  message: string;
+}) => api.post<import("./types").ContactMessage>("/contact", data);
+
+export const getAdminContactMessages = (params?: {
+  page?: number;
+  pageSize?: number;
+  status?: string;
+  search?: string;
+}) => {
+  const sp = new URLSearchParams();
+  if (params?.page) sp.set("page", params.page.toString());
+  if (params?.pageSize) sp.set("page_size", params.pageSize.toString());
+  if (params?.status && params.status !== "ALL") sp.set("status", params.status);
+  if (params?.search) sp.set("search", params.search);
+  return api.get<PaginatedResponse<import("./types").ContactMessage>>(
+    `/admin/contact-messages?${sp.toString()}`,
+  );
+};
+
+export const updateAdminContactMessage = (
+  id: string,
+  data: { status?: string; reply_notes?: string },
+) => api.patch<import("./types").ContactMessage>(`/admin/contact-messages/${id}`, data);
+
+export const deleteAdminContactMessage = (id: string) =>
+  api.delete<{ success: boolean; message: string }>(`/admin/contact-messages/${id}`);

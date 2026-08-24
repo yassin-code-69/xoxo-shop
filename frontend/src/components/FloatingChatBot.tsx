@@ -108,7 +108,7 @@ export function FloatingChatBot() {
   };
 
   const renderMarkdownText = (text: string) => {
-    // Format bold and markdown links simply
+    // Format bold and markdown links safely
     const parts = text.split(/(\[.*?\]\(.*?\)|\*\*.*?\*\*|\n)/g);
     return parts.map((part, index) => {
       if (part.startsWith("**") && part.endsWith("**")) {
@@ -122,27 +122,51 @@ export function FloatingChatBot() {
         const titleMatch = part.match(/\[(.*?)\]/);
         const urlMatch = part.match(/\((.*?)\)/);
         if (titleMatch && urlMatch) {
-          const isExternal = urlMatch[1].startsWith("http");
-          return isExternal ? (
-            <a
-              key={index}
-              href={urlMatch[1]}
-              target="_blank"
-              rel="noreferrer"
-              className="text-purple-600 dark:text-purple-400 font-bold underline hover:opacity-80"
-            >
-              {titleMatch[1]}
-            </a>
-          ) : (
-            <Link
-              key={index}
-              href={urlMatch[1]}
-              onClick={() => setIsOpen(false)}
-              className="text-purple-600 dark:text-purple-400 font-bold underline hover:opacity-80 cursor-pointer"
-            >
-              {titleMatch[1]}
-            </Link>
-          );
+          const rawUrl = urlMatch[1].trim();
+          const lowerUrl = rawUrl.toLowerCase();
+
+          // Reject unsafe protocols to prevent XSS
+          const isUnsafe =
+            lowerUrl.startsWith("javascript:") ||
+            lowerUrl.startsWith("data:") ||
+            lowerUrl.startsWith("vbscript:");
+
+          // Safe protocols: http:, https:, mailto:, tel:, or leading / (relative path)
+          const isSafeExternal =
+            !isUnsafe &&
+            (lowerUrl.startsWith("https://") ||
+              lowerUrl.startsWith("http://") ||
+              lowerUrl.startsWith("mailto:") ||
+              lowerUrl.startsWith("tel:"));
+          const isSafeRelative = !isUnsafe && rawUrl.startsWith("/") && !rawUrl.startsWith("//");
+
+          if (isSafeExternal) {
+            return (
+              <a
+                key={index}
+                href={rawUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-purple-600 dark:text-purple-400 font-bold underline hover:opacity-80"
+              >
+                {titleMatch[1]}
+              </a>
+            );
+          } else if (isSafeRelative) {
+            return (
+              <Link
+                key={index}
+                href={rawUrl}
+                onClick={() => setIsOpen(false)}
+                className="text-purple-600 dark:text-purple-400 font-bold underline hover:opacity-80 cursor-pointer"
+              >
+                {titleMatch[1]}
+              </Link>
+            );
+          } else {
+            // Neutralize unsafe schemes by rendering title as plain text
+            return <span key={index}>{titleMatch[1]}</span>;
+          }
         }
       }
       if (part === "\n") {

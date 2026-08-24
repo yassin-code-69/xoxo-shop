@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { Profile, RoleCode } from "../api/types";
 import { getMyProfile, getMockToken, syncProfile } from "../api/endpoints";
+import { ApiError } from "../api/client";
 import { supabase, isSupabaseConfigured } from "./supabase";
 
 interface AuthContextType {
@@ -56,10 +57,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const p = await getMyProfile();
       setProfile(p);
-    } catch {
-      localStorage.removeItem("xoxo_auth_token");
-      setToken(null);
-      setProfile(null);
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.status === 401) {
+        localStorage.removeItem("xoxo_auth_token");
+        setToken(null);
+        setProfile(null);
+      } else {
+        console.warn("Failed to refresh profile (non-401 error):", err);
+      }
     }
   }, []);
 
@@ -69,10 +74,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(storedToken);
       getMyProfile()
         .then((p) => setProfile(p))
-        .catch(() => {
-          localStorage.removeItem("xoxo_auth_token");
-          setToken(null);
-          setProfile(null);
+        .catch((err: unknown) => {
+          if (err instanceof ApiError && err.status === 401) {
+            localStorage.removeItem("xoxo_auth_token");
+            setToken(null);
+            setProfile(null);
+          } else {
+            console.warn("Failed to fetch initial profile (non-401 error):", err);
+          }
         })
         .finally(() => setIsLoading(false));
     } else {

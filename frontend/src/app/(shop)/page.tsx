@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   X,
   Send,
@@ -124,10 +125,13 @@ export default function Home() {
               {activeSlides.map((slide, idx) => (
                 <div key={slide.id || idx} className="w-full h-full flex-shrink-0 relative">
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10"></div>
-                  <img
+                  <Image
                     src={slide.image_url}
                     alt={slide.title || `Promotion ${idx + 1}`}
-                    className="w-full h-full object-cover"
+                    fill
+                    priority={idx === 0}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1200px"
+                    className="object-cover"
                   />
                   <div className="absolute bottom-6 sm:bottom-10 left-6 sm:left-10 z-20 text-white max-w-lg">
                     <span className="px-3 py-1 bg-purple-600 text-xs font-black uppercase rounded-full mb-3 inline-block shadow-md">
@@ -221,7 +225,12 @@ export default function Home() {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6">
           {[
-            { name: "UID TOPUP (BD)", src: "/FF/2.jpg", href: "/uid-topup", tag: "Instant" },
+            {
+              name: "UID TOPUP (BD)",
+              src: "/FF/2.jpg",
+              href: "/uid-topup",
+              tag: "Instant",
+            },
             {
               name: "Weekly & Monthly",
               src: "/FF/3.jpg",
@@ -229,8 +238,17 @@ export default function Home() {
               tag: "Best Value",
             },
             { name: "Weekly Lite", src: "/FF/4.jpg", href: "/weekly-lite" },
-            { name: "Level Up Pass", src: "/FF/5.jpg", href: "/level-up-pass", tag: "High Reward" },
-            { name: "Indo Server", src: "/FF/6.jpg", href: "/indonesia-server" },
+            {
+              name: "Level Up Pass",
+              src: "/FF/5.jpg",
+              href: "/level-up-pass",
+              tag: "High Reward",
+            },
+            {
+              name: "Indo Server",
+              src: "/FF/6.jpg",
+              href: "/indonesia-server",
+            },
             { name: "Free Fire Likes", src: "/FF/1.jpg", href: "/ff-likes" },
           ].map((item, idx) => (
             <Link href={item.href} key={idx} className="group">
@@ -241,9 +259,11 @@ export default function Home() {
                   </div>
                 )}
                 <div className="w-full aspect-square rounded-xl bg-slate-100 dark:bg-slate-700 mb-3 overflow-hidden relative">
-                  <img
+                  <Image
                     src={item.src}
                     alt={item.name}
+                    fill
+                    sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 16vw"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>

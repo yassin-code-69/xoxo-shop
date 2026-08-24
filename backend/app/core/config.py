@@ -47,8 +47,26 @@ class Settings(BaseSettings):
 
     # Payment Gateways
     MANUAL_PAYMENT_ENABLED: bool = True
-    AUTOMATIC_PAYMENT_ENABLED: bool = False
+    AUTOMATIC_PAYMENT_ENABLED: bool = True
     PAYMENT_GATEWAY_NAME: str = "mock"
+
+    # bKash Gateway
+    BKASH_APP_KEY: str = ""
+    BKASH_APP_SECRET: str = ""
+    BKASH_USERNAME: str = ""
+    BKASH_PASSWORD: str = ""
+    BKASH_BASE_URL: str = "https://tokenized.sandbox.bka.sh/v1.2.0-beta"
+    BKASH_CALLBACK_URL: str = "http://localhost:8000/api/v1/payments/bkash/callback"
+
+    # Nagad Gateway
+    NAGAD_MERCHANT_ID: str = ""
+    NAGAD_MERCHANT_PRIVATE_KEY: str = ""
+    NAGAD_PG_PUBLIC_KEY: str = ""
+    NAGAD_BASE_URL: str = "http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0/api/dfs"
+    NAGAD_CALLBACK_URL: str = "http://localhost:8000/api/v1/payments/nagad/callback"
+
+    # Frontend URL for post-payment redirects
+    FRONTEND_URL: str = "http://localhost:3000"
 
     # Admin bootstrap
     ADMIN_EMAIL: str = "admin@xoxoshop.com"

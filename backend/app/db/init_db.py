@@ -383,6 +383,14 @@ async def seed_initial_data(db: AsyncSession):
     await db.commit()
 
     # 6. Seed Site Settings
+    public_keys = {
+        "site_title",
+        "notice",
+        "support_phone",
+        "support_telegram",
+        "support_facebook_group",
+        "maintenance_mode",
+    }
     settings_to_seed = {
         "site_title": "XoXo Shop",
         "notice": "১৮ বছরের নিচে কেউ অর্ডার করবেন না! বাবা/মা বা ফ্যামিলির টাকা চুরি করে অর্ডার করলে তার বিরুদ্ধে আইনগত ব্যবস্থা নেওয়া হবে!",
@@ -391,7 +399,7 @@ async def seed_initial_data(db: AsyncSession):
         "support_facebook_group": "https://facebook.com/groups/xoxoshop",
         "maintenance_mode": "false",
         "diamond_api_url": "https://api.xoxotopup.com/v1/diamonds",
-        "diamond_api_key": "sk_live_xoxo_topup_api_key_8849",
+        "diamond_api_key": "",
         "diamond_api_mode": "LOCAL",
         "gemini_api_key": "",
         "gemini_model": "gemini-2.5-flash",
@@ -399,7 +407,8 @@ async def seed_initial_data(db: AsyncSession):
     for k, v in settings_to_seed.items():
         existing = await db.execute(select(SiteSetting).where(SiteSetting.key == k))
         if not existing.scalars().first():
-            db.add(SiteSetting(key=k, value=v, is_public=True))
+            is_pub = k in public_keys
+            db.add(SiteSetting(key=k, value=v, is_public=is_pub))
     await db.commit()
 
     # 7. Seed Default Admin User

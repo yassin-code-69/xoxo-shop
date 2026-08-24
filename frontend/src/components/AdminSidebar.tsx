@@ -16,6 +16,7 @@ import {
   Store,
   X,
   ShieldCheck,
+  MessageSquare,
 } from "lucide-react";
 import { useAuth } from "../lib/auth/AuthContext";
 
@@ -38,6 +39,7 @@ export function AdminSidebar({ isOpen = false, onClose }: AdminSidebarProps) {
   ];
 
   const systemLinks = [
+    { href: "/admin/messages", label: "Inquiries & Messages", icon: MessageSquare },
     { href: "/admin/users", label: "Customers", icon: Users },
     { href: "/admin/settings", label: "Store & Diamond API", icon: Sliders },
     { href: "/admin/audit-logs", label: "Audit Logs", icon: FileText },

@@ -3,9 +3,11 @@ from fastapi import APIRouter
 from app.api.v1 import (
     auth,
     banners,
+    contact,
     health,
     orders,
     payment_methods,
+    payments,
     products,
     profile,
     settings,
@@ -15,6 +17,9 @@ from app.api.v1.admin import (
 )
 from app.api.v1.admin import (
     banners as admin_banners,
+)
+from app.api.v1.admin import (
+    contact_messages as admin_contact_messages,
 )
 from app.api.v1.admin import (
     customers as admin_customers,
@@ -53,6 +58,8 @@ api_router.include_router(auth.router)
 api_router.include_router(products.router)
 api_router.include_router(payment_methods.router)
 api_router.include_router(orders.router)
+api_router.include_router(payments.router)
+api_router.include_router(contact.router)
 api_router.include_router(profile.router)
 api_router.include_router(banners.router)
 api_router.include_router(settings.router)
@@ -64,6 +71,7 @@ api_router.include_router(admin_payments.router)
 api_router.include_router(admin_products.router)
 api_router.include_router(admin_payment_methods.router)
 api_router.include_router(admin_customers.router)
+api_router.include_router(admin_contact_messages.router)
 api_router.include_router(admin_banners.router)
 api_router.include_router(admin_settings.router)
 api_router.include_router(admin_audit_logs.router)

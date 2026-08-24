@@ -22,9 +22,11 @@ class PaymentMethodAdminRead(PaymentMethodPublicRead):
 
 class PaymentMethodUpdate(BaseModel):
     name: str | None = None
+    type: str | None = None
     account_number: str | None = None
     account_type: str | None = None
     instructions: str | None = None
     logo_url: str | None = None
     active: bool | None = None
     sort_order: int | None = None
+    metadata_json: str | None = None

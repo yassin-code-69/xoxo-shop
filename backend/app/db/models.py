@@ -2,6 +2,7 @@
 from app.db.base import Base
 from app.modules.audit.model import AuditLog
 from app.modules.banners.model import Banner
+from app.modules.contact.model import ContactMessage
 from app.modules.fulfillment.model import ProviderOrder
 from app.modules.games.model import Game
 from app.modules.orders.model import Order, OrderStatusHistory
@@ -16,6 +17,7 @@ __all__ = [
     "AuditLog",
     "Banner",
     "Base",
+    "ContactMessage",
     "Game",
     "Order",
     "OrderStatusHistory",

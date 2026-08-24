@@ -82,8 +82,10 @@ export default function AdminBannersPage() {
     <div className="flex flex-col gap-6 max-w-6xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900">Promotions & Banners</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h1 className="text-2xl font-black text-slate-900 dark:text-white">
+            Promotions & Banners
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
             Manage dynamic homepage hero slides, special discounts, and promotional graphics
           </p>
         </div>
@@ -100,7 +102,7 @@ export default function AdminBannersPage() {
               sort_order: banners.length + 1,
             });
           }}
-          className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-1.5 self-start sm:self-auto"
+          className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
         >
           <Plus size={16} /> Add Hero Banner
         </button>
@@ -108,16 +110,16 @@ export default function AdminBannersPage() {
 
       {notification && (
         <div
-          className={`p-4 rounded-2xl text-xs font-bold flex items-center justify-between shadow-sm ${
+          className={`p-4 rounded-2xl text-xs font-bold flex items-center justify-between shadow-xs ${
             notification.type === "success"
-              ? "bg-green-50 text-green-800 border border-green-200"
-              : "bg-red-50 text-red-800 border border-red-200"
+              ? "bg-green-50 dark:bg-green-950/40 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800"
+              : "bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800"
           }`}
         >
           <span>{notification.text}</span>
           <button
             onClick={() => setNotification(null)}
-            className="uppercase text-[10px] ml-4 font-black"
+            className="uppercase text-[10px] ml-4 font-black cursor-pointer"
           >
             Dismiss
           </button>
@@ -125,14 +127,16 @@ export default function AdminBannersPage() {
       )}
 
       {isLoading ? (
-        <div className="p-12 text-center text-slate-400">
+        <div className="p-12 text-center text-slate-400 dark:text-zinc-500">
           <Loader2 className="animate-spin inline-block mr-2" size={24} /> Loading banners...
         </div>
       ) : banners.length === 0 ? (
-        <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-sm">
-          <ImageIcon size={36} className="mx-auto text-slate-400 mb-2" />
-          <h3 className="font-bold text-slate-800 text-base">No Banners Configured</h3>
-          <p className="text-xs text-slate-500 mt-1">
+        <div className="bg-white dark:bg-[#111111] rounded-3xl p-12 text-center border border-slate-200/80 dark:border-[#222222] shadow-xs">
+          <ImageIcon size={36} className="mx-auto text-slate-400 dark:text-zinc-500 mb-2" />
+          <h3 className="font-bold text-slate-800 dark:text-white text-base">
+            No Banners Configured
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
             Add banners to display featured offers on the homepage.
           </p>
         </div>
@@ -141,9 +145,9 @@ export default function AdminBannersPage() {
           {banners.map((b) => (
             <div
               key={b.id}
-              className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm flex flex-col justify-between"
+              className="bg-white dark:bg-[#111111] rounded-3xl border border-slate-200/80 dark:border-[#222222] overflow-hidden shadow-xs flex flex-col justify-between"
             >
-              <div className="relative h-48 w-full bg-slate-100 overflow-hidden">
+              <div className="relative h-48 w-full bg-slate-100 dark:bg-[#171717] overflow-hidden">
                 <img
                   src={b.image_url}
                   alt={b.title || "Banner"}
@@ -159,26 +163,30 @@ export default function AdminBannersPage() {
               </div>
 
               <div className="p-5 flex flex-col gap-2">
-                <h3 className="font-black text-base text-slate-900">{b.title}</h3>
-                {b.subtitle && <p className="text-xs text-slate-500">{b.subtitle}</p>}
+                <h3 className="font-black text-base text-slate-900 dark:text-white">{b.title}</h3>
+                {b.subtitle && (
+                  <p className="text-xs text-slate-500 dark:text-zinc-400">{b.subtitle}</p>
+                )}
                 {b.link_url && (
-                  <span className="text-[11px] font-mono text-purple-600">Link: {b.link_url}</span>
+                  <span className="text-[11px] font-mono text-purple-600 dark:text-purple-400">
+                    Link: {b.link_url}
+                  </span>
                 )}
               </div>
 
-              <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+              <div className="p-4 bg-slate-50 dark:bg-[#171717] border-t border-slate-100 dark:border-[#1f1f1f] flex items-center justify-between">
                 <button
                   onClick={() => {
                     setIsCreating(false);
                     setEditingBanner(b);
                   }}
-                  className="text-purple-600 hover:text-purple-800 text-xs font-bold flex items-center gap-1"
+                  className="text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 text-xs font-bold flex items-center gap-1 cursor-pointer"
                 >
                   <Edit2 size={13} /> Edit
                 </button>
                 <button
                   onClick={() => handleDelete(b.id)}
-                  className="text-red-600 hover:text-red-800 text-xs font-bold flex items-center gap-1"
+                  className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 text-xs font-bold flex items-center gap-1 cursor-pointer"
                 >
                   <Trash2 size={13} /> Delete
                 </button>
@@ -190,18 +198,18 @@ export default function AdminBannersPage() {
 
       {/* Edit / Create Banner Modal */}
       {editingBanner && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-200">
-            <h3 className="text-xl font-black text-slate-900 mb-1">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#111111] rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-200 dark:border-[#222222] animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-xl font-black text-slate-900 dark:text-white mb-1">
               {isCreating ? "Add Promotional Banner" : "Edit Banner"}
             </h3>
-            <p className="text-xs text-slate-500 mb-6">
+            <p className="text-xs text-slate-500 dark:text-zinc-400 mb-6">
               Enter promotional image URL and call-to-action link
             </p>
 
             <form onSubmit={handleSave} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">
                   Banner Title *
                 </label>
                 <input
@@ -209,24 +217,28 @@ export default function AdminBannersPage() {
                   value={editingBanner.title || ""}
                   onChange={(e) => setEditingBanner({ ...editingBanner, title: e.target.value })}
                   placeholder="e.g. Weekly Mega Discount"
-                  className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600"
+                  className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#171717] border border-slate-200 dark:border-[#262626] text-slate-800 dark:text-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Subtitle</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">
+                  Subtitle
+                </label>
                 <input
                   type="text"
                   value={editingBanner.subtitle || ""}
                   onChange={(e) => setEditingBanner({ ...editingBanner, subtitle: e.target.value })}
                   placeholder="e.g. 20% bonus diamonds on first recharge"
-                  className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600"
+                  className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#171717] border border-slate-200 dark:border-[#262626] text-slate-800 dark:text-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Image URL *</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">
+                  Image URL *
+                </label>
                 <input
                   type="url"
                   value={editingBanner.image_url || ""}
@@ -234,13 +246,13 @@ export default function AdminBannersPage() {
                     setEditingBanner({ ...editingBanner, image_url: e.target.value })
                   }
                   placeholder="https://..."
-                  className="w-full px-3.5 py-2.5 text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600"
+                  className="w-full px-3.5 py-2.5 text-xs font-mono bg-slate-50 dark:bg-[#171717] border border-slate-200 dark:border-[#262626] text-slate-800 dark:text-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">
                   Action Link (URL)
                 </label>
                 <input
@@ -248,7 +260,7 @@ export default function AdminBannersPage() {
                   value={editingBanner.link_url || "/uid-topup"}
                   onChange={(e) => setEditingBanner({ ...editingBanner, link_url: e.target.value })}
                   placeholder="/uid-topup"
-                  className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600"
+                  className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#171717] border border-slate-200 dark:border-[#262626] text-slate-800 dark:text-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600"
                 />
               </div>
 
@@ -258,28 +270,31 @@ export default function AdminBannersPage() {
                   id="bannerActiveToggle"
                   checked={editingBanner.active ?? true}
                   onChange={(e) => setEditingBanner({ ...editingBanner, active: e.target.checked })}
-                  className="w-4 h-4 text-purple-600 rounded"
+                  className="w-4 h-4 text-purple-600 rounded cursor-pointer"
                 />
-                <label htmlFor="bannerActiveToggle" className="text-xs font-bold text-slate-800">
+                <label
+                  htmlFor="bannerActiveToggle"
+                  className="text-xs font-bold text-slate-800 dark:text-zinc-200 cursor-pointer"
+                >
                   Active and visible on Homepage
                 </label>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-[#1f1f1f]">
                 <button
                   type="button"
                   onClick={() => {
                     setEditingBanner(null);
                     setIsCreating(false);
                   }}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-[#1f1f1f] transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md transition-all disabled:opacity-50 flex items-center gap-1.5"
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
                 >
                   {isSaving ? (
                     <Loader2 size={13} className="animate-spin" />

@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { Suspense, useState, useEffect, useRef } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   Check,
   Copy,
-  Clock,
   CheckCircle2,
   AlertCircle,
   Zap,
@@ -14,26 +13,46 @@ import {
   Loader2,
   RefreshCw,
   HelpCircle,
+  ShieldCheck,
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
+  Smartphone,
 } from "lucide-react";
 import { Order, PaymentMethod } from "../../../../lib/api/types";
-import { getOrder, submitManualPayment, getPaymentMethods } from "../../../../lib/api/endpoints";
+import {
+  getOrder,
+  submitManualPayment,
+  getPaymentMethods,
+  initiateGatewayPayment,
+} from "../../../../lib/api/endpoints";
+import { supabase, isSupabaseConfigured } from "../../../../lib/auth/supabase";
 
-export default function PaymentPage() {
+function PaymentContent() {
   const params = useParams();
-  const router = useRouter();
+  const searchParams = useSearchParams();
   const orderId = params.orderId as string;
+
+  const urlStatus = searchParams.get("status");
+  const urlTrxId = searchParams.get("trx_id");
+  const urlGateway = searchParams.get("gateway");
+  const urlError = searchParams.get("error");
 
   const [order, setOrder] = useState<Order | null>(null);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [transactionId, setTransactionId] = useState("");
   const [senderNumber, setSenderNumber] = useState("");
+  const [isUserInputDirty, setIsUserInputDirty] = useState(false);
+  const isUserInputDirtyRef = useRef(false);
   const [copiedNumber, setCopiedNumber] = useState(false);
   const [copiedAmount, setCopiedAmount] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isInitiatingGateway, setIsInitiatingGateway] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(urlError || null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showManualForm, setShowManualForm] = useState(false);
 
   const fetchOrderData = async (showLoading = false) => {
     if (showLoading) setIsLoading(true);
@@ -41,11 +60,13 @@ export default function PaymentPage() {
       const [orderData, methods] = await Promise.all([getOrder(orderId), getPaymentMethods()]);
       setOrder(orderData);
       setPaymentMethods(methods);
-      if (orderData.payment_transaction_id) {
-        setTransactionId(orderData.payment_transaction_id);
-      }
-      if (orderData.payment_sender_number) {
-        setSenderNumber(orderData.payment_sender_number);
+      if (!isUserInputDirtyRef.current) {
+        if (orderData.payment_transaction_id) {
+          setTransactionId(orderData.payment_transaction_id);
+        }
+        if (orderData.payment_sender_number) {
+          setSenderNumber(orderData.payment_sender_number);
+        }
       }
     } catch (err: any) {
       setError(err.message || "Failed to load order information.");
@@ -59,27 +80,111 @@ export default function PaymentPage() {
     fetchOrderData(true);
   }, [orderId]);
 
-  // Smart adaptive polling while awaiting verification or fulfillment
+  // Supabase Realtime Channel Subscription for zero-polling instant checkout updates
+  useEffect(() => {
+    if (!order?.id || !orderId || !isSupabaseConfigured) return;
+
+    const channelName = "order-status-" + orderId;
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "orders",
+          filter: `public_order_id=eq.${orderId}`,
+        },
+        (payload) => {
+          if (payload.new && typeof payload.new === "object") {
+            const updated = payload.new as Partial<Order>;
+            setOrder((prev) => (prev ? { ...prev, ...updated } : null));
+            if (!isUserInputDirtyRef.current) {
+              if (updated.payment_transaction_id) {
+                setTransactionId(updated.payment_transaction_id);
+              }
+              if (updated.payment_sender_number) {
+                setSenderNumber(updated.payment_sender_number);
+              }
+            }
+          }
+          fetchOrderData(false);
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "payments",
+          filter: `order_id=eq.${order.id}`,
+        },
+        (payload) => {
+          if (payload.new && typeof payload.new === "object") {
+            const newPayment = payload.new as any;
+            setOrder((prev) => {
+              if (!prev) return null;
+              return {
+                ...prev,
+                payment_status: newPayment.status || prev.payment_status,
+                payment_transaction_id: newPayment.transaction_id || prev.payment_transaction_id,
+                payment_sender_number: newPayment.sender_number || prev.payment_sender_number,
+              };
+            });
+            if (!isUserInputDirtyRef.current) {
+              if (newPayment.transaction_id) {
+                setTransactionId(newPayment.transaction_id);
+              }
+              if (newPayment.sender_number) {
+                setSenderNumber(newPayment.sender_number);
+              }
+            }
+          }
+          fetchOrderData(false);
+        },
+      )
+      .subscribe();
+
+    // Free-tier safety: Unsubscribe and clean up channel on unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [order?.id, orderId]);
+
+  // Set initial status messages from URL redirect
+  useEffect(() => {
+    if (urlStatus === "success") {
+      setSuccessMessage(
+        `Payment successful via ${urlGateway || "Gateway"}! Your transaction ID is ${urlTrxId || "confirmed"}. Top-up is being processed.`,
+      );
+    } else if (urlStatus === "cancelled") {
+      setError("Payment checkout was cancelled. You can retry anytime below.");
+    } else if (urlStatus === "failed") {
+      setError(urlError || "Payment transaction could not be completed. Please try again.");
+    }
+  }, [urlStatus, urlTrxId, urlGateway, urlError]);
+
+  // Gentle low-frequency fallback check (every 8-10s) if Realtime is unavailable or not connected
   useEffect(() => {
     const isPending =
+      order?.payment_status === "PENDING" ||
       order?.payment_status === "SUBMITTED" ||
-      order?.fulfillment_status === "PROCESSING" ||
-      order?.fulfillment_status === "QUEUED";
+      order?.order_status === "PENDING_PAYMENT" ||
+      order?.order_status === "PAYMENT_SUBMITTED" ||
+      order?.order_status === "PAYMENT_VERIFIED" ||
+      order?.order_status === "PROCESSING" ||
+      order?.fulfillment_status === "QUEUED" ||
+      order?.fulfillment_status === "PROCESSING";
 
     if (!isPending) return;
 
-    let delay = 4000;
-    let timeoutId: NodeJS.Timeout;
+    // Gentle 9s interval fallback
+    const intervalId = setInterval(() => {
+      fetchOrderData(false);
+    }, 9000);
 
-    const poll = async () => {
-      await fetchOrderData(false);
-      delay = Math.min(delay + 2000, 12000);
-      timeoutId = setTimeout(poll, delay);
-    };
-
-    timeoutId = setTimeout(poll, delay);
-    return () => clearTimeout(timeoutId);
-  }, [order?.payment_status, order?.fulfillment_status]);
+    return () => clearInterval(intervalId);
+  }, [order?.payment_status, order?.order_status, order?.fulfillment_status]);
 
   const activeMethod =
     paymentMethods.find((m) => m.code === order?.payment_method_code) || paymentMethods[0];
@@ -98,6 +203,29 @@ export default function PaymentPage() {
     setTimeout(() => setCopiedAmount(false), 2000);
   };
 
+  // 1-Click Automated Gateway Checkout
+  const handleInitiateGateway = async (gateway: "BKASH" | "NAGAD") => {
+    if (!order) return;
+    setIsInitiatingGateway(gateway);
+    setError(null);
+
+    try {
+      const res = await initiateGatewayPayment(order.public_order_id, gateway);
+      if (res.redirect_url) {
+        window.location.href = res.redirect_url;
+      } else {
+        throw new Error("No redirect URL returned from gateway.");
+      }
+    } catch (err: any) {
+      setError(
+        err.message ||
+          `Failed to initiate ${gateway} checkout. Please try again or use manual transfer.`,
+      );
+      setIsInitiatingGateway(null);
+    }
+  };
+
+  // Manual Transfer Submission
   const handleSubmitPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!transactionId.trim()) {
@@ -116,6 +244,8 @@ export default function PaymentPage() {
         payment_method: order?.payment_method_code,
       });
       setSuccessMessage("Payment submitted successfully! Admin will verify and top-up shortly.");
+      isUserInputDirtyRef.current = false;
+      setIsUserInputDirty(false);
       await fetchOrderData(false);
     } catch (err: any) {
       setError(err.message || "Could not submit payment. Please check your Transaction ID.");
@@ -154,12 +284,12 @@ export default function PaymentPage() {
   }
 
   const isCompleted = order.order_status === "COMPLETED";
-  const isPaymentSubmitted =
-    order.payment_status === "SUBMITTED" || order.payment_status === "VERIFIED";
+  const isVerified = order.payment_status === "VERIFIED";
+  const isPaymentSubmitted = order.payment_status === "SUBMITTED" || isVerified;
 
   return (
     <div className="flex flex-col gap-6 py-8 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
-      {/* Top Header */}
+      {/* Top Navigation */}
       <div className="flex items-center justify-between">
         <Link
           href="/uid-topup"
@@ -174,7 +304,7 @@ export default function PaymentPage() {
             fetchOrderData(false);
           }}
           disabled={isRefreshing}
-          className="flex items-center gap-1.5 text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/30 px-3 py-1.5 rounded-lg border border-purple-200 dark:border-purple-800 hover:bg-purple-100 transition-all"
+          className="flex items-center gap-1.5 text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/30 px-3 py-1.5 rounded-lg border border-purple-200 dark:border-purple-800 hover:bg-purple-100 transition-all cursor-pointer"
         >
           <RefreshCw size={13} className={isRefreshing ? "animate-spin" : ""} /> Refresh Status
         </button>
@@ -182,7 +312,7 @@ export default function PaymentPage() {
 
       {/* Completion Banner */}
       {isCompleted && (
-        <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col sm:flex-row items-center gap-6">
+        <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col sm:flex-row items-center gap-6 animate-in fade-in zoom-in-95 duration-300">
           <div className="w-16 h-16 rounded-2xl bg-white/20 flex items-center justify-center shrink-0 shadow-inner">
             <CheckCircle2 size={36} />
           </div>
@@ -195,6 +325,40 @@ export default function PaymentPage() {
               Your {order.product_name} have been sent to Free Fire Player ID #{order.player_uid}.
             </p>
           </div>
+        </div>
+      )}
+
+      {/* Verified Banner while waiting for fulfillment */}
+      {!isCompleted && isVerified && (
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-700 text-white rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col sm:flex-row items-center gap-6 animate-in fade-in duration-300">
+          <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center shrink-0 shadow-inner">
+            <Sparkles size={32} className="animate-pulse" />
+          </div>
+          <div className="flex flex-col text-center sm:text-left">
+            <span className="text-xs font-black uppercase tracking-widest text-purple-200">
+              Payment Verified
+            </span>
+            <h2 className="text-xl sm:text-2xl font-black mt-0.5">Top-Up In Progress</h2>
+            <p className="text-xs sm:text-sm text-purple-100 mt-1">
+              Payment confirmed! Our automated system is delivering your {order.product_name} to
+              Player #{order.player_uid}.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Status Notifications */}
+      {successMessage && !isVerified && (
+        <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-semibold flex items-center gap-2.5">
+          <CheckCircle2 size={18} className="shrink-0 text-emerald-600" />
+          <span>{successMessage}</span>
+        </div>
+      )}
+
+      {error && !isCompleted && (
+        <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center gap-2.5">
+          <AlertCircle size={18} className="shrink-0 text-rose-600" />
+          <span>{error}</span>
         </div>
       )}
 
@@ -255,10 +419,8 @@ export default function PaymentPage() {
             >
               {isPaymentSubmitted ? <Check size={16} /> : "2"}
             </div>
-            <span className="text-xs font-bold text-slate-800 dark:text-white">
-              2. Submit Payment
-            </span>
-            <span className="text-[10px] text-slate-500 mt-0.5">TrxID / SMS</span>
+            <span className="text-xs font-bold text-slate-800 dark:text-white">2. Payment</span>
+            <span className="text-[10px] text-slate-500 mt-0.5">Gateway / TrxID</span>
           </div>
 
           <div className="flex flex-col items-center text-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60">
@@ -272,7 +434,7 @@ export default function PaymentPage() {
               {order.payment_status === "VERIFIED" ? <Check size={16} /> : "3"}
             </div>
             <span className="text-xs font-bold text-slate-800 dark:text-white">
-              3. Admin Verify
+              3. Verification
             </span>
             <span className="text-[10px] text-slate-500 mt-0.5">Instant Check</span>
           </div>
@@ -293,175 +455,336 @@ export default function PaymentPage() {
         </div>
       </div>
 
-      {/* Main Payment Details & Submission Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Left Card: Payment Instructions */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-lg flex flex-col justify-between gap-6">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-black text-slate-800 dark:text-white">
-                Payment Instructions
-              </h2>
-              <span className="text-xs font-black uppercase text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/40 px-3 py-1 rounded-full border border-purple-200 dark:border-purple-800">
-                {activeMethod?.name || order.payment_method_code}
-              </span>
+      {/* Main Payment Section: 1-Click Gateway Checkout & Manual Fallback */}
+      {!isCompleted && !isVerified && (
+        <div className="space-y-6">
+          {/* Automated 1-Click Gateway Section */}
+          <div className="bg-gradient-to-br from-slate-900 to-purple-950 text-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-purple-900/50">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-purple-800/40">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-bold mb-2">
+                  <ShieldCheck size={14} className="text-purple-400" />
+                  <span>Instant 1-Click Payment Gateways</span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+                  Pay with bKash or Nagad
+                </h2>
+                <p className="text-xs sm:text-sm text-purple-200/80 mt-1">
+                  Instant automated verification. Your Free Fire diamonds will be delivered
+                  immediately upon payment.
+                </p>
+              </div>
+              <div className="text-right">
+                <span className="text-[11px] uppercase tracking-wider text-purple-300 block">
+                  Amount to Pay
+                </span>
+                <span className="text-2xl sm:text-3xl font-black text-white font-mono">
+                  ৳ {order.total_amount}
+                </span>
+              </div>
             </div>
 
-            <div className="space-y-4">
-              {/* Account Number with Copy */}
-              <div className="p-4 rounded-2xl bg-purple-50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900 flex items-center justify-between">
-                <div>
-                  <span className="text-[11px] font-bold text-purple-700 dark:text-purple-300 uppercase block">
-                    {activeMethod?.name} {activeMethod?.account_type} Number
-                  </span>
-                  <span className="text-xl font-black text-slate-900 dark:text-white font-mono tracking-wider">
-                    {activeMethod?.account_number || "01700000000"}
+            {/* 1-Click Gateway Buttons Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6">
+              {/* bKash 1-Click Gateway Button */}
+              <button
+                type="button"
+                onClick={() => handleInitiateGateway("BKASH")}
+                disabled={isInitiatingGateway !== null}
+                className="group relative overflow-hidden bg-gradient-to-r from-[#E2136E] to-[#C70959] hover:from-[#C70959] hover:to-[#A50648] text-white p-5 rounded-2xl font-bold shadow-lg hover:shadow-pink-500/25 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 text-left cursor-pointer flex flex-col justify-between min-h-[110px]"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-white text-[#E2136E] flex items-center justify-center font-black text-sm shadow-md">
+                      ৳
+                    </div>
+                    <div>
+                      <span className="text-base font-black tracking-tight block">
+                        Pay with bKash
+                      </span>
+                      <span className="text-[11px] text-pink-100 opacity-90 font-medium">
+                        bKash Tokenized Checkout
+                      </span>
+                    </div>
+                  </div>
+                  {isInitiatingGateway === "BKASH" ? (
+                    <Loader2 size={20} className="animate-spin text-white" />
+                  ) : (
+                    <span className="text-xs bg-white/20 px-2.5 py-1 rounded-full text-white font-bold">
+                      Instant
+                    </span>
+                  )}
+                </div>
+                <div className="mt-3 flex items-center justify-between text-xs text-pink-100 border-t border-white/15 pt-2">
+                  <span>Zero Fee • Instant Top-up</span>
+                  <span className="font-bold group-hover:translate-x-1 transition-transform">
+                    Pay ৳{order.total_amount} →
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleCopyNumber}
-                  className="bg-white dark:bg-slate-800 hover:bg-purple-100 text-purple-600 p-2.5 rounded-xl border border-purple-200 dark:border-purple-700 shadow-sm transition-all flex items-center gap-1 text-xs font-bold"
-                >
-                  {copiedNumber ? <Check size={16} /> : <Copy size={16} />}
-                  <span>{copiedNumber ? "Copied" : "Copy"}</span>
-                </button>
-              </div>
+              </button>
 
-              {/* Exact Amount with Copy */}
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                <div>
-                  <span className="text-[11px] font-bold text-slate-500 uppercase block">
-                    Exact Amount to Send
-                  </span>
-                  <span className="text-2xl font-black text-purple-600 dark:text-purple-400">
-                    ৳ {order.total_amount}
+              {/* Nagad 1-Click Gateway Button */}
+              <button
+                type="button"
+                onClick={() => handleInitiateGateway("NAGAD")}
+                disabled={isInitiatingGateway !== null}
+                className="group relative overflow-hidden bg-gradient-to-r from-[#F7941D] to-[#E05A10] hover:from-[#E05A10] hover:to-[#B84508] text-white p-5 rounded-2xl font-bold shadow-lg hover:shadow-orange-500/25 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 text-left cursor-pointer flex flex-col justify-between min-h-[110px]"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-white text-[#E05A10] flex items-center justify-center font-black text-sm shadow-md">
+                      ৳
+                    </div>
+                    <div>
+                      <span className="text-base font-black tracking-tight block">
+                        Pay with Nagad
+                      </span>
+                      <span className="text-[11px] text-orange-100 opacity-90 font-medium">
+                        Nagad Remote PGW Checkout
+                      </span>
+                    </div>
+                  </div>
+                  {isInitiatingGateway === "NAGAD" ? (
+                    <Loader2 size={20} className="animate-spin text-white" />
+                  ) : (
+                    <span className="text-xs bg-white/20 px-2.5 py-1 rounded-full text-white font-bold">
+                      Instant
+                    </span>
+                  )}
+                </div>
+                <div className="mt-3 flex items-center justify-between text-xs text-orange-100 border-t border-white/15 pt-2">
+                  <span>Secure DFS • Instant Top-up</span>
+                  <span className="font-bold group-hover:translate-x-1 transition-transform">
+                    Pay ৳{order.total_amount} →
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleCopyAmount}
-                  className="bg-white dark:bg-slate-900 hover:bg-slate-100 text-slate-700 dark:text-slate-200 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm transition-all flex items-center gap-1 text-xs font-bold"
-                >
-                  {copiedAmount ? <Check size={16} /> : <Copy size={16} />}
-                  <span>{copiedAmount ? "Copied" : "Copy"}</span>
-                </button>
-              </div>
-
-              {/* Step By Step Guide */}
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 text-xs space-y-2 text-slate-600 dark:text-slate-300">
-                <p className="font-bold text-slate-800 dark:text-white flex items-center gap-1.5">
-                  <HelpCircle size={14} className="text-purple-600" /> How to Pay:
-                </p>
-                <ol className="list-decimal pl-4 space-y-1">
-                  <li>Open your {activeMethod?.name} mobile app or dial USSD.</li>
-                  <li>
-                    Select <strong>Send Money</strong> option.
-                  </li>
-                  <li>Enter the {activeMethod?.account_type} number above.</li>
-                  <li>
-                    Enter amount <strong>৳ {order.total_amount}</strong> and confirm with your PIN.
-                  </li>
-                  <li>
-                    Copy the <strong>Transaction ID (TrxID)</strong> from confirmation SMS/App.
-                  </li>
-                </ol>
-              </div>
+              </button>
             </div>
           </div>
 
-          <div className="text-xs text-slate-400">
-            Player UID:{" "}
-            <strong className="text-slate-700 dark:text-slate-300">{order.player_uid}</strong> •
-            Item:{" "}
-            <strong className="text-slate-700 dark:text-slate-300">{order.product_name}</strong>
+          {/* Manual Send Money / TrxID Accordion Fallback */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md overflow-hidden transition-all">
+            <button
+              type="button"
+              onClick={() => setShowManualForm(!showManualForm)}
+              className="w-full p-5 sm:p-6 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-purple-600 flex items-center justify-center">
+                  <Smartphone size={20} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-800 dark:text-white">
+                    Need Manual Transfer instead? (Send Money with TrxID)
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    If you sent money manually or prefer Rocket / Agent transfer, click to submit
+                    your Transaction ID.
+                  </p>
+                </div>
+              </div>
+              <div className="text-slate-400">
+                {showManualForm ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              </div>
+            </button>
+
+            {showManualForm && (
+              <div className="p-6 sm:p-8 pt-0 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-200">
+                {/* Left: Manual Payment Instructions */}
+                <div className="space-y-4 pt-6">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                      Transfer Details
+                    </span>
+                    <span className="text-xs font-black uppercase text-purple-600 bg-purple-50 dark:bg-purple-950/40 px-3 py-1 rounded-full">
+                      {activeMethod?.name || order.payment_method_code}
+                    </span>
+                  </div>
+
+                  {/* Account Number with Copy */}
+                  <div className="p-4 rounded-2xl bg-purple-50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900 flex items-center justify-between">
+                    <div>
+                      <span className="text-[11px] font-bold text-purple-700 dark:text-purple-300 uppercase block">
+                        {activeMethod?.name} {activeMethod?.account_type} Number
+                      </span>
+                      <span className="text-lg font-black text-slate-900 dark:text-white font-mono tracking-wider">
+                        {activeMethod?.account_number || "01700000000"}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCopyNumber}
+                      className="bg-white dark:bg-slate-800 hover:bg-purple-100 text-purple-600 p-2 rounded-xl border border-purple-200 dark:border-purple-700 shadow-sm transition-all flex items-center gap-1 text-xs font-bold cursor-pointer"
+                    >
+                      {copiedNumber ? <Check size={14} /> : <Copy size={14} />}
+                      <span>{copiedNumber ? "Copied" : "Copy"}</span>
+                    </button>
+                  </div>
+
+                  {/* Exact Amount */}
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <div>
+                      <span className="text-[11px] font-bold text-slate-500 uppercase block">
+                        Amount
+                      </span>
+                      <span className="text-xl font-black text-purple-600 dark:text-purple-400">
+                        ৳ {order.total_amount}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCopyAmount}
+                      className="bg-white dark:bg-slate-900 hover:bg-slate-100 text-slate-700 dark:text-slate-200 p-2 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm transition-all flex items-center gap-1 text-xs font-bold cursor-pointer"
+                    >
+                      {copiedAmount ? <Check size={14} /> : <Copy size={14} />}
+                      <span>{copiedAmount ? "Copied" : "Copy"}</span>
+                    </button>
+                  </div>
+
+                  {/* Step By Step Guide */}
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 text-xs space-y-2 text-slate-600 dark:text-slate-300">
+                    <p className="font-bold text-slate-800 dark:text-white flex items-center gap-1.5">
+                      <HelpCircle size={14} className="text-purple-600" /> Manual Payment Steps:
+                    </p>
+                    <ol className="list-decimal pl-4 space-y-1 text-[11px]">
+                      <li>
+                        Send money <strong>৳ {order.total_amount}</strong> to the number above.
+                      </li>
+                      <li>
+                        Copy the <strong>Transaction ID (TrxID)</strong> from confirmation SMS.
+                      </li>
+                      <li>Paste the TrxID in the form and submit.</li>
+                    </ol>
+                  </div>
+                </div>
+
+                {/* Right: Manual Submission Form */}
+                <div className="pt-6 flex flex-col justify-between">
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-3 uppercase tracking-wider">
+                      Submit Transaction Details
+                    </h4>
+                    <form onSubmit={handleSubmitPayment} className="space-y-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                          Transaction ID / TrxID <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={transactionId}
+                          onChange={(e) => {
+                            isUserInputDirtyRef.current = true;
+                            setIsUserInputDirty(true);
+                            setTransactionId(e.target.value.toUpperCase());
+                          }}
+                          placeholder="e.g. 9K72B8X10P"
+                          className="w-full uppercase font-mono bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-purple-500 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-white"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                          Sender Phone Number (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={senderNumber}
+                          onChange={(e) => {
+                            isUserInputDirtyRef.current = true;
+                            setIsUserInputDirty(true);
+                            setSenderNumber(e.target.value);
+                          }}
+                          placeholder="e.g. 017XXXXXXXX"
+                          className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-purple-500 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-white"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={isSubmitting || !transactionId.trim()}
+                        className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black py-3.5 rounded-xl text-xs transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2 uppercase tracking-wider disabled:opacity-50 cursor-pointer"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 size={16} className="animate-spin" /> Verifying...
+                          </>
+                        ) : isPaymentSubmitted ? (
+                          <>
+                            <RefreshCw size={14} /> Update Transaction Info
+                          </>
+                        ) : (
+                          <>
+                            <Zap size={16} /> Submit Manual TrxID
+                          </>
+                        )}
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Order Item Summary Card */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-md">
+        <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-4">
+          Order Summary & Details
+        </h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60">
+            <span className="text-slate-500 block">Product</span>
+            <span className="font-bold text-slate-800 dark:text-white mt-0.5 block">
+              {order.product_name}
+            </span>
+          </div>
+          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60">
+            <span className="text-slate-500 block">Free Fire Player UID</span>
+            <span className="font-bold text-slate-800 dark:text-white mt-0.5 block font-mono">
+              {order.player_uid}
+            </span>
+          </div>
+          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60">
+            <span className="text-slate-500 block">Total Amount</span>
+            <span className="font-bold text-purple-600 dark:text-purple-400 mt-0.5 block">
+              ৳ {order.total_amount} {order.currency}
+            </span>
+          </div>
+          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60">
+            <span className="text-slate-500 block">Payment Method</span>
+            <span className="font-bold text-slate-800 dark:text-white mt-0.5 block">
+              {order.payment_method_code}
+            </span>
           </div>
         </div>
 
-        {/* Right Card: Transaction Submission Form */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-lg flex flex-col justify-between">
-          <div>
-            <h2 className="text-lg font-black text-slate-800 dark:text-white mb-2">
-              Submit Transaction Info
-            </h2>
-            <p className="text-xs text-slate-500 mb-6">
-              Enter your payment details below so our admin team can verify the transaction
-              immediately.
-            </p>
-
-            {successMessage && (
-              <div className="mb-5 p-4 rounded-2xl bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-300 text-xs font-semibold flex items-center gap-2">
-                <CheckCircle2 size={18} className="shrink-0" />
-                <span>{successMessage}</span>
-              </div>
-            )}
-
-            {error && (
-              <div className="mb-5 p-4 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-semibold">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmitPayment} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Transaction ID / TrxID <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={transactionId}
-                  onChange={(e) => setTransactionId(e.target.value.toUpperCase())}
-                  placeholder="e.g. 9K72B8X10P"
-                  className="w-full uppercase font-mono bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-purple-500 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-white"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Sender Phone Number (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={senderNumber}
-                  onChange={(e) => setSenderNumber(e.target.value)}
-                  placeholder="e.g. 017XXXXXXXX"
-                  className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-purple-500 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-white"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSubmitting || !transactionId.trim()}
-                className="w-full mt-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-black py-4 rounded-xl text-sm transition-all shadow-lg hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 uppercase tracking-wider disabled:opacity-50 cursor-pointer"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin" /> Verifying...
-                  </>
-                ) : isPaymentSubmitted ? (
-                  <>
-                    <RefreshCw size={16} /> Update Transaction Info
-                  </>
-                ) : (
-                  <>
-                    <Zap size={18} /> Confirm & Submit Payment
-                  </>
-                )}
-              </button>
-            </form>
-          </div>
-
-          <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800 text-center">
-            <Link
-              href="/orders"
-              className="text-xs font-bold text-slate-500 hover:text-purple-600 transition-colors"
-            >
-              View all your orders →
-            </Link>
-          </div>
+        <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-xs">
+          <span className="text-slate-400">Order Reference: {order.id}</span>
+          <Link
+            href="/orders"
+            className="font-bold text-purple-600 hover:text-purple-700 transition-colors"
+          >
+            View all orders →
+          </Link>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PaymentPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
+          <Loader2 className="animate-spin text-purple-600" size={36} />
+          <p className="text-slate-600 dark:text-slate-400 font-medium">Loading checkout...</p>
+        </div>
+      }
+    >
+      <PaymentContent />
+    </Suspense>
   );
 }

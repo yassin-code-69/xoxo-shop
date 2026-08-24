@@ -4,6 +4,8 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
+from app.core.exceptions import ForbiddenError
 from app.core.security import (
     AuthenticatedUser,
     create_access_token,
@@ -80,6 +82,9 @@ async def sync_profile(
 @router.post("/mock-token", response_model=MockTokenResponse)
 async def generate_mock_token(data: MockTokenRequest):
     """Helper for testing and frontend development without active Supabase backend."""
+    if settings.APP_ENV == "production" and not settings.DEBUG:
+        raise ForbiddenError(message="Mock tokens are disabled in production environment", code="MOCK_AUTH_DISABLED")
+
     auth_user_id = f"mock-user-{abs(hash(data.email)) % 1000000}"
     payload = {
         "sub": auth_user_id,

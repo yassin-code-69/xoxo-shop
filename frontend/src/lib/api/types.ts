@@ -200,10 +200,19 @@ export interface Banner {
 export interface DashboardMetrics {
   orders_today: number;
   revenue_today: string;
+  total_revenue?: string;
+  gross_profit?: string;
+  total_orders?: number;
   pending_payments: number;
   processing_fulfillment: number;
   failed_fulfillment: number;
   completed_today: number;
+  active_customers?: number;
+  gateway_status?: {
+    bkash?: { active: boolean; type: string; account_number: string; status: string };
+    nagad?: { active: boolean; type: string; account_number: string; status: string };
+    diamond_provider?: { name: string; mode: string; url: string; mock: boolean; status: string };
+  };
   recent_orders: OrderAdmin[];
 }
 
@@ -304,4 +313,27 @@ export interface SyncExternalProductsResponse {
   success: boolean;
   synced_count: number;
   message: string;
+}
+
+export interface GatewayInitiateResponse {
+  gateway: string;
+  redirect_url: string;
+  payment_session_id: string;
+  order_id: string;
+  public_order_id: string;
+  amount: number | string;
+  currency: string;
+  is_mock?: boolean;
+}
+
+export interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  order_id?: string | null;
+  message: string;
+  status: "UNREAD" | "READ" | "REPLIED" | "ARCHIVED" | string;
+  reply_notes?: string | null;
+  created_at: string;
+  updated_at: string;
 }

@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     }
 
     const lastUserMessage = messages[messages.length - 1]?.content || "";
-    const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
+    const apiKey = process.env.GEMINI_API_KEY || "";
     const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
     if (apiKey) {
