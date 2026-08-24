@@ -86,19 +86,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("xoxo_auth_token");
+    const storedToken = typeof window !== "undefined" ? localStorage.getItem("xoxo_auth_token") : null;
     if (storedToken) {
       setToken(storedToken);
       getMyProfile()
         .then((p) => setProfile(p))
-        .catch((err: unknown) => {
-          if (err instanceof ApiError && err.status === 401) {
+        .catch(() => {
+          if (typeof window !== "undefined") {
             localStorage.removeItem("xoxo_auth_token");
-            setToken(null);
-            setProfile(null);
-          } else {
-            console.warn("Failed to fetch initial profile (non-401 error):", err);
           }
+          setToken(null);
+          setProfile(null);
         })
         .finally(() => setIsLoading(false));
     } else {
