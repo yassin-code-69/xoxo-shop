@@ -2,7 +2,13 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { Profile, RoleCode } from "../api/types";
-import { getMyProfile, getMockToken, syncProfile } from "../api/endpoints";
+import {
+  getMyProfile,
+  getMockToken,
+  syncProfile,
+  loginWithBackend,
+  registerWithBackend,
+} from "../api/endpoints";
 import { ApiError } from "../api/client";
 import { supabase, isSupabaseConfigured } from "./supabase";
 
@@ -17,6 +23,8 @@ interface AuthContextType {
   loginWithMock: (email: string, fullName: string, role?: RoleCode) => Promise<void>;
   loginWithSupabase: (email: string, password: string) => Promise<void>;
   registerWithSupabase: (email: string, password: string, fullName: string) => Promise<void>;
+  loginWithBackend: (email: string, password: string) => Promise<void>;
+  registerWithBackend: (email: string, password: string, fullName?: string, phone?: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -137,19 +145,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const loginWithBackendHandler = async (email: string, password: string) => {
+    setIsLoading(true);
+    try {
+      const res = await loginWithBackend({ email, password });
+      if (res?.access_token) {
+        localStorage.setItem("xoxo_auth_token", res.access_token);
+        setToken(res.access_token);
+        setProfile(res.user);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const registerWithBackendHandler = async (
+    email: string,
+    password: string,
+    fullName?: string,
+    phone?: string,
+  ) => {
+    setIsLoading(true);
+    try {
+      const res = await registerWithBackend({ email, password, full_name: fullName, phone });
+      if (res?.access_token) {
+        localStorage.setItem("xoxo_auth_token", res.access_token);
+        setToken(res.access_token);
+        setProfile(res.user);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const loginWithSupabase = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      if (data.session) {
-        localStorage.setItem("xoxo_auth_token", data.session.access_token);
-        setToken(data.session.access_token);
-        await syncProfile({
-          email: data.user.email,
-          full_name: data.user.user_metadata?.full_name,
-        });
-        await refreshProfile();
+      if (isSupabaseConfigured) {
+        try {
+          const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+          if (!error && data.session) {
+            localStorage.setItem("xoxo_auth_token", data.session.access_token);
+            setToken(data.session.access_token);
+            await syncProfile({
+              email: data.user.email,
+              full_name: data.user.user_metadata?.full_name,
+            });
+            await refreshProfile();
+            return;
+          }
+        } catch (supaErr) {
+          console.warn("Supabase signIn failed, falling back to backend DB auth:", supaErr);
+        }
+      }
+      // Direct Backend Auth Fallback (Works for admin and direct database users)
+      const res = await loginWithBackend({ email, password });
+      if (res?.access_token) {
+        localStorage.setItem("xoxo_auth_token", res.access_token);
+        setToken(res.access_token);
+        setProfile(res.user);
       }
     } finally {
       setIsLoading(false);
@@ -159,22 +213,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const registerWithSupabase = async (email: string, password: string, fullName: string) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { full_name: fullName },
-        },
-      });
-      if (error) throw error;
-      if (data.session) {
-        localStorage.setItem("xoxo_auth_token", data.session.access_token);
-        setToken(data.session.access_token);
-        await syncProfile({
-          email: data.user?.email,
-          full_name: fullName,
-        });
-        await refreshProfile();
+      if (isSupabaseConfigured) {
+        try {
+          const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              data: { full_name: fullName },
+            },
+          });
+          if (!error && data.session) {
+            localStorage.setItem("xoxo_auth_token", data.session.access_token);
+            setToken(data.session.access_token);
+            await syncProfile({
+              email: data.user?.email,
+              full_name: fullName,
+            });
+            await refreshProfile();
+            return;
+          }
+        } catch (supaErr) {
+          console.warn("Supabase signUp failed, falling back to backend DB registration:", supaErr);
+        }
+      }
+      // Direct Backend Auth Fallback
+      const res = await registerWithBackend({ email, password, full_name: fullName });
+      if (res?.access_token) {
+        localStorage.setItem("xoxo_auth_token", res.access_token);
+        setToken(res.access_token);
+        setProfile(res.user);
       }
     } finally {
       setIsLoading(false);
@@ -199,6 +266,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loginWithMock,
         loginWithSupabase,
         registerWithSupabase,
+        loginWithBackend: loginWithBackendHandler,
+        registerWithBackend: registerWithBackendHandler,
         logout,
         refreshProfile,
       }}

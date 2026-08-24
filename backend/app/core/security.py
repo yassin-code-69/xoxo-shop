@@ -1,3 +1,6 @@
+import hashlib
+import hmac
+import secrets
 from datetime import UTC, datetime, timedelta
 
 import jwt
@@ -14,6 +17,29 @@ from app.modules.users.model import Profile
 from app.shared.enums import RoleCode
 
 security_scheme = HTTPBearer(auto_error=False)
+
+
+def hash_password(password: str) -> str:
+    """Secure PBKDF2-SHA256 password hashing with random 16-byte salt."""
+    salt = secrets.token_hex(16)
+    key = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 100_000)
+    return f"pbkdf2_sha256${salt}${key.hex()}"
+
+
+def verify_password(plain_password: str, hashed_password: str | None) -> bool:
+    """Verify plain password against hashed password."""
+    if not hashed_password or not hashed_password.startswith("pbkdf2_sha256$"):
+        return False
+    try:
+        parts = hashed_password.split("$")
+        if len(parts) != 3:
+            return False
+        _, salt, key_hex = parts
+        key = hashlib.pbkdf2_hmac("sha256", plain_password.encode("utf-8"), salt.encode("utf-8"), 100_000)
+        return hmac.compare_digest(key.hex(), key_hex)
+    except Exception:
+        return False
+
 
 
 def create_access_token(

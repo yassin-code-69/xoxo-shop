@@ -32,7 +32,11 @@ export default function LoginPage() {
           email.includes("admin") ? "ADMIN" : "CUSTOMER",
         );
       }
-      router.push("/");
+      if (email.trim().toLowerCase().includes("admin")) {
+        router.push("/admin");
+      } else {
+        router.push("/");
+      }
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : "Failed to sign in. Please verify your credentials.";

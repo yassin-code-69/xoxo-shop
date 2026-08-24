@@ -1,9 +1,10 @@
 from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import logger
+from app.core.security import hash_password
 from app.db.models import Base
 from app.db.session import AsyncSessionLocal, async_engine
 from app.modules.banners.model import Banner
@@ -20,9 +21,14 @@ async def init_db():
     logger.info("Initializing database tables...")
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        try:
+            await conn.execute(text("ALTER TABLE profiles ADD COLUMN password_hash VARCHAR(255)"))
+        except Exception:
+            pass  # Column already exists
 
     async with AsyncSessionLocal() as db:
         await seed_initial_data(db)
+
 
 
 async def seed_initial_data(db: AsyncSession):
@@ -413,6 +419,7 @@ async def seed_initial_data(db: AsyncSession):
 
     # 7. Seed Default Admin User
     admin_email = "admin@xoxoshop.com"
+    default_admin_password = "Admin@123456"
     admin_res = await db.execute(select(Profile).where(Profile.email == admin_email))
     admin_profile = admin_res.scalars().first()
     if not admin_profile:
@@ -421,6 +428,7 @@ async def seed_initial_data(db: AsyncSession):
             email=admin_email,
             full_name="Super Administrator",
             phone="01700000000",
+            password_hash=hash_password(default_admin_password),
             status="ACTIVE",
             is_active=True,
         )
@@ -430,5 +438,10 @@ async def seed_initial_data(db: AsyncSession):
         db.add(UserRole(user_id=admin_profile.id, role_code=RoleCode.ADMIN.value))
         db.add(UserRole(user_id=admin_profile.id, role_code=RoleCode.SUPER_ADMIN.value))
         await db.commit()
+    else:
+        # Ensure password_hash is set if missing
+        if not admin_profile.password_hash:
+            admin_profile.password_hash = hash_password(default_admin_password)
+            await db.commit()
 
     logger.info("Database initialized and seeded successfully.")

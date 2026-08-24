@@ -66,6 +66,16 @@ export const updateMyProfile = (data: {
 export const syncProfile = (data: { email?: string; full_name?: string; avatar_url?: string }) =>
   api.post<Profile>("/auth/sync", data);
 
+export const loginWithBackend = (data: { email: string; password: string }) =>
+  api.post<{ access_token: string; token_type: string; user: Profile }>("/auth/login", data);
+
+export const registerWithBackend = (data: {
+  email: string;
+  password: string;
+  full_name?: string;
+  phone?: string;
+}) => api.post<{ access_token: string; token_type: string; user: Profile }>("/auth/register", data);
+
 export const getMockToken = (email: string, fullName: string, role: string = "CUSTOMER") =>
   api.post<{ access_token: string; user: unknown }>("/auth/mock-token", {
     email,
