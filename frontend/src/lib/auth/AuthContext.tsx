@@ -177,8 +177,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               avatar_url:
                 session.user?.user_metadata?.avatar_url || session.user?.user_metadata?.picture,
             });
-          } catch (e) {
-            console.warn("Profile sync skipped or failed:", e);
+          } catch (e: unknown) {
+            if (!(e instanceof ApiError && e.status === 401)) {
+              console.warn("Profile sync skipped:", e);
+            }
           }
           await refreshProfile();
         } else if (event === "SIGNED_OUT") {
