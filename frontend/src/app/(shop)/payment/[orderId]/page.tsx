@@ -25,8 +25,11 @@ import {
   submitManualPayment,
   getPaymentMethods,
   initiateGatewayPayment,
+  payOrderWithWallet,
 } from "../../../../lib/api/endpoints";
 import { supabase, isSupabaseConfigured } from "../../../../lib/auth/supabase";
+import { useAuth } from "../../../../lib/auth/AuthContext";
+import { AddMoneyModal } from "../../../../components/AddMoneyModal";
 
 function PaymentContent() {
   const params = useParams();
@@ -53,6 +56,29 @@ function PaymentContent() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showManualForm, setShowManualForm] = useState(false);
+  const [isPayingWithWallet, setIsPayingWithWallet] = useState(false);
+  const [showAddMoneyModal, setShowAddMoneyModal] = useState(false);
+
+  const { profile, refreshProfile, isAuthenticated } = useAuth();
+
+  const handlePayWithWallet = async () => {
+    if (!order) return;
+    setIsPayingWithWallet(true);
+    setError(null);
+    try {
+      await payOrderWithWallet(order.public_order_id);
+      setSuccessMessage(
+        "Paid successfully using wallet balance! Diamonds are being sent to your account.",
+      );
+      await Promise.all([fetchOrderData(false), refreshProfile()]);
+    } catch (err: any) {
+      setError(
+        err.message || "Failed to pay with wallet. Please ensure you have sufficient balance.",
+      );
+    } finally {
+      setIsPayingWithWallet(false);
+    }
+  };
 
   const fetchOrderData = async (showLoading = false) => {
     if (showLoading) setIsLoading(true);
@@ -484,6 +510,57 @@ function PaymentContent() {
               </div>
             </div>
 
+            {/* Wallet Balance Payment Option */}
+            {isAuthenticated && (
+              <div className="bg-purple-900/40 border border-purple-500/30 rounded-2xl p-4 sm:p-5 mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-purple-600/30 border border-purple-400/40 text-purple-300 flex items-center justify-center shrink-0">
+                    <Sparkles size={24} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-black text-white text-base">Your Wallet Balance</span>
+                      <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">
+                        Available: ৳ {profile?.balance || 0}
+                      </span>
+                    </div>
+                    <p className="text-xs text-purple-200/70 mt-0.5">
+                      {Number(profile?.balance || 0) >= Number(order.total_amount)
+                        ? "You have enough balance to complete this order instantly!"
+                        : `Need ৳ ${Number(order.total_amount) - Number(profile?.balance || 0)} more to pay with wallet.`}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  {Number(profile?.balance || 0) >= Number(order.total_amount) ? (
+                    <button
+                      type="button"
+                      onClick={handlePayWithWallet}
+                      disabled={isPayingWithWallet}
+                      className="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs uppercase tracking-wider py-3 px-6 rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                    >
+                      {isPayingWithWallet ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" /> Processing...
+                        </>
+                      ) : (
+                        <>Pay ৳ {order.total_amount} with Wallet</>
+                      )}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowAddMoneyModal(true)}
+                      className="w-full sm:w-auto bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs py-2.5 px-4 rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      + Add Money to Wallet
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* 1-Click Gateway Buttons Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6">
               {/* bKash 1-Click Gateway Button */}
@@ -770,6 +847,15 @@ function PaymentContent() {
           </Link>
         </div>
       </div>
+
+      {/* Add Money Modal */}
+      <AddMoneyModal
+        isOpen={showAddMoneyModal}
+        onClose={() => setShowAddMoneyModal(false)}
+        onSuccess={() => {
+          void refreshProfile();
+        }}
+      />
     </div>
   );
 }

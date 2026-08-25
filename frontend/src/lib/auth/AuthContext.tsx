@@ -21,10 +21,16 @@ interface AuthContextType {
   isLoading: boolean;
   isSupabaseEnabled: boolean;
   loginWithMock: (email: string, fullName: string, role?: RoleCode) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   loginWithSupabase: (email: string, password: string) => Promise<void>;
   registerWithSupabase: (email: string, password: string, fullName: string) => Promise<void>;
   loginWithBackend: (email: string, password: string) => Promise<void>;
-  registerWithBackend: (email: string, password: string, fullName?: string, phone?: string) => Promise<void>;
+  registerWithBackend: (
+    email: string,
+    password: string,
+    fullName?: string,
+    phone?: string,
+  ) => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -80,23 +86,76 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setToken(null);
         setProfile(null);
       } else {
+        // Fallback: If FastAPI backend is down, query profile directly from Supabase
+        if (isSupabaseConfigured) {
+          try {
+            const { data: userData } = await supabase.auth.getUser();
+            if (userData?.user) {
+              const u = userData.user;
+              const { data: prof } = await supabase
+                .from("profiles")
+                .select("*")
+                .eq("auth_user_id", u.id)
+                .maybeSingle();
+
+              if (prof) {
+                const { data: rolesData } = await supabase
+                  .from("user_roles")
+                  .select("role_code")
+                  .eq("user_id", prof.id);
+
+                const roles =
+                  rolesData && rolesData.length > 0
+                    ? rolesData.map((r: { role_code: string }) => r.role_code)
+                    : ["CUSTOMER"];
+
+                setProfile({
+                  id: prof.id,
+                  auth_user_id: prof.auth_user_id,
+                  email: prof.email || u.email || "",
+                  full_name: prof.full_name || u.user_metadata?.full_name,
+                  phone: prof.phone,
+                  avatar_url: prof.avatar_url || u.user_metadata?.avatar_url,
+                  status: prof.status || "ACTIVE",
+                  is_active: prof.is_active ?? true,
+                  balance: Number(prof.balance || 0),
+                  total_spend: Number(prof.total_spend || 0),
+                  current_rank: prof.current_rank || "Bronze",
+                  rank_level: Number(prof.rank_level || 1),
+                  roles,
+                  created_at: prof.created_at,
+                  updated_at: prof.updated_at,
+                });
+                return;
+              }
+            }
+          } catch (supaErr) {
+            console.warn("Direct Supabase fallback fetch failed:", supaErr);
+          }
+        }
         console.warn("Failed to refresh profile (non-401 error):", err);
       }
     }
   }, []);
 
   useEffect(() => {
-    const storedToken = typeof window !== "undefined" ? localStorage.getItem("xoxo_auth_token") : null;
+    const storedToken =
+      typeof window !== "undefined" ? localStorage.getItem("xoxo_auth_token") : null;
     if (storedToken) {
       setToken(storedToken);
       getMyProfile()
         .then((p) => setProfile(p))
         .catch(() => {
-          if (typeof window !== "undefined") {
-            localStorage.removeItem("xoxo_auth_token");
+          // If stored token failed on backend, try direct Supabase session
+          if (isSupabaseConfigured) {
+            void refreshProfile();
+          } else {
+            if (typeof window !== "undefined") {
+              localStorage.removeItem("xoxo_auth_token");
+            }
+            setToken(null);
+            setProfile(null);
           }
-          setToken(null);
-          setProfile(null);
         })
         .finally(() => setIsLoading(false));
     } else {
@@ -111,21 +170,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           try {
             await syncProfile({
               email: session.user?.email,
-              full_name: session.user?.user_metadata?.full_name,
-              avatar_url: session.user?.user_metadata?.avatar_url,
+              full_name:
+                session.user?.user_metadata?.full_name ||
+                session.user?.user_metadata?.name ||
+                session.user?.email?.split("@")[0],
+              avatar_url:
+                session.user?.user_metadata?.avatar_url || session.user?.user_metadata?.picture,
             });
-            await refreshProfile();
           } catch (e) {
             console.warn("Profile sync skipped or failed:", e);
-            if (e instanceof ApiError && e.status === 401) {
-              if (typeof window !== "undefined") {
-                localStorage.removeItem("xoxo_auth_token");
-              }
-              setToken(null);
-              setProfile(null);
-              await supabase.auth.signOut().catch(() => {});
-            }
           }
+          await refreshProfile();
         } else if (event === "SIGNED_OUT") {
           if (!isLoggingOutRef.current) {
             void logout();
@@ -138,6 +193,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
     }
   }, [logout, refreshProfile]);
+
+  const loginWithGoogle = async () => {
+    setIsLoading(true);
+    try {
+      if (!isSupabaseConfigured) {
+        throw new Error("Supabase authentication is not configured.");
+      }
+      const origin = typeof window !== "undefined" ? window.location.origin : "";
+      const redirectTo = `${origin}/auth/callback`;
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+    } catch (err: unknown) {
+      console.error("Google sign-in error:", err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const loginWithMock = async (email: string, fullName: string, role: RoleCode = "CUSTOMER") => {
     setIsLoading(true);
@@ -270,6 +356,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         isSupabaseEnabled: isSupabaseConfigured,
         loginWithMock,
+        loginWithGoogle,
         loginWithSupabase,
         registerWithSupabase,
         loginWithBackend: loginWithBackendHandler,

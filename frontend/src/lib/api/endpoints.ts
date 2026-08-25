@@ -19,7 +19,12 @@ import {
   ProviderOrder,
   OrderPublicFeedItem,
   GatewayInitiateResponse,
+  WalletDeposit,
+  WalletTransaction,
+  UidCheckerConfig,
+  CreateUidCheckerConfigInput,
 } from "./types";
+import { supabase, isSupabaseConfigured } from "../auth/supabase";
 
 // Public & Catalog APIs
 export const getProducts = (category?: string) => {
@@ -272,3 +277,311 @@ export const updateAdminContactMessage = (
 
 export const deleteAdminContactMessage = (id: string) =>
   api.delete<{ success: boolean; message: string }>(`/admin/contact-messages/${id}`);
+
+// Wallet & Deposit APIs
+export const submitWalletDeposit = async (data: {
+  amount: number;
+  payment_method: string;
+  sender_number: string;
+  transaction_id: string;
+}) => {
+  if (isSupabaseConfigured) {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("auth_user_id", userData.user.id)
+          .single();
+
+        if (prof) {
+          const { data: deposit, error } = await supabase
+            .from("wallet_deposits")
+            .insert({
+              user_id: prof.id,
+              amount: data.amount,
+              payment_method: data.payment_method,
+              sender_number: data.sender_number,
+              transaction_id: data.transaction_id,
+              status: "PENDING",
+            })
+            .select()
+            .single();
+
+          if (error) throw error;
+          return deposit as WalletDeposit;
+        }
+      }
+    } catch (e) {
+      console.warn("Direct Supabase deposit insert failed, falling back to REST:", e);
+    }
+  }
+  return api.post<WalletDeposit>("/wallet/deposit", data);
+};
+
+export const getMyWalletDeposits = async () => {
+  if (isSupabaseConfigured) {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("auth_user_id", userData.user.id)
+          .single();
+
+        if (prof) {
+          const { data: deposits, error } = await supabase
+            .from("wallet_deposits")
+            .select("*")
+            .eq("user_id", prof.id)
+            .order("created_at", { ascending: false });
+
+          if (!error && deposits) {
+            return deposits as WalletDeposit[];
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Direct Supabase deposits fetch failed:", e);
+    }
+  }
+  return api.get<WalletDeposit[]>("/wallet/deposits");
+};
+
+export const getMyWalletTransactions = async () => {
+  if (isSupabaseConfigured) {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData?.user) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("auth_user_id", userData.user.id)
+          .single();
+
+        if (prof) {
+          const { data: txs, error } = await supabase
+            .from("wallet_transactions")
+            .select("*")
+            .eq("user_id", prof.id)
+            .order("created_at", { ascending: false });
+
+          if (!error && txs) {
+            return txs as WalletTransaction[];
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Direct Supabase transactions fetch failed:", e);
+    }
+  }
+  return api.get<WalletTransaction[]>("/wallet/transactions");
+};
+
+export const getAdminWalletDeposits = async (params?: { status?: string; search?: string }) => {
+  if (isSupabaseConfigured) {
+    try {
+      let q = supabase
+        .from("wallet_deposits")
+        .select("*, profile:profiles(email, full_name, phone)")
+        .order("created_at", { ascending: false });
+
+      if (params?.status && params.status !== "ALL") {
+        q = q.eq("status", params.status);
+      }
+      const { data: deposits, error } = await q;
+      if (!error && deposits) {
+        return deposits;
+      }
+    } catch (e) {
+      console.warn("Direct Supabase admin deposits query failed:", e);
+    }
+  }
+  const sp = new URLSearchParams();
+  if (params?.status && params.status !== "ALL") sp.set("status", params.status);
+  if (params?.search) sp.set("search", params.search);
+  return api.get<WalletDeposit[]>(`/admin/wallet/deposits?${sp.toString()}`);
+};
+
+export const approveWalletDeposit = async (depositId: string, adminNotes?: string) => {
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await supabase.rpc("approve_wallet_deposit", {
+        p_deposit_id: depositId,
+        p_admin_notes: adminNotes || null,
+      });
+      if (!error && data?.success) {
+        return data;
+      }
+      if (error) throw error;
+    } catch (e) {
+      console.warn("Direct Supabase approve_wallet_deposit RPC failed, trying REST:", e);
+    }
+  }
+  return api.post<{ success: boolean }>(`/admin/wallet/deposits/${depositId}/approve`, {
+    admin_notes: adminNotes,
+  });
+};
+
+export const rejectWalletDeposit = async (depositId: string, reason: string) => {
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await supabase.rpc("reject_wallet_deposit", {
+        p_deposit_id: depositId,
+        p_reason: reason,
+      });
+      if (!error && data?.success) {
+        return data;
+      }
+      if (error) throw error;
+    } catch (e) {
+      console.warn("Direct Supabase reject_wallet_deposit RPC failed, trying REST:", e);
+    }
+  }
+  return api.post<{ success: boolean }>(`/admin/wallet/deposits/${depositId}/reject`, {
+    reason,
+  });
+};
+
+export const payOrderWithWallet = async (publicOrderId: string) => {
+  if (isSupabaseConfigured) {
+    try {
+      const { data, error } = await supabase.rpc("pay_order_with_wallet", {
+        p_public_order_id: publicOrderId,
+      });
+      if (!error && data?.success) {
+        return data;
+      }
+      if (error) throw error;
+      if (data && !data.success) {
+        throw new Error(data.error || "Wallet payment failed.");
+      }
+    } catch (e: any) {
+      console.warn("Direct Supabase pay_order_with_wallet failed, trying REST:", e);
+      if (e.message && !e.message.includes("Could not find stored procedure")) {
+        throw e;
+      }
+    }
+  }
+  return api.post<{ success: boolean; order_id: string }>(
+    `/orders/${publicOrderId}/pay-with-wallet`,
+    {},
+  );
+};
+
+// ==========================================
+// Admin UID / UUID Checker API Configuration
+// ==========================================
+
+export const getUidCheckerConfigs = async (): Promise<UidCheckerConfig[]> => {
+  if (isSupabaseConfigured) {
+    const { data, error } = await supabase
+      .from("uid_checker_configs")
+      .select("*")
+      .order("is_primary", { ascending: false })
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Failed to fetch uid_checker_configs:", error);
+      throw error;
+    }
+    return (data || []) as UidCheckerConfig[];
+  }
+  return [];
+};
+
+export const createUidCheckerConfig = async (
+  input: CreateUidCheckerConfigInput,
+): Promise<UidCheckerConfig> => {
+  if (isSupabaseConfigured) {
+    // If setting as primary, demote other configs first
+    if (input.is_primary) {
+      await supabase
+        .from("uid_checker_configs")
+        .update({ is_primary: false, updated_at: new Date().toISOString() })
+        .neq("id", "none");
+    }
+
+    const { data, error } = await supabase
+      .from("uid_checker_configs")
+      .insert({
+        provider_name: input.provider_name.trim(),
+        endpoint_url: input.endpoint_url.trim(),
+        api_key: input.api_key.trim(),
+        header_name: input.header_name?.trim() || "x-api-key",
+        default_region: input.default_region?.trim() || "BD",
+        is_active: input.is_active ?? true,
+        is_primary: input.is_primary ?? false,
+        rate_limit_per_min: input.rate_limit_per_min || 30,
+        notes: input.notes?.trim() || null,
+        usage_count: 0,
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as UidCheckerConfig;
+  }
+  throw new Error("Supabase is not configured.");
+};
+
+export const updateUidCheckerConfig = async (
+  id: string,
+  input: Partial<CreateUidCheckerConfigInput>,
+): Promise<UidCheckerConfig> => {
+  if (isSupabaseConfigured) {
+    // If setting as primary, demote other configs first
+    if (input.is_primary) {
+      await supabase
+        .from("uid_checker_configs")
+        .update({ is_primary: false, updated_at: new Date().toISOString() })
+        .neq("id", id);
+    }
+
+    const updatePayload: Record<string, any> = {
+      ...input,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data, error } = await supabase
+      .from("uid_checker_configs")
+      .update(updatePayload)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as UidCheckerConfig;
+  }
+  throw new Error("Supabase is not configured.");
+};
+
+export const deleteUidCheckerConfig = async (id: string): Promise<{ success: boolean }> => {
+  if (isSupabaseConfigured) {
+    const { error } = await supabase.from("uid_checker_configs").delete().eq("id", id);
+    if (error) throw error;
+    return { success: true };
+  }
+  throw new Error("Supabase is not configured.");
+};
+
+export const setPrimaryUidCheckerConfig = async (id: string): Promise<{ success: boolean }> => {
+  if (isSupabaseConfigured) {
+    await supabase
+      .from("uid_checker_configs")
+      .update({ is_primary: false, updated_at: new Date().toISOString() })
+      .neq("id", id);
+
+    const { error } = await supabase
+      .from("uid_checker_configs")
+      .update({ is_primary: true, is_active: true, updated_at: new Date().toISOString() })
+      .eq("id", id);
+
+    if (error) throw error;
+    return { success: true };
+  }
+  throw new Error("Supabase is not configured.");
+};

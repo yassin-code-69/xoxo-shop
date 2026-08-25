@@ -1,14 +1,12 @@
 import { MobileNav } from "../../components/MobileNav";
+import { ShopHeader } from "../../components/ShopHeader";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "../globals.css";
-import Link from "next/link";
-import { Send, Mail, Home, LayoutGrid, Headset } from "lucide-react";
+import { Send, Mail } from "lucide-react";
 import { FaFacebook, FaInstagram, FaYoutube } from "react-icons/fa";
 import { ThemeProvider } from "../../components/ThemeProvider";
-import { ThemeToggle } from "../../components/ThemeToggle";
 import { AuthProvider } from "../../lib/auth/AuthContext";
-import { UserNav } from "../../components/UserNav";
 import { FloatingChatBot } from "../../components/FloatingChatBot";
 import NextTopLoader from "nextjs-toploader";
 
@@ -30,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} antialiased bg-slate-50 dark:bg-black text-slate-800 dark:text-[#ededed] min-h-screen flex flex-col font-sans transition-colors duration-300`}
+        className={`${inter.variable} antialiased bg-[#f4f6fb] dark:bg-[#0f0c20] text-slate-800 dark:text-[#ededed] min-h-screen flex flex-col font-sans transition-colors duration-300`}
       >
         <ThemeProvider
           attribute="class"
@@ -40,56 +38,8 @@ export default function RootLayout({
         >
           <AuthProvider>
             <NextTopLoader color="#663cbc" showSpinner={false} />
-            {/* Navbar */}
-            <header className="bg-white/90 dark:bg-black/90 backdrop-blur-md sticky top-0 z-50 shadow-sm border-b border-slate-100 dark:border-neutral-800/80 transition-colors duration-300">
-              <div className="container mx-auto px-4 max-w-6xl h-20 flex items-center justify-between">
-                {/* Logo */}
-                <Link href="/" className="flex items-center gap-2">
-                  <div className="flex items-center font-bold text-2xl tracking-tighter">
-                    <div className="flex relative items-center">
-                      <div className="w-8 h-8 rounded-full border-4 border-black dark:border-white mr-1 relative flex items-center justify-center transition-colors">
-                        <div className="w-2.5 h-2.5 bg-black dark:bg-white rounded-full mb-3 ml-2 transition-colors"></div>
-                        <div className="absolute -top-1 -right-1 w-2 h-2 bg-purple-600 rounded-full"></div>
-                      </div>
-                      <div className="flex flex-col leading-none">
-                        <span className="text-black dark:text-white font-black text-[18px] transition-colors">
-                          XoXo
-                        </span>
-                        <span className="text-purple-600 font-black text-[14px]">Shop</span>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-
-                {/* Navigation Links - Desktop */}
-                <nav className="hidden md:flex items-center gap-8">
-                  <Link
-                    href="/"
-                    className="text-sm font-bold text-slate-700 dark:text-slate-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors flex items-center gap-2"
-                  >
-                    <Home size={16} /> Home
-                  </Link>
-                  <Link
-                    href="/uid-topup"
-                    className="text-sm font-bold text-slate-700 dark:text-slate-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors flex items-center gap-2"
-                  >
-                    <LayoutGrid size={16} /> Topup
-                  </Link>
-                  <Link
-                    href="/contact"
-                    className="text-sm font-bold text-slate-700 dark:text-slate-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors flex items-center gap-2"
-                  >
-                    <Headset size={16} /> Contact Us
-                  </Link>
-                </nav>
-
-                {/* Actions */}
-                <div className="flex items-center gap-3">
-                  <ThemeToggle />
-                  <UserNav />
-                </div>
-              </div>
-            </header>
+            {/* Top Navbar */}
+            <ShopHeader />
 
             {/* Main Content */}
             <main className="flex-1 w-full max-w-6xl mx-auto">{children}</main>

@@ -166,9 +166,37 @@ export interface Profile {
   avatar_url?: string | null;
   status: string;
   is_active: boolean;
+  balance?: number;
+  total_spend?: number;
+  current_rank?: string;
+  rank_level?: number;
   roles: string[];
   created_at: string;
   updated_at: string;
+}
+
+export interface WalletDeposit {
+  id: string;
+  user_id: string;
+  amount: number;
+  payment_method: string;
+  sender_number: string;
+  transaction_id: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  admin_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WalletTransaction {
+  id: string;
+  user_id: string;
+  type: "DEPOSIT" | "PURCHASE" | "REFUND" | "ADJUSTMENT";
+  amount: number;
+  balance_after: number;
+  description?: string | null;
+  reference_id?: string | null;
+  created_at: string;
 }
 
 export interface CustomerAdmin {
@@ -336,4 +364,33 @@ export interface ContactMessage {
   reply_notes?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface UidCheckerConfig {
+  id: string;
+  provider_name: string;
+  endpoint_url: string;
+  api_key: string;
+  header_name: string;
+  default_region: string;
+  is_active: boolean;
+  is_primary: boolean;
+  rate_limit_per_min?: number;
+  usage_count: number;
+  last_used_at?: string | null;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateUidCheckerConfigInput {
+  provider_name: string;
+  endpoint_url: string;
+  api_key: string;
+  header_name?: string;
+  default_region?: string;
+  is_active?: boolean;
+  is_primary?: boolean;
+  rate_limit_per_min?: number;
+  notes?: string;
 }

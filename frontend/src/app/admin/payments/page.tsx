@@ -20,11 +20,14 @@ import {
   Sparkles,
   Download,
 } from "lucide-react";
-import { PaymentAdmin } from "../../../lib/api/types";
+import { PaymentAdmin, WalletDeposit } from "../../../lib/api/types";
 import {
   getAdminPayments,
   approveAdminPayment,
   rejectAdminPayment,
+  getAdminWalletDeposits,
+  approveWalletDeposit,
+  rejectWalletDeposit,
 } from "../../../lib/api/endpoints";
 import { exportToCsv } from "../../../lib/utils/csv";
 import { useDebounce } from "../../../lib/hooks/useDebounce";
@@ -55,8 +58,61 @@ export default function AdminPaymentsPage() {
     text: string;
   } | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [mainTab, setMainTab] = useState<"ORDERS" | "WALLET">("ORDERS");
+  const [walletDeposits, setWalletDeposits] = useState<
+    (WalletDeposit & { profile?: { email?: string; full_name?: string; phone?: string } })[]
+  >([]);
+  const [walletStatusFilter, setWalletStatusFilter] = useState("PENDING");
 
   const debouncedSearch = useDebounce(search, 300);
+
+  const loadWalletDeposits = async () => {
+    setIsLoading(true);
+    try {
+      const res = await getAdminWalletDeposits({
+        status: walletStatusFilter === "ALL" ? undefined : walletStatusFilter,
+        search: debouncedSearch.trim() || undefined,
+      });
+      setWalletDeposits((res as any) || []);
+    } catch (err: any) {
+      setNotification({ type: "error", text: err.message || "Failed to load wallet deposits." });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleApproveDeposit = async (depositId: string) => {
+    setIsProcessingId(depositId);
+    setNotification(null);
+    try {
+      await approveWalletDeposit(depositId, "Approved via Admin Console");
+      setNotification({
+        type: "success",
+        text: "Wallet deposit approved! User balance has been credited.",
+      });
+      await loadWalletDeposits();
+    } catch (err: any) {
+      setNotification({ type: "error", text: err.message || "Could not approve deposit." });
+    } finally {
+      setIsProcessingId(null);
+    }
+  };
+
+  const handleRejectDeposit = async (depositId: string) => {
+    if (!rejectionReason.trim()) return;
+    setIsProcessingId(depositId);
+    setNotification(null);
+    try {
+      await rejectWalletDeposit(depositId, rejectionReason.trim());
+      setNotification({ type: "success", text: "Wallet deposit rejected." });
+      setRejectingId(null);
+      await loadWalletDeposits();
+    } catch (err: any) {
+      setNotification({ type: "error", text: err.message || "Could not reject deposit." });
+    } finally {
+      setIsProcessingId(null);
+    }
+  };
 
   const loadPayments = async () => {
     setIsLoading(true);
@@ -109,8 +165,12 @@ export default function AdminPaymentsPage() {
   };
 
   useEffect(() => {
-    loadPayments();
-  }, [statusFilter, methodFilter, page, debouncedSearch]);
+    if (mainTab === "ORDERS") {
+      loadPayments();
+    } else {
+      loadWalletDeposits();
+    }
+  }, [mainTab, statusFilter, methodFilter, walletStatusFilter, page, debouncedSearch]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -217,263 +277,504 @@ export default function AdminPaymentsPage() {
         </div>
       )}
 
-      {/* Filter and Search Bar */}
-      <div className="bg-white dark:bg-[#111111] p-4 rounded-2xl border border-slate-200/80 dark:border-[#222222] shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
-        {/* Status Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-none">
-          {[
-            { label: "Pending Review", value: "SUBMITTED" },
-            { label: "Verified", value: "VERIFIED" },
-            { label: "Rejected", value: "REJECTED" },
-            { label: "Gateway Direct", value: "GATEWAY" },
-            { label: "All Payments", value: "ALL" },
-          ].map((tab) => (
-            <button
-              key={tab.value}
-              onClick={() => {
-                setStatusFilter(tab.value);
-                setPage(1);
-              }}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
-                statusFilter === tab.value
-                  ? "bg-purple-600 text-white shadow-xs"
-                  : "bg-slate-100 dark:bg-[#171717] text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-[#222222]"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Search */}
-        <form onSubmit={handleSearch} className="flex items-center gap-2 w-full md:w-auto">
-          <div className="relative flex-1 md:w-64">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Search TrxID, Order ID, Phone..."
-              className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-[#171717] border border-slate-200 dark:border-[#262626] text-slate-800 dark:text-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600"
-            />
-          </div>
-          <button
-            type="submit"
-            className="bg-slate-800 dark:bg-zinc-800 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-slate-900 transition-colors shrink-0 cursor-pointer"
-          >
-            Search
-          </button>
-        </form>
+      {/* Main Tab Switcher: Orders vs Wallet Deposits */}
+      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-[#222222] pb-3">
+        <button
+          type="button"
+          onClick={() => setMainTab("ORDERS")}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+            mainTab === "ORDERS"
+              ? "bg-purple-600 text-white shadow-xs"
+              : "bg-slate-100 dark:bg-[#171717] text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-[#222222]"
+          }`}
+        >
+          <CreditCard size={15} /> Order Payments ({payments.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setMainTab("WALLET")}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
+            mainTab === "WALLET"
+              ? "bg-purple-600 text-white shadow-xs"
+              : "bg-slate-100 dark:bg-[#171717] text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-[#222222]"
+          }`}
+        >
+          <Sparkles size={15} /> Wallet Deposits ({walletDeposits.length})
+        </button>
       </div>
 
-      {/* Payments Table */}
-      <div className="bg-white dark:bg-[#111111] rounded-2xl border border-slate-200/80 dark:border-[#222222] shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-[#171717] text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 border-b border-slate-200/80 dark:border-[#1f1f1f]">
-                <th className="p-4">Order ID</th>
-                <th className="p-4">Customer</th>
-                <th className="p-4">Method</th>
-                <th className="p-4">Amount</th>
-                <th className="p-4">Transaction ID (TrxID)</th>
-                <th className="p-4">Sender No.</th>
-                <th className="p-4">Status</th>
-                <th className="p-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="text-xs divide-y divide-slate-100 dark:divide-[#1f1f1f]">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={8} className="p-12 text-center text-slate-400 dark:text-zinc-500">
-                    <Loader2 className="animate-spin inline-block mr-2" size={20} /> Loading payment
-                    records...
-                  </td>
-                </tr>
-              ) : payments.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={8}
-                    className="p-12 text-center text-slate-400 dark:text-zinc-500 font-medium"
-                  >
-                    No payment submissions found matching your filter.
-                  </td>
-                </tr>
-              ) : (
-                payments.map((p) => {
-                  const isProcessing = isProcessingId === p.id;
-                  const isSubmitted = p.status === "SUBMITTED" || p.status === "PENDING";
+      {mainTab === "WALLET" ? (
+        /* WALLET DEPOSITS VIEW */
+        <div className="flex flex-col gap-4">
+          <div className="bg-white dark:bg-[#111111] p-4 rounded-2xl border border-slate-200/80 dark:border-[#222222] shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-none">
+              {[
+                { label: "Pending Deposits", value: "PENDING" },
+                { label: "Approved", value: "APPROVED" },
+                { label: "Rejected", value: "REJECTED" },
+                { label: "All Deposits", value: "ALL" },
+              ].map((tab) => (
+                <button
+                  key={tab.value}
+                  onClick={() => {
+                    setWalletStatusFilter(tab.value);
+                  }}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                    walletStatusFilter === tab.value
+                      ? "bg-purple-600 text-white shadow-xs"
+                      : "bg-slate-100 dark:bg-[#171717] text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-[#222222]"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
-                  return (
-                    <tr
-                      key={p.id}
-                      className="hover:bg-slate-50/80 dark:hover:bg-[#171717]/60 transition-colors"
-                    >
-                      <td className="p-4 font-mono font-bold text-purple-600 dark:text-purple-400">
-                        <Link
-                          href={`/payment/${p.public_order_id}`}
-                          className="hover:underline flex items-center gap-1"
-                        >
-                          {p.public_order_id || "N/A"}
-                          <ExternalLink size={11} className="opacity-60" />
-                        </Link>
-                      </td>
-                      <td className="p-4">
-                        <div className="font-bold text-slate-800 dark:text-white">
-                          {p.customer_name || "Customer"}
-                        </div>
-                        <div className="text-[11px] text-slate-400 dark:text-zinc-500">
-                          {p.customer_email || "guest"}
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <span className="font-bold uppercase text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 rounded border border-purple-100 dark:border-purple-900/60 text-[10px]">
-                          {p.payment_method}
-                        </span>
-                      </td>
-                      <td className="p-4 font-black text-slate-900 dark:text-white text-sm">
-                        ৳ {p.amount}
-                      </td>
-                      <td className="p-4 font-mono font-black text-slate-900 dark:text-white">
-                        {p.transaction_id ? (
-                          <div className="flex items-center gap-1.5">
-                            <span className="bg-slate-100 dark:bg-zinc-800 px-2 py-1 rounded text-slate-800 dark:text-zinc-200 border border-slate-200 dark:border-zinc-700 font-mono text-[11px]">
-                              {p.transaction_id}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleCopy(p.transaction_id!, p.id + "-trx")}
-                              className="text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 p-1 cursor-pointer"
-                              title="Copy TrxID"
-                            >
-                              {copiedId === p.id + "-trx" ? (
-                                <Check size={13} className="text-green-600" />
-                              ) : (
-                                <Copy size={13} />
-                              )}
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-slate-400 dark:text-zinc-500 italic text-[11px]">
-                            Auto Gateway Direct
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-4 text-slate-600 dark:text-zinc-400 font-medium font-mono text-[11px]">
-                        {p.sender_number ? (
-                          <div className="flex items-center gap-1">
-                            <span>{p.sender_number}</span>
-                            <button
-                              type="button"
-                              onClick={() => handleCopy(p.sender_number!, p.id + "-phone")}
-                              className="text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 p-0.5 cursor-pointer"
-                              title="Copy Sender Number"
-                            >
-                              {copiedId === p.id + "-phone" ? (
-                                <Check size={11} className="text-green-600" />
-                              ) : (
-                                <Copy size={11} />
-                              )}
-                            </button>
-                          </div>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td className="p-4">
-                        <span
-                          className={`px-2.5 py-0.5 rounded-full font-bold text-[10px] uppercase ${
-                            p.status === "VERIFIED"
-                              ? "bg-green-100 text-green-700 dark:bg-green-950/60 dark:text-green-300"
-                              : p.status === "SUBMITTED"
-                                ? "bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300"
-                                : p.status === "REJECTED"
-                                  ? "bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300"
-                                  : "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
-                          }`}
-                        >
-                          {p.status}
-                        </span>
-                      </td>
-                      <td className="p-4 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setViewingPayment(p)}
-                            className="text-slate-600 dark:text-zinc-400 hover:text-purple-600 dark:hover:text-purple-400 p-1 font-bold text-xs flex items-center gap-1 cursor-pointer"
-                            title="View Full Details"
-                          >
-                            <Eye size={14} />
-                          </button>
+            <form onSubmit={handleSearch} className="flex items-center gap-2 w-full md:w-auto">
+              <div className="relative flex-1 md:w-64">
+                <Search
+                  size={16}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search TrxID, Phone, Email..."
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-[#171717] border border-slate-200 dark:border-[#262626] text-slate-800 dark:text-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600"
+                />
+              </div>
+              <button
+                type="submit"
+                className="bg-slate-800 dark:bg-zinc-800 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-slate-900 transition-colors shrink-0 cursor-pointer"
+              >
+                Search
+              </button>
+            </form>
+          </div>
 
-                          {isSubmitted ? (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => handleApprove(p.id)}
-                                disabled={isProcessing}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all shadow-xs flex items-center gap-1 disabled:opacity-50 cursor-pointer"
-                              >
-                                {isProcessing ? (
-                                  <Loader2 size={12} className="animate-spin" />
-                                ) : (
-                                  <CheckCircle2 size={13} />
-                                )}
-                                <span>Approve</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setRejectingId(p.id)}
-                                disabled={isProcessing}
-                                className="bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 font-bold px-3 py-1.5 rounded-lg text-xs transition-all disabled:opacity-50 cursor-pointer"
-                              >
-                                Reject
-                              </button>
-                            </>
-                          ) : p.status === "VERIFIED" ? (
-                            <span className="text-[11px] text-green-600 dark:text-green-400 font-bold flex items-center gap-1">
-                              <CheckCircle2 size={13} /> Approved
-                            </span>
-                          ) : (
-                            <span className="text-[11px] text-red-600 dark:text-red-400 font-medium truncate max-w-[120px]">
-                              {p.rejection_reason || "Rejected"}
-                            </span>
-                          )}
-                        </div>
+          <div className="bg-white dark:bg-[#111111] rounded-2xl border border-slate-200/80 dark:border-[#222222] shadow-xs overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-[#171717] text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 border-b border-slate-200/80 dark:border-[#1f1f1f]">
+                    <th className="p-4">Deposit ID</th>
+                    <th className="p-4">Customer</th>
+                    <th className="p-4">Method</th>
+                    <th className="p-4">Amount</th>
+                    <th className="p-4">Transaction ID (TrxID)</th>
+                    <th className="p-4">Sender Phone</th>
+                    <th className="p-4">Status</th>
+                    <th className="p-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="text-xs divide-y divide-slate-100 dark:divide-[#1f1f1f]">
+                  {isLoading ? (
+                    <tr>
+                      <td
+                        colSpan={8}
+                        className="p-12 text-center text-slate-400 dark:text-zinc-500"
+                      >
+                        <Loader2 className="animate-spin inline-block mr-2" size={20} /> Loading
+                        wallet deposits...
                       </td>
                     </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                  ) : walletDeposits.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={8}
+                        className="p-12 text-center text-slate-400 dark:text-zinc-500 font-medium"
+                      >
+                        No wallet deposits found matching your filter.
+                      </td>
+                    </tr>
+                  ) : (
+                    walletDeposits.map((d) => {
+                      const isProcessing = isProcessingId === d.id;
+                      const isPending = d.status === "PENDING";
 
-        {totalPages > 1 && (
-          <div className="p-4 border-t border-slate-100 dark:border-[#1f1f1f] flex items-center justify-between text-xs">
-            <button
-              disabled={page <= 1}
-              onClick={() => setPage(page - 1)}
-              className="px-3 py-1.5 rounded-lg font-bold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 disabled:opacity-40 cursor-pointer"
-            >
-              Previous
-            </button>
-            <span className="text-slate-500 dark:text-zinc-400 font-medium">
-              Page {page} of {totalPages}
-            </span>
-            <button
-              disabled={page >= totalPages}
-              onClick={() => setPage(page + 1)}
-              className="px-3 py-1.5 rounded-lg font-bold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 disabled:opacity-40 cursor-pointer"
-            >
-              Next
-            </button>
+                      return (
+                        <tr
+                          key={d.id}
+                          className="hover:bg-slate-50/80 dark:hover:bg-[#171717]/60 transition-colors"
+                        >
+                          <td className="p-4 font-mono font-bold text-purple-600 dark:text-purple-400">
+                            {d.id.slice(0, 8)}...
+                          </td>
+                          <td className="p-4">
+                            <div className="font-bold text-slate-800 dark:text-white">
+                              {d.profile?.full_name || "Customer"}
+                            </div>
+                            <div className="text-[11px] text-slate-400 dark:text-zinc-500">
+                              {d.profile?.email}
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <span className="font-bold uppercase text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 rounded border border-purple-100 dark:border-purple-900/60 text-[10px]">
+                              {d.payment_method}
+                            </span>
+                          </td>
+                          <td className="p-4 font-black text-emerald-600 dark:text-emerald-400 text-sm">
+                            ৳ {d.amount}
+                          </td>
+                          <td className="p-4 font-mono font-black text-slate-900 dark:text-white">
+                            <div className="flex items-center gap-1.5">
+                              <span className="bg-slate-100 dark:bg-zinc-800 px-2 py-1 rounded text-slate-800 dark:text-zinc-200 border border-slate-200 dark:border-zinc-700 font-mono text-[11px]">
+                                {d.transaction_id}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleCopy(d.transaction_id, d.id + "-trx")}
+                                className="text-slate-400 hover:text-purple-600 p-1 cursor-pointer"
+                                title="Copy TrxID"
+                              >
+                                {copiedId === d.id + "-trx" ? (
+                                  <Check size={13} className="text-green-600" />
+                                ) : (
+                                  <Copy size={13} />
+                                )}
+                              </button>
+                            </div>
+                          </td>
+                          <td className="p-4 font-mono font-medium text-slate-600 dark:text-zinc-400">
+                            <div className="flex items-center gap-1">
+                              <span>{d.sender_number}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleCopy(d.sender_number, d.id + "-phone")}
+                                className="text-slate-400 hover:text-purple-600 p-0.5 cursor-pointer"
+                                title="Copy Phone Number"
+                              >
+                                {copiedId === d.id + "-phone" ? (
+                                  <Check size={11} className="text-green-600" />
+                                ) : (
+                                  <Copy size={11} />
+                                )}
+                              </button>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <span
+                              className={`px-2.5 py-0.5 rounded-full font-bold text-[10px] uppercase ${
+                                d.status === "APPROVED"
+                                  ? "bg-green-100 text-green-700 dark:bg-green-950/60 dark:text-green-300"
+                                  : d.status === "PENDING"
+                                    ? "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
+                                    : "bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300"
+                              }`}
+                            >
+                              {d.status}
+                            </span>
+                          </td>
+                          <td className="p-4 text-right">
+                            {isPending ? (
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  type="button"
+                                  disabled={isProcessing}
+                                  onClick={() => handleApproveDeposit(d.id)}
+                                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+                                >
+                                  {isProcessing ? (
+                                    <Loader2 size={12} className="animate-spin" />
+                                  ) : (
+                                    <CheckCircle2 size={13} />
+                                  )}
+                                  Approve (+Credit)
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={isProcessing}
+                                  onClick={() => setRejectingId(d.id)}
+                                  className="bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400 px-2.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1 transition-all cursor-pointer"
+                                >
+                                  <XCircle size={13} />
+                                  Reject
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 dark:text-zinc-600 italic text-[11px]">
+                                {d.admin_notes || "Processed"}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        /* ORDER PAYMENTS VIEW */
+        <>
+          {/* Filter and Search Bar */}
+          <div className="bg-white dark:bg-[#111111] p-4 rounded-2xl border border-slate-200/80 dark:border-[#222222] shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
+            {/* Status Tabs */}
+            <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-none">
+              {[
+                { label: "Pending Review", value: "SUBMITTED" },
+                { label: "Verified", value: "VERIFIED" },
+                { label: "Rejected", value: "REJECTED" },
+                { label: "Gateway Direct", value: "GATEWAY" },
+                { label: "All Payments", value: "ALL" },
+              ].map((tab) => (
+                <button
+                  key={tab.value}
+                  onClick={() => {
+                    setStatusFilter(tab.value);
+                    setPage(1);
+                  }}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                    statusFilter === tab.value
+                      ? "bg-purple-600 text-white shadow-xs"
+                      : "bg-slate-100 dark:bg-[#171717] text-slate-600 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-[#222222]"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Search */}
+            <form onSubmit={handleSearch} className="flex items-center gap-2 w-full md:w-auto">
+              <div className="relative flex-1 md:w-64">
+                <Search
+                  size={16}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
+                  }}
+                  placeholder="Search TrxID, Order ID, Phone..."
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 dark:bg-[#171717] border border-slate-200 dark:border-[#262626] text-slate-800 dark:text-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600"
+                />
+              </div>
+              <button
+                type="submit"
+                className="bg-slate-800 dark:bg-zinc-800 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-slate-900 transition-colors shrink-0 cursor-pointer"
+              >
+                Search
+              </button>
+            </form>
+          </div>
+
+          {/* Payments Table */}
+          <div className="bg-white dark:bg-[#111111] rounded-2xl border border-slate-200/80 dark:border-[#222222] shadow-xs overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-[#171717] text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 border-b border-slate-200/80 dark:border-[#1f1f1f]">
+                    <th className="p-4">Order ID</th>
+                    <th className="p-4">Customer</th>
+                    <th className="p-4">Method</th>
+                    <th className="p-4">Amount</th>
+                    <th className="p-4">Transaction ID (TrxID)</th>
+                    <th className="p-4">Sender No.</th>
+                    <th className="p-4">Status</th>
+                    <th className="p-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="text-xs divide-y divide-slate-100 dark:divide-[#1f1f1f]">
+                  {isLoading ? (
+                    <tr>
+                      <td
+                        colSpan={8}
+                        className="p-12 text-center text-slate-400 dark:text-zinc-500"
+                      >
+                        <Loader2 className="animate-spin inline-block mr-2" size={20} /> Loading
+                        payment records...
+                      </td>
+                    </tr>
+                  ) : payments.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={8}
+                        className="p-12 text-center text-slate-400 dark:text-zinc-500 font-medium"
+                      >
+                        No payment submissions found matching your filter.
+                      </td>
+                    </tr>
+                  ) : (
+                    payments.map((p) => {
+                      const isProcessing = isProcessingId === p.id;
+                      const isSubmitted = p.status === "SUBMITTED" || p.status === "PENDING";
+
+                      return (
+                        <tr
+                          key={p.id}
+                          className="hover:bg-slate-50/80 dark:hover:bg-[#171717]/60 transition-colors"
+                        >
+                          <td className="p-4 font-mono font-bold text-purple-600 dark:text-purple-400">
+                            <Link
+                              href={`/payment/${p.public_order_id}`}
+                              className="hover:underline flex items-center gap-1"
+                            >
+                              {p.public_order_id || "N/A"}
+                              <ExternalLink size={11} className="opacity-60" />
+                            </Link>
+                          </td>
+                          <td className="p-4">
+                            <div className="font-bold text-slate-800 dark:text-white">
+                              {p.customer_name || "Customer"}
+                            </div>
+                            <div className="text-[11px] text-slate-400 dark:text-zinc-500">
+                              {p.customer_email || "guest"}
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <span className="font-bold uppercase text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 rounded border border-purple-100 dark:border-purple-900/60 text-[10px]">
+                              {p.payment_method}
+                            </span>
+                          </td>
+                          <td className="p-4 font-black text-slate-900 dark:text-white text-sm">
+                            ৳ {p.amount}
+                          </td>
+                          <td className="p-4 font-mono font-black text-slate-900 dark:text-white">
+                            {p.transaction_id ? (
+                              <div className="flex items-center gap-1.5">
+                                <span className="bg-slate-100 dark:bg-zinc-800 px-2 py-1 rounded text-slate-800 dark:text-zinc-200 border border-slate-200 dark:border-zinc-700 font-mono text-[11px]">
+                                  {p.transaction_id}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopy(p.transaction_id!, p.id + "-trx")}
+                                  className="text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 p-1 cursor-pointer"
+                                  title="Copy TrxID"
+                                >
+                                  {copiedId === p.id + "-trx" ? (
+                                    <Check size={13} className="text-green-600" />
+                                  ) : (
+                                    <Copy size={13} />
+                                  )}
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 dark:text-zinc-500 italic text-[11px]">
+                                Auto Gateway Direct
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-4 text-slate-600 dark:text-zinc-400 font-medium font-mono text-[11px]">
+                            {p.sender_number ? (
+                              <div className="flex items-center gap-1">
+                                <span>{p.sender_number}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopy(p.sender_number!, p.id + "-phone")}
+                                  className="text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 p-0.5 cursor-pointer"
+                                  title="Copy Sender Number"
+                                >
+                                  {copiedId === p.id + "-phone" ? (
+                                    <Check size={11} className="text-green-600" />
+                                  ) : (
+                                    <Copy size={11} />
+                                  )}
+                                </button>
+                              </div>
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                          <td className="p-4">
+                            <span
+                              className={`px-2.5 py-0.5 rounded-full font-bold text-[10px] uppercase ${
+                                p.status === "VERIFIED"
+                                  ? "bg-green-100 text-green-700 dark:bg-green-950/60 dark:text-green-300"
+                                  : p.status === "SUBMITTED"
+                                    ? "bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300"
+                                    : p.status === "REJECTED"
+                                      ? "bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300"
+                                      : "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
+                              }`}
+                            >
+                              {p.status}
+                            </span>
+                          </td>
+                          <td className="p-4 text-right whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setViewingPayment(p)}
+                                className="text-slate-600 dark:text-zinc-400 hover:text-purple-600 dark:hover:text-purple-400 p-1 font-bold text-xs flex items-center gap-1 cursor-pointer"
+                                title="View Full Details"
+                              >
+                                <Eye size={14} />
+                              </button>
+
+                              {isSubmitted ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleApprove(p.id)}
+                                    disabled={isProcessing}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-all shadow-xs flex items-center gap-1 disabled:opacity-50 cursor-pointer"
+                                  >
+                                    {isProcessing ? (
+                                      <Loader2 size={12} className="animate-spin" />
+                                    ) : (
+                                      <CheckCircle2 size={13} />
+                                    )}
+                                    <span>Approve</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setRejectingId(p.id)}
+                                    disabled={isProcessing}
+                                    className="bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 font-bold px-3 py-1.5 rounded-lg text-xs transition-all disabled:opacity-50 cursor-pointer"
+                                  >
+                                    Reject
+                                  </button>
+                                </>
+                              ) : p.status === "VERIFIED" ? (
+                                <span className="text-[11px] text-green-600 dark:text-green-400 font-bold flex items-center gap-1">
+                                  <CheckCircle2 size={13} /> Approved
+                                </span>
+                              ) : (
+                                <span className="text-[11px] text-red-600 dark:text-red-400 font-medium truncate max-w-[120px]">
+                                  {p.rejection_reason || "Rejected"}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {totalPages > 1 && (
+              <div className="p-4 border-t border-slate-100 dark:border-[#1f1f1f] flex items-center justify-between text-xs">
+                <button
+                  disabled={page <= 1}
+                  onClick={() => setPage(page - 1)}
+                  className="px-3 py-1.5 rounded-lg font-bold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 disabled:opacity-40 cursor-pointer"
+                >
+                  Previous
+                </button>
+                <span className="text-slate-500 dark:text-zinc-400 font-medium">
+                  Page {page} of {totalPages}
+                </span>
+                <button
+                  disabled={page >= totalPages}
+                  onClick={() => setPage(page + 1)}
+                  className="px-3 py-1.5 rounded-lg font-bold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 disabled:opacity-40 cursor-pointer"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
 
       {/* Full Payment Inspector Modal */}
       {viewingPayment && (

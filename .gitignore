@@ -71,4 +71,6 @@ Thumbs.db
 *.log
 *.tmp
 t.txt
+.claude/
+agent/
 

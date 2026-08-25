@@ -17,6 +17,7 @@ import {
   X,
   ShieldCheck,
   MessageSquare,
+  KeyRound,
 } from "lucide-react";
 import { useAuth } from "../lib/auth/AuthContext";
 
@@ -39,6 +40,7 @@ export function AdminSidebar({ isOpen = false, onClose }: AdminSidebarProps) {
   ];
 
   const systemLinks = [
+    { href: "/admin/uid-checker", label: "UUID Checker API", icon: KeyRound },
     { href: "/admin/messages", label: "Inquiries & Messages", icon: MessageSquare },
     { href: "/admin/users", label: "Customers", icon: Users },
     { href: "/admin/settings", label: "Store & Diamond API", icon: Sliders },

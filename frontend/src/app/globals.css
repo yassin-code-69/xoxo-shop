@@ -11,33 +11,33 @@
   --color-primary-200: #decff6;
   --color-primary-300: #c5aef0;
   --color-primary-400: #a784e7;
-  --color-primary-500: #875add;
-  --color-primary-600: #663cbc;
-  --color-primary-700: #552f9e;
-  --color-primary-800: #462782;
-  --color-primary-900: #3b226b;
-  --color-primary-950: #251446;
+  --color-primary-500: #7148c4;
+  --color-primary-600: #5f39a8;
+  --color-primary-700: #452787;
+  --color-primary-800: #351c6b;
+  --color-primary-900: #25124f;
+  --color-primary-950: #150a2b;
 
   --color-purple-50: #f6f3fc;
   --color-purple-100: #eee7fa;
   --color-purple-200: #decff6;
   --color-purple-300: #c5aef0;
   --color-purple-400: #a784e7;
-  --color-purple-500: #875add;
-  --color-purple-600: #663cbc;
-  --color-purple-700: #552f9e;
-  --color-purple-800: #462782;
-  --color-purple-900: #3b226b;
-  --color-purple-950: #251446;
+  --color-purple-500: #7148c4;
+  --color-purple-600: #5f39a8;
+  --color-purple-700: #452787;
+  --color-purple-800: #351c6b;
+  --color-purple-900: #25124f;
+  --color-purple-950: #150a2b;
 }
 
 :root {
-  --background: #f8fafc;
-  --foreground: #09090b;
+  --background: #f4f6fb;
+  --foreground: #1e293b;
 }
 
 .dark {
-  --background: #000000;
+  --background: #0f0c20;
   --foreground: #ededed;
   color-scheme: dark;
 }
@@ -64,6 +64,50 @@ body {
 
 .animate-marquee:hover {
   animation-play-state: paused;
+}
+
+/* Shiny Card & Shimmer Animations */
+@keyframes card-shine {
+  0% {
+    transform: translateX(-150%) skewX(-20deg);
+  }
+  30%, 100% {
+    transform: translateX(250%) skewX(-20deg);
+  }
+}
+
+.animate-card-shine {
+  animation: card-shine 4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes rank-glow-pulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scale(1.15);
+  }
+}
+
+.animate-rank-glow {
+  animation: rank-glow-pulse 3.5s ease-in-out infinite;
+}
+
+@keyframes coin-pulse {
+  0%, 100% {
+    box-shadow: 0 0 6px rgba(251, 191, 36, 0.7);
+    transform: translateY(-50%) translate(50%, 0) scale(1);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(251, 191, 36, 1);
+    transform: translateY(-50%) translate(50%, 0) scale(1.15);
+  }
+}
+
+.animate-coin-glow {
+  animation: coin-pulse 2s ease-in-out infinite;
 }
 
 /* Next.js Pitch-Black Dark Theme Surfacing */
