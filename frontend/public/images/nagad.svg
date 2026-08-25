@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 60" width="120" height="60">
+  <defs>
+    <linearGradient id="nagadGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F7941D"/>
+      <stop offset="100%" stop-color="#EE1C25"/>
+    </linearGradient>
+  </defs>
+  <g fill="none" fill-rule="evenodd">
+    <!-- Nagad Spiral Icon -->
+    <circle cx="22" cy="30" r="18" fill="url(#nagadGrad)"/>
+    <circle cx="22" cy="30" r="12" fill="#FFFFFF"/>
+    <circle cx="22" cy="30" r="8" fill="url(#nagadGrad)"/>
+    <path fill="#F37023" d="M22 14c8.8 0 16 7.2 16 16h-6c0-5.5-4.5-10-10-10v-6z"/>
+    <!-- Nagad Text -->
+    <text x="48" y="38" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="900" fill="#F37023" letter-spacing="-0.5">Nagad</text>
+  </g>
+</svg>

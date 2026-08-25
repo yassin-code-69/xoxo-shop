@@ -484,27 +484,27 @@ function PaymentContent() {
       {/* Main Payment Section: 1-Click Gateway Checkout & Manual Fallback */}
       {!isCompleted && !isVerified && (
         <div className="space-y-6">
-          {/* Automated 1-Click Gateway Section */}
-          <div className="bg-gradient-to-br from-slate-900 to-purple-950 text-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-purple-900/50">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-purple-800/40">
+          {/* Automated 1-Click Gateway Section (Light Mode by default, adaptive in Dark) */}
+          <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-3xl p-5 sm:p-8 shadow-sm sm:shadow-md border border-slate-200 dark:border-slate-800">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-800">
               <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-bold mb-2">
-                  <ShieldCheck size={14} className="text-purple-400" />
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 text-xs font-bold mb-2">
+                  <ShieldCheck size={14} className="text-purple-600 dark:text-purple-400" />
                   <span>Instant 1-Click Payment Gateways</span>
                 </div>
-                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
                   Pay with bKash or Nagad
                 </h2>
-                <p className="text-xs sm:text-sm text-purple-200/80 mt-1">
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
                   Instant automated verification. Your Free Fire diamonds will be delivered
                   immediately upon payment.
                 </p>
               </div>
-              <div className="text-right">
-                <span className="text-[11px] uppercase tracking-wider text-purple-300 block">
+              <div className="text-left sm:text-right bg-purple-50/60 dark:bg-purple-950/30 sm:bg-transparent p-3 sm:p-0 rounded-2xl w-full sm:w-auto">
+                <span className="text-[11px] uppercase font-bold tracking-wider text-slate-500 dark:text-purple-300 block">
                   Amount to Pay
                 </span>
-                <span className="text-2xl sm:text-3xl font-black text-white font-mono">
+                <span className="text-2xl sm:text-3xl font-black text-purple-600 dark:text-white font-mono">
                   ৳ {order.total_amount}
                 </span>
               </div>
@@ -512,19 +512,21 @@ function PaymentContent() {
 
             {/* Wallet Balance Payment Option */}
             {isAuthenticated && (
-              <div className="bg-purple-900/40 border border-purple-500/30 rounded-2xl p-4 sm:p-5 mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-800/60 rounded-2xl p-4 sm:p-5 mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3.5">
-                  <div className="w-12 h-12 rounded-2xl bg-purple-600/30 border border-purple-400/40 text-purple-300 flex items-center justify-center shrink-0">
-                    <Sparkles size={24} />
+                  <div className="w-11 h-11 rounded-2xl bg-purple-600/10 dark:bg-purple-600/30 border border-purple-300 dark:border-purple-400/40 text-purple-600 dark:text-purple-300 flex items-center justify-center shrink-0">
+                    <Sparkles size={22} />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-black text-white text-base">Your Wallet Balance</span>
-                      <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">
+                      <span className="font-black text-slate-900 dark:text-white text-sm sm:text-base">
+                        Your Wallet Balance
+                      </span>
+                      <span className="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-500/30">
                         Available: ৳ {profile?.balance || 0}
                       </span>
                     </div>
-                    <p className="text-xs text-purple-200/70 mt-0.5">
+                    <p className="text-xs text-slate-600 dark:text-purple-200/70 mt-0.5">
                       {Number(profile?.balance || 0) >= Number(order.total_amount)
                         ? "You have enough balance to complete this order instantly!"
                         : `Need ৳ ${Number(order.total_amount) - Number(profile?.balance || 0)} more to pay with wallet.`}
@@ -538,7 +540,7 @@ function PaymentContent() {
                       type="button"
                       onClick={handlePayWithWallet}
                       disabled={isPayingWithWallet}
-                      className="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs uppercase tracking-wider py-3 px-6 rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                      className="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs uppercase tracking-wider py-3 px-6 rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
                     >
                       {isPayingWithWallet ? (
                         <>
@@ -552,7 +554,7 @@ function PaymentContent() {
                     <button
                       type="button"
                       onClick={() => setShowAddMoneyModal(true)}
-                      className="w-full sm:w-auto bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs py-2.5 px-4 rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs py-2.5 px-4 rounded-xl transition-all shadow-sm active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       + Add Money to Wallet
                     </button>
@@ -568,12 +570,12 @@ function PaymentContent() {
                 type="button"
                 onClick={() => handleInitiateGateway("BKASH")}
                 disabled={isInitiatingGateway !== null}
-                className="group relative overflow-hidden bg-gradient-to-r from-[#E2136E] to-[#C70959] hover:from-[#C70959] hover:to-[#A50648] text-white p-5 rounded-2xl font-bold shadow-lg hover:shadow-pink-500/25 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 text-left cursor-pointer flex flex-col justify-between min-h-[110px]"
+                className="group relative overflow-hidden bg-gradient-to-r from-[#E2136E] to-[#C70959] hover:from-[#C70959] hover:to-[#A50648] text-white p-4 sm:p-5 rounded-2xl font-bold shadow-md hover:shadow-pink-500/20 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 text-left cursor-pointer flex flex-col justify-between min-h-[110px]"
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-xl bg-white text-[#E2136E] flex items-center justify-center font-black text-sm shadow-md">
-                      ৳
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-xs shrink-0">
+                      <img src="/images/bkash.svg" alt="bKash" className="w-full h-full object-contain" />
                     </div>
                     <div>
                       <span className="text-base font-black tracking-tight block">
@@ -605,12 +607,12 @@ function PaymentContent() {
                 type="button"
                 onClick={() => handleInitiateGateway("NAGAD")}
                 disabled={isInitiatingGateway !== null}
-                className="group relative overflow-hidden bg-gradient-to-r from-[#F7941D] to-[#E05A10] hover:from-[#E05A10] hover:to-[#B84508] text-white p-5 rounded-2xl font-bold shadow-lg hover:shadow-orange-500/25 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 text-left cursor-pointer flex flex-col justify-between min-h-[110px]"
+                className="group relative overflow-hidden bg-gradient-to-r from-[#F7941D] to-[#EE1C25] hover:from-[#E05A10] hover:to-[#D81B24] text-white p-4 sm:p-5 rounded-2xl font-bold shadow-md hover:shadow-orange-500/20 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 text-left cursor-pointer flex flex-col justify-between min-h-[110px]"
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-xl bg-white text-[#E05A10] flex items-center justify-center font-black text-sm shadow-md">
-                      ৳
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-xs shrink-0">
+                      <img src="/images/nagad.svg" alt="Nagad" className="w-full h-full object-contain" />
                     </div>
                     <div>
                       <span className="text-base font-black tracking-tight block">

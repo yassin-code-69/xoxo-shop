@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 60" width="120" height="60">
+  <g fill="none" fill-rule="evenodd">
+    <!-- bKash Bird Icon -->
+    <path fill="#DF146E" d="M15.8 44.5L2 30.7l13.8-13.8 13.8 13.8z"/>
+    <path fill="#E2136E" d="M15.8 16.9L29.6 3.1l6.9 13.8-13.8 13.8z"/>
+    <path fill="#C70E60" d="M22.7 30.7l6.9-13.8 13.8 13.8-13.8 13.8z"/>
+    <path fill="#9B0B4C" d="M15.8 44.5l13.8 13.8 6.9-13.8-13.8-13.8z"/>
+    <!-- bKash Text -->
+    <text x="48" y="38" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="900" fill="#E2136E" letter-spacing="-0.5">bKash</text>
+  </g>
+</svg>

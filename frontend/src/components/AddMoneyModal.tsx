@@ -24,6 +24,7 @@ const PAYMENT_METHODS = [
   {
     code: "BKASH",
     name: "bKash",
+    logo: "/images/bkash.svg",
     number: "01723848471",
     type: "Personal (Send Money)",
     color: "from-pink-600 to-rose-600",
@@ -34,6 +35,7 @@ const PAYMENT_METHODS = [
   {
     code: "NAGAD",
     name: "Nagad",
+    logo: "/images/nagad.svg",
     number: "01800000000",
     type: "Personal (Send Money)",
     color: "from-orange-600 to-amber-600",
@@ -44,6 +46,7 @@ const PAYMENT_METHODS = [
   {
     code: "ROCKET",
     name: "Rocket",
+    logo: "/images/rocket.svg",
     number: "01900000000-0",
     type: "Personal (Send Money)",
     color: "from-purple-600 to-indigo-600",
@@ -228,16 +231,23 @@ export function AddMoneyModal({ isOpen, onClose, onSuccess }: AddMoneyModalProps
                         type="button"
                         key={method.code}
                         onClick={() => setSelectedMethodCode(method.code)}
-                        className={`p-2.5 sm:p-3 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${
+                        className={`p-2 sm:p-2.5 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 relative overflow-hidden group ${
                           isSelected
                             ? `${method.border} bg-purple-50/80 dark:bg-purple-950/40 shadow-sm ring-2 ring-purple-500/20`
                             : "border-slate-200 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-800/40 hover:bg-slate-100 dark:hover:bg-neutral-800 text-slate-600 dark:text-slate-300"
                         }`}
                       >
-                        <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
+                        <div className="h-6 sm:h-7 flex items-center justify-center">
+                          <img
+                            src={method.logo}
+                            alt={method.name}
+                            className="h-full object-contain group-hover:scale-105 transition-transform"
+                          />
+                        </div>
+                        <span className="text-[11px] sm:text-xs font-black text-slate-900 dark:text-white">
                           {method.name}
                         </span>
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                        <span className="text-[9px] text-slate-500 dark:text-slate-400 font-medium">
                           Send Money
                         </span>
                       </button>

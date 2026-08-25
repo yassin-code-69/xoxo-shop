@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 60" width="120" height="60">
+  <defs>
+    <linearGradient id="rocketGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8C3494"/>
+      <stop offset="100%" stop-color="#5B2C82"/>
+    </linearGradient>
+  </defs>
+  <g fill="none" fill-rule="evenodd">
+    <!-- Rocket Icon -->
+    <rect x="4" y="12" width="36" height="36" rx="10" fill="url(#rocketGrad)"/>
+    <path fill="#FFFFFF" d="M22 18c-3 3-5 8-5 13l4-2 1 6 3-3 3 3 1-6 4 2c0-5-2-10-5-13h-6z"/>
+    <circle cx="22" cy="27" r="2.5" fill="#F47920"/>
+    <!-- Rocket Text -->
+    <text x="48" y="38" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="900" fill="#8C3494" letter-spacing="-0.5">Rocket</text>
+  </g>
+</svg>
