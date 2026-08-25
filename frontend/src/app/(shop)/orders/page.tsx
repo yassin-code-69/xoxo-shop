@@ -61,49 +61,49 @@ export default function MyOrdersPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 py-8 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+    <div className="flex flex-col gap-3.5 sm:gap-6 py-3 sm:py-6 px-2.5 sm:px-4 max-w-5xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+          <h1 className="text-base sm:text-2xl font-black text-slate-900 dark:text-white">
             My Orders
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5">
             Track and view your Free Fire diamond top-up history
           </p>
         </div>
         <Link
           href="/uid-topup"
-          className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-1.5"
+          className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-[10px] sm:text-xs px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl shadow-xs transition-all flex items-center gap-1 shrink-0"
         >
-          <ShoppingBag size={16} /> Top Up Now
+          <ShoppingBag size={13} /> Top Up Now
         </Link>
       </div>
 
       {error && (
-        <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-semibold">
+        <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-semibold">
           {error}
         </div>
       )}
 
       {orders.length === 0 ? (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-purple-50 dark:bg-purple-950/40 text-purple-600 flex items-center justify-center">
-            <ShoppingBag size={32} />
+        <div className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl p-8 sm:p-12 text-center border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col items-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-purple-50 dark:bg-purple-950/40 text-purple-600 flex items-center justify-center">
+            <ShoppingBag size={24} />
           </div>
-          <h3 className="text-lg font-bold text-slate-800 dark:text-white">No Orders Yet</h3>
+          <h3 className="text-sm sm:text-base font-bold text-slate-800 dark:text-white">No Orders Yet</h3>
           <p className="text-xs text-slate-500 max-w-sm">
             You haven&apos;t placed any top-up orders yet. Choose a package and get diamonds
             delivered instantly!
           </p>
           <Link
             href="/uid-topup"
-            className="mt-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold px-6 py-3 rounded-xl text-xs uppercase tracking-wider shadow-md hover:scale-105 transition-all"
+            className="mt-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold px-4 py-2 rounded-xl text-xs uppercase tracking-wider shadow-sm hover:scale-105 transition-all"
           >
             Browse Diamond Packs
           </Link>
         </div>
       ) : (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-lg overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {orders.map((o) => {
               const isCompleted = o.order_status === "COMPLETED";
@@ -114,11 +114,11 @@ export default function MyOrdersPage() {
                 <Link
                   key={o.id}
                   href={`/payment/${o.public_order_id}`}
-                  className="p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group block"
+                  className="p-3 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 sm:gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group block"
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
                     <div
-                      className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-inner ${
+                      className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
                         isCompleted
                           ? "bg-green-100 text-green-600 dark:bg-green-950/40 dark:text-green-400"
                           : isSubmitted
@@ -126,33 +126,33 @@ export default function MyOrdersPage() {
                             : "bg-purple-100 text-purple-600 dark:bg-purple-950/40 dark:text-purple-400"
                       }`}
                     >
-                      {isCompleted ? <CheckCircle2 size={24} /> : <Clock size={24} />}
+                      {isCompleted ? <CheckCircle2 size={18} /> : <Clock size={18} />}
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-sm text-purple-600 dark:text-purple-400">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono font-bold text-xs text-purple-600 dark:text-purple-400 truncate">
                           {o.public_order_id}
                         </span>
-                        <span className="text-[11px] text-slate-400">
+                        <span className="text-[9px] sm:text-[10px] text-slate-400 shrink-0">
                           • {new Date(o.created_at).toLocaleDateString()}
                         </span>
                       </div>
-                      <h4 className="font-bold text-slate-800 dark:text-white text-sm sm:text-base mt-0.5">
+                      <h4 className="font-bold text-slate-800 dark:text-white text-xs sm:text-sm mt-0.5 truncate">
                         {o.product_name}
                       </h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">
                         Player UID: <span className="font-mono font-semibold">{o.player_uid}</span>{" "}
                         • Method: {o.payment_method_code}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between sm:justify-end gap-5 w-full sm:w-auto pl-16 sm:pl-0">
-                    <span className="font-black text-base sm:text-lg text-slate-900 dark:text-white">
+                  <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4 w-full sm:w-auto pl-11 sm:pl-0 shrink-0">
+                    <span className="font-black text-xs sm:text-base text-slate-900 dark:text-white">
                       ৳ {o.total_amount}
                     </span>
                     <span
-                      className={`px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider ${
+                      className={`px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-wider ${
                         isCompleted
                           ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300"
                           : o.order_status === "PAYMENT_SUBMITTED"
@@ -165,8 +165,8 @@ export default function MyOrdersPage() {
                       {o.order_status.replace(/_/g, " ")}
                     </span>
                     <ChevronRight
-                      size={18}
-                      className="text-slate-400 group-hover:translate-x-1 transition-transform"
+                      size={14}
+                      className="text-slate-400 group-hover:translate-x-0.5 transition-transform"
                     />
                   </div>
                 </Link>
