@@ -180,7 +180,7 @@ export function FloatingChatBot() {
     <>
       {/* Floating Trigger Button */}
       {!isOpen && (
-        <div className="fixed bottom-20 md:bottom-6 right-4 sm:right-6 z-50 flex items-center gap-2">
+        <div className="fixed bottom-16 sm:bottom-6 right-3 sm:right-6 z-50 flex items-center gap-2">
           {/* Tooltip / Prompt bubble on desktop */}
           <div className="hidden sm:flex items-center gap-1.5 bg-slate-900/90 text-white text-xs font-semibold px-3.5 py-1.5 rounded-full shadow-lg border border-purple-500/30 backdrop-blur-md animate-bounce">
             <Sparkles size={12} className="text-purple-400" />
@@ -190,12 +190,12 @@ export function FloatingChatBot() {
           <button
             onClick={() => setIsOpen(true)}
             aria-label="Open AI Assistant"
-            className="w-14 h-14 rounded-full bg-gradient-to-tr from-purple-600 via-indigo-600 to-pink-500 text-white flex items-center justify-center shadow-[0_4px_25px_rgba(147,51,234,0.5)] hover:scale-110 active:scale-95 transition-all duration-300 relative group cursor-pointer"
+            className="w-10 h-10 sm:w-13 sm:h-13 rounded-full bg-gradient-to-tr from-purple-600 via-indigo-600 to-pink-500 text-white flex items-center justify-center shadow-[0_3px_15px_rgba(147,51,234,0.4)] hover:scale-110 active:scale-95 transition-all duration-300 relative group cursor-pointer"
           >
-            <Bot size={28} className="group-hover:rotate-12 transition-transform" />
-            <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+            <Bot size={20} className="sm:w-6 sm:h-6 group-hover:rotate-12 transition-transform" />
+            <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5 sm:h-3 sm:w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-green-500 border-2 border-white dark:border-black"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-green-500 border-2 border-white dark:border-black"></span>
             </span>
           </button>
         </div>

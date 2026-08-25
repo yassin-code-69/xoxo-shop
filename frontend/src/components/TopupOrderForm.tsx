@@ -178,10 +178,10 @@ export function TopupOrderForm({
   const hasSufficientWalletBalance = isAuthenticated && currentBalance >= currentPrice;
 
   return (
-    <div className="flex flex-col gap-6 py-6 px-4 max-w-6xl mx-auto">
+    <div className="flex flex-col gap-3.5 sm:gap-6 py-3 sm:py-6 px-2.5 sm:px-4 max-w-6xl mx-auto">
       {/* 1. Header Hero Card matching Screenshot */}
-      <div className="bg-gradient-to-r from-purple-50 to-white dark:from-[#170e2c] dark:to-[#120b22] rounded-2xl shadow-xs border border-slate-100 dark:border-purple-950/60 p-5 sm:p-6 flex items-center gap-5 sm:gap-6">
-        <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-md shrink-0 border border-slate-100 dark:border-purple-900/40 bg-purple-900/10">
+      <div className="bg-gradient-to-r from-purple-50 to-white dark:from-[#170e2c] dark:to-[#120b22] rounded-xl sm:rounded-2xl shadow-xs border border-slate-100 dark:border-purple-950/60 p-3.5 sm:p-6 flex items-center gap-3.5 sm:gap-6">
+        <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl overflow-hidden shadow-sm shrink-0 border border-slate-100 dark:border-purple-900/40 bg-purple-900/10">
           <img
             src={imageSrc}
             alt={title}
@@ -192,17 +192,17 @@ export function TopupOrderForm({
           />
         </div>
         <div className="flex flex-col">
-          <h1 className="text-xl sm:text-2xl font-black text-[#0b132b] dark:text-white mb-2 tracking-tight">
+          <h1 className="text-base sm:text-2xl font-black text-[#0b132b] dark:text-white mb-1 sm:mb-2 tracking-tight">
             {title}
           </h1>
-          <div className="bg-purple-50 dark:bg-purple-950/50 text-[#6b46c1] dark:text-purple-300 text-xs font-bold px-3 py-1.5 rounded-full inline-flex items-center gap-1.5 w-max border border-purple-100 dark:border-purple-900/40 shadow-xs">
-            <Zap size={14} className="text-amber-500 fill-amber-500" /> {badgeText}
+          <div className="bg-purple-50 dark:bg-purple-950/50 text-[#6b46c1] dark:text-purple-300 text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-full inline-flex items-center gap-1 w-max border border-purple-100 dark:border-purple-900/40 shadow-xs">
+            <Zap size={12} className="text-amber-500 fill-amber-500" /> {badgeText}
           </div>
         </div>
       </div>
 
       {error && (
-        <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-bold flex items-center justify-between shadow-xs">
+        <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-bold flex items-center justify-between shadow-xs">
           <span>{error}</span>
           <button
             type="button"
@@ -215,22 +215,22 @@ export function TopupOrderForm({
       )}
 
       {/* Main 2-Column Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 sm:gap-6 items-start">
         {/* Left Column: Select Recharge Packages */}
-        <div className="lg:col-span-2 flex flex-col gap-4">
-          <div className="bg-white dark:bg-[#120b22] rounded-2xl shadow-xs border border-slate-100 dark:border-purple-950/60 overflow-hidden">
+        <div className="lg:col-span-2 flex flex-col gap-3.5 sm:gap-4">
+          <div className="bg-white dark:bg-[#120b22] rounded-xl sm:rounded-2xl shadow-xs border border-slate-100 dark:border-purple-950/60 overflow-hidden">
             {/* Step Header */}
-            <div className="bg-slate-50 dark:bg-[#18112e] border-b border-slate-100 dark:border-purple-950/60 p-4 flex items-center gap-2.5">
-              <div className="w-6 h-6 rounded-full bg-[#6b46c1] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+            <div className="bg-slate-50 dark:bg-[#18112e] border-b border-slate-100 dark:border-purple-950/60 p-3 sm:p-4 flex items-center gap-2">
+              <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#6b46c1] text-white flex items-center justify-center font-bold text-[10px] sm:text-xs shadow-xs">
                 1
               </div>
-              <h2 className="font-bold text-[#0b132b] dark:text-white text-sm sm:text-base">
+              <h2 className="font-bold text-[#0b132b] dark:text-white text-xs sm:text-base">
                 Select Recharge
               </h2>
             </div>
 
             {/* Packages Grid */}
-            <div className="p-4 sm:p-5">
+            <div className="p-3 sm:p-5">
               {isLoading ? (
                 <div className="flex items-center justify-center py-12 text-slate-400 gap-2 font-medium">
                   <Loader2 className="animate-spin text-[#6b46c1]" size={24} />

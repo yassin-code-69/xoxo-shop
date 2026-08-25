@@ -23,50 +23,50 @@ export function MobileNav() {
     <>
       <nav
         aria-label="Mobile Bottom App Bar"
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#120b22]/95 backdrop-blur-2xl border-t border-slate-200/90 dark:border-purple-950/80 shadow-[0_-8px_30px_rgba(0,0,0,0.15)] dark:shadow-[0_-8px_30px_rgba(0,0,0,0.6)] px-2 pt-1.5 pb-[calc(env(safe-area-inset-bottom,0.75rem)+4px)] transition-colors duration-300"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#120b22]/95 backdrop-blur-2xl border-t border-slate-200/90 dark:border-purple-950/80 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.5)] px-1.5 pt-1 pb-[calc(env(safe-area-inset-bottom,0.5rem)+2px)] transition-colors duration-300"
       >
         <div className="flex items-end justify-around max-w-md mx-auto relative">
           {/* 1. Home */}
           <Link
             href="/"
-            className={`flex-1 flex flex-col items-center justify-center min-h-[54px] py-1 px-1 rounded-2xl transition-all duration-200 select-none cursor-pointer active:scale-95 ${
+            className={`flex-1 flex flex-col items-center justify-center min-h-[46px] py-0.5 px-0.5 rounded-xl transition-all duration-200 select-none cursor-pointer active:scale-95 ${
               isHomeActive
                 ? "text-purple-600 dark:text-purple-400 font-bold"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium"
             }`}
           >
-            <Home size={24} strokeWidth={isHomeActive ? 2.5 : 1.9} />
-            <span className="text-[10px] sm:text-[11px] leading-tight mt-1">Home</span>
+            <Home size={19} strokeWidth={isHomeActive ? 2.5 : 1.9} />
+            <span className="text-[9px] sm:text-[10px] leading-tight mt-0.5">Home</span>
           </Link>
 
           {/* 2. My Orders */}
           <Link
             href="/orders"
-            className={`flex-1 flex flex-col items-center justify-center min-h-[54px] py-1 px-1 rounded-2xl transition-all duration-200 select-none cursor-pointer active:scale-95 ${
+            className={`flex-1 flex flex-col items-center justify-center min-h-[46px] py-0.5 px-0.5 rounded-xl transition-all duration-200 select-none cursor-pointer active:scale-95 ${
               isOrdersActive
                 ? "text-purple-600 dark:text-purple-400 font-bold"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium"
             }`}
           >
-            <ShoppingBag size={24} strokeWidth={isOrdersActive ? 2.5 : 1.9} />
-            <span className="text-[10px] sm:text-[11px] leading-tight mt-1">My Orders</span>
+            <ShoppingBag size={19} strokeWidth={isOrdersActive ? 2.5 : 1.9} />
+            <span className="text-[9px] sm:text-[10px] leading-tight mt-0.5">My Orders</span>
           </Link>
 
           {/* 3. Center Elevated Add Money Button (+) */}
-          <div className="flex-1 flex flex-col items-center justify-center -mt-6">
+          <div className="flex-1 flex flex-col items-center justify-center -mt-4">
             <button
               type="button"
               onClick={() => setIsAddMoneyOpen(true)}
-              className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-purple-700 via-purple-600 to-indigo-600 hover:from-purple-600 hover:to-indigo-500 text-white flex items-center justify-center shadow-[0_6px_20px_rgba(102,60,188,0.45)] border-4 border-white dark:border-[#120b22] active:scale-90 transition-all cursor-pointer group"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-tr from-purple-700 via-purple-600 to-indigo-600 hover:from-purple-600 hover:to-indigo-500 text-white flex items-center justify-center shadow-[0_4px_15px_rgba(102,60,188,0.4)] border-3 border-white dark:border-[#120b22] active:scale-90 transition-all cursor-pointer group"
               title="Add Money to Wallet"
             >
               <Plus
-                size={28}
-                strokeWidth={3}
+                size={22}
+                strokeWidth={2.8}
                 className="group-hover:rotate-90 transition-transform duration-300"
               />
             </button>
-            <span className="text-[10px] sm:text-[11px] font-bold text-slate-700 dark:text-slate-300 leading-tight mt-1">
+            <span className="text-[9px] sm:text-[10px] font-bold text-slate-700 dark:text-slate-300 leading-tight mt-0.5">
               Add Money
             </span>
           </div>
@@ -74,21 +74,21 @@ export function MobileNav() {
           {/* 4. My Codes / Topup */}
           <Link
             href="/uid-topup"
-            className={`flex-1 flex flex-col items-center justify-center min-h-[54px] py-1 px-1 rounded-2xl transition-all duration-200 select-none cursor-pointer active:scale-95 ${
+            className={`flex-1 flex flex-col items-center justify-center min-h-[46px] py-0.5 px-0.5 rounded-xl transition-all duration-200 select-none cursor-pointer active:scale-95 ${
               isCodesActive
                 ? "text-purple-600 dark:text-purple-400 font-bold"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium"
             }`}
           >
-            <CreditCard size={24} strokeWidth={isCodesActive ? 2.5 : 1.9} />
-            <span className="text-[10px] sm:text-[11px] leading-tight mt-1">My Codes</span>
+            <CreditCard size={19} strokeWidth={isCodesActive ? 2.5 : 1.9} />
+            <span className="text-[9px] sm:text-[10px] leading-tight mt-0.5">My Codes</span>
           </Link>
 
           {/* 5. My Account -> Opens Sidebar/Sidemenu */}
           <button
             type="button"
             onClick={() => setIsDrawerOpen(true)}
-            className={`flex-1 flex flex-col items-center justify-center min-h-[54px] py-1 px-1 rounded-2xl transition-all duration-200 select-none cursor-pointer active:scale-95 ${
+            className={`flex-1 flex flex-col items-center justify-center min-h-[46px] py-0.5 px-0.5 rounded-xl transition-all duration-200 select-none cursor-pointer active:scale-95 ${
               isAccountActive
                 ? "text-purple-600 dark:text-purple-400 font-bold"
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium"
@@ -96,9 +96,9 @@ export function MobileNav() {
           >
             {isAuthenticated && profile?.avatar_url ? (
               <div
-                className={`w-6 h-6 rounded-full overflow-hidden border-2 transition-all ${
+                className={`w-5 h-5 rounded-full overflow-hidden border transition-all ${
                   isAccountActive
-                    ? "border-purple-600 dark:border-purple-400 shadow-sm"
+                    ? "border-purple-600 dark:border-purple-400 shadow-xs"
                     : "border-transparent"
                 }`}
               >
@@ -109,9 +109,9 @@ export function MobileNav() {
                 />
               </div>
             ) : (
-              <User size={24} strokeWidth={isAccountActive ? 2.5 : 1.9} />
+              <User size={19} strokeWidth={isAccountActive ? 2.5 : 1.9} />
             )}
-            <span className="text-[10px] sm:text-[11px] leading-tight mt-1">My Account</span>
+            <span className="text-[9px] sm:text-[10px] leading-tight mt-0.5">My Account</span>
           </button>
         </div>
       </nav>
