@@ -24,7 +24,7 @@ class Settings(BaseSettings):
         "http://localhost:8000",
         "http://127.0.0.1:8000",
     ]
-    BACKEND_CORS_ORIGIN_REGEX: str | None = None
+    BACKEND_CORS_ORIGIN_REGEX: str | None = r"^https:\/\/.*\.vercel\.app$"
 
     # Comma-free list of hostnames this API answers to ("*" disables the check).
     ALLOWED_HOSTS: list[str] = ["*"]
