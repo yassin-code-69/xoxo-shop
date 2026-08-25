@@ -110,13 +110,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setToken(session.access_token);
           try {
             await syncProfile({
-              email: session.user.email,
-              full_name: session.user.user_metadata?.full_name,
-              avatar_url: session.user.user_metadata?.avatar_url,
+              email: session.user?.email,
+              full_name: session.user?.user_metadata?.full_name,
+              avatar_url: session.user?.user_metadata?.avatar_url,
             });
             await refreshProfile();
           } catch (e) {
-            console.error("Profile sync error:", e);
+            console.warn("Profile sync skipped or failed:", e);
+            if (e instanceof ApiError && e.status === 401) {
+              if (typeof window !== "undefined") {
+                localStorage.removeItem("xoxo_auth_token");
+              }
+              setToken(null);
+              setProfile(null);
+              await supabase.auth.signOut().catch(() => {});
+            }
           }
         } else if (event === "SIGNED_OUT") {
           if (!isLoggingOutRef.current) {

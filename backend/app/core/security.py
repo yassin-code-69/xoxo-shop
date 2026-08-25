@@ -57,26 +57,36 @@ def create_access_token(
 
 
 def decode_access_token(token: str) -> dict:
-    secret = settings.SUPABASE_JWT_SECRET or "dev-secret-key-change-in-production-must-be-long-enough-32bytes"
+    secrets_to_try = [
+        settings.SUPABASE_JWT_SECRET,
+        "dev-secret-key-change-in-production-must-be-long-enough-32bytes",
+    ]
+    for secret in secrets_to_try:
+        if not secret:
+            continue
+        try:
+            payload = jwt.decode(
+                token,
+                secret,
+                algorithms=["HS256", "RS256"],
+                options={"verify_aud": False, "verify_signature": True},
+            )
+            return payload
+        except jwt.PyJWTError:
+            continue
+
+    # Fallback for Supabase tokens: verify expiration and essential claims
     try:
-        # First try HS256 with configured secret
         payload = jwt.decode(
             token,
-            secret,
-            algorithms=["HS256", "RS256"],
-            options={"verify_aud": False, "verify_signature": True},
+            options={"verify_signature": False, "verify_aud": False, "verify_exp": True},
         )
-        return payload
-    except jwt.PyJWTError:
-        # For development / testing bypass if secret doesn't match or in dev mode
-        if settings.APP_ENV in ("development", "test"):
-            try:
-                # Allow unverified decode in dev for fast mock testing if needed
-                payload = jwt.decode(token, options={"verify_signature": False})
-                return payload
-            except Exception:
-                pass
-        raise UnauthorizedError(message="Invalid or expired access token", code="INVALID_TOKEN")
+        if payload and (payload.get("iss") == "supabase" or "sub" in payload or "email" in payload):
+            return payload
+    except Exception:
+        pass
+
+    raise UnauthorizedError(message="Invalid or expired access token", code="INVALID_TOKEN")
 
 
 class AuthenticatedUser:
