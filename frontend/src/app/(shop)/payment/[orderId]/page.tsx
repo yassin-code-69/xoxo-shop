@@ -55,7 +55,8 @@ function PaymentContent() {
   const [error, setError] = useState<string | null>(urlError || null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showManualForm, setShowManualForm] = useState(false);
+  const [showManualForm, setShowManualForm] = useState(true);
+  const [selectedManualCode, setSelectedManualCode] = useState<string>("BKASH");
   const [isPayingWithWallet, setIsPayingWithWallet] = useState(false);
   const [showAddMoneyModal, setShowAddMoneyModal] = useState(false);
 
@@ -86,6 +87,9 @@ function PaymentContent() {
       const [orderData, methods] = await Promise.all([getOrder(orderId), getPaymentMethods()]);
       setOrder(orderData);
       setPaymentMethods(methods);
+      if (orderData.payment_method_code && ["BKASH", "NAGAD", "ROCKET"].includes(orderData.payment_method_code)) {
+        setSelectedManualCode(orderData.payment_method_code);
+      }
       if (!isUserInputDirtyRef.current) {
         if (orderData.payment_transaction_id) {
           setTransactionId(orderData.payment_transaction_id);
@@ -641,168 +645,201 @@ function PaymentContent() {
             </div>
           </div>
 
-          {/* Manual Send Money / TrxID Accordion Fallback */}
+          {/* Manual Send Money / TrxID Section (Direct & Interactive) */}
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-md overflow-hidden transition-all">
-            <button
-              type="button"
-              onClick={() => setShowManualForm(!showManualForm)}
-              className="w-full p-5 sm:p-6 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
-            >
+            <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-purple-600 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-300 flex items-center justify-center shrink-0">
                   <Smartphone size={20} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-800 dark:text-white">
-                    Need Manual Transfer instead? (Send Money with TrxID)
+                  <h3 className="text-base font-black text-slate-800 dark:text-white">
+                    Manual Send Money (bKash / Nagad / Rocket)
                   </h3>
-                  <p className="text-xs text-slate-500">
-                    If you sent money manually or prefer Rocket / Agent transfer, click to submit
-                    your Transaction ID.
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Select your payment method, send money, and submit your Transaction ID below.
                   </p>
                 </div>
               </div>
-              <div className="text-slate-400">
-                {showManualForm ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-              </div>
-            </button>
+            </div>
 
-            {showManualForm && (
-              <div className="p-6 sm:p-8 pt-0 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-200">
-                {/* Left: Manual Payment Instructions */}
-                <div className="space-y-4 pt-6">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                      Transfer Details
-                    </span>
-                    <span className="text-xs font-black uppercase text-purple-600 bg-purple-50 dark:bg-purple-950/40 px-3 py-1 rounded-full">
-                      {activeMethod?.name || order.payment_method_code}
-                    </span>
-                  </div>
-
-                  {/* Account Number with Copy */}
-                  <div className="p-4 rounded-2xl bg-purple-50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900 flex items-center justify-between">
-                    <div>
-                      <span className="text-[11px] font-bold text-purple-700 dark:text-purple-300 uppercase block">
-                        {activeMethod?.name} {activeMethod?.account_type} Number
-                      </span>
-                      <span className="text-lg font-black text-slate-900 dark:text-white font-mono tracking-wider">
-                        {activeMethod?.account_number || "01700000000"}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleCopyNumber}
-                      className="bg-white dark:bg-slate-800 hover:bg-purple-100 text-purple-600 p-2 rounded-xl border border-purple-200 dark:border-purple-700 shadow-sm transition-all flex items-center gap-1 text-xs font-bold cursor-pointer"
-                    >
-                      {copiedNumber ? <Check size={14} /> : <Copy size={14} />}
-                      <span>{copiedNumber ? "Copied" : "Copy"}</span>
-                    </button>
-                  </div>
-
-                  {/* Exact Amount */}
-                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                    <div>
-                      <span className="text-[11px] font-bold text-slate-500 uppercase block">
-                        Amount
-                      </span>
-                      <span className="text-xl font-black text-purple-600 dark:text-purple-400">
-                        ৳ {order.total_amount}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleCopyAmount}
-                      className="bg-white dark:bg-slate-900 hover:bg-slate-100 text-slate-700 dark:text-slate-200 p-2 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm transition-all flex items-center gap-1 text-xs font-bold cursor-pointer"
-                    >
-                      {copiedAmount ? <Check size={14} /> : <Copy size={14} />}
-                      <span>{copiedAmount ? "Copied" : "Copy"}</span>
-                    </button>
-                  </div>
-
-                  {/* Step By Step Guide */}
-                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 text-xs space-y-2 text-slate-600 dark:text-slate-300">
-                    <p className="font-bold text-slate-800 dark:text-white flex items-center gap-1.5">
-                      <HelpCircle size={14} className="text-purple-600" /> Manual Payment Steps:
-                    </p>
-                    <ol className="list-decimal pl-4 space-y-1 text-[11px]">
-                      <li>
-                        Send money <strong>৳ {order.total_amount}</strong> to the number above.
-                      </li>
-                      <li>
-                        Copy the <strong>Transaction ID (TrxID)</strong> from confirmation SMS.
-                      </li>
-                      <li>Paste the TrxID in the form and submit.</li>
-                    </ol>
+            <div className="p-5 sm:p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left: Select Method & Transfer Details */}
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
+                    1. Select Payment Method
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { code: "BKASH", name: "bKash", logo: "/images/bkash.svg", border: "border-pink-500" },
+                      { code: "NAGAD", name: "Nagad", logo: "/images/nagad.svg", border: "border-orange-500" },
+                      { code: "ROCKET", name: "Rocket", logo: "/images/rocket.svg", border: "border-purple-500" },
+                    ].map((m) => {
+                      const isSelected = selectedManualCode === m.code;
+                      return (
+                        <button
+                          key={m.code}
+                          type="button"
+                          onClick={() => setSelectedManualCode(m.code)}
+                          className={`p-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 group ${
+                            isSelected
+                              ? `${m.border} bg-purple-50/80 dark:bg-purple-950/40 shadow-xs ring-2 ring-purple-500/20`
+                              : "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100 text-slate-600 dark:text-slate-300"
+                          }`}
+                        >
+                          <div className="h-6 flex items-center justify-center">
+                            <img src={m.logo} alt={m.name} className="h-full object-contain" />
+                          </div>
+                          <span className="text-[11px] font-black text-slate-900 dark:text-white">
+                            {m.name}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* Right: Manual Submission Form */}
-                <div className="pt-6 flex flex-col justify-between">
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-3 uppercase tracking-wider">
-                      Submit Transaction Details
-                    </h4>
-                    <form onSubmit={handleSubmitPayment} className="space-y-4">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                          Transaction ID / TrxID <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={transactionId}
-                          onChange={(e) => {
-                            isUserInputDirtyRef.current = true;
-                            setIsUserInputDirty(true);
-                            setTransactionId(e.target.value.toUpperCase());
-                          }}
-                          placeholder="e.g. 9K72B8X10P"
-                          className="w-full uppercase font-mono bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-purple-500 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-white"
-                          required
-                        />
-                      </div>
+                {/* Account Number with Copy */}
+                {(() => {
+                  const dbMethod = paymentMethods.find((m) => m.code === selectedManualCode);
+                  const displayNum =
+                    dbMethod?.account_number ||
+                    (selectedManualCode === "BKASH"
+                      ? "01723848471"
+                      : selectedManualCode === "NAGAD"
+                        ? "01800000000"
+                        : "01900000000-0");
+                  const displayType = dbMethod?.account_type || "Personal (Send Money)";
 
+                  return (
+                    <div className="p-4 rounded-2xl bg-purple-50/80 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900 flex items-center justify-between">
                       <div>
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                          Sender Phone Number (Optional)
-                        </label>
-                        <input
-                          type="text"
-                          value={senderNumber}
-                          onChange={(e) => {
-                            isUserInputDirtyRef.current = true;
-                            setIsUserInputDirty(true);
-                            setSenderNumber(e.target.value);
-                          }}
-                          placeholder="e.g. 017XXXXXXXX"
-                          className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-purple-500 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-white"
-                        />
+                        <span className="text-[11px] font-bold text-purple-700 dark:text-purple-300 uppercase block">
+                          {selectedManualCode} {displayType} Number
+                        </span>
+                        <span className="text-lg font-black text-slate-900 dark:text-white font-mono tracking-wider">
+                          {displayNum}
+                        </span>
                       </div>
-
                       <button
-                        type="submit"
-                        disabled={isSubmitting || !transactionId.trim()}
-                        className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black py-3.5 rounded-xl text-xs transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2 uppercase tracking-wider disabled:opacity-50 cursor-pointer"
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(displayNum);
+                          setCopiedNumber(true);
+                          setTimeout(() => setCopiedNumber(false), 2000);
+                        }}
+                        className="bg-white dark:bg-slate-800 hover:bg-purple-100 text-purple-600 p-2 rounded-xl border border-purple-200 dark:border-purple-700 shadow-xs transition-all flex items-center gap-1 text-xs font-bold cursor-pointer"
                       >
-                        {isSubmitting ? (
-                          <>
-                            <Loader2 size={16} className="animate-spin" /> Verifying...
-                          </>
-                        ) : isPaymentSubmitted ? (
-                          <>
-                            <RefreshCw size={14} /> Update Transaction Info
-                          </>
-                        ) : (
-                          <>
-                            <Zap size={16} /> Submit Manual TrxID
-                          </>
-                        )}
+                        {copiedNumber ? <Check size={14} /> : <Copy size={14} />}
+                        <span>{copiedNumber ? "Copied" : "Copy"}</span>
                       </button>
-                    </form>
+                    </div>
+                  );
+                })()}
+
+                {/* Exact Amount with Copy */}
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold text-slate-500 uppercase block">
+                      Amount to Send
+                    </span>
+                    <span className="text-xl font-black text-purple-600 dark:text-purple-400">
+                      ৳ {order.total_amount}
+                    </span>
                   </div>
+                  <button
+                    type="button"
+                    onClick={handleCopyAmount}
+                    className="bg-white dark:bg-slate-900 hover:bg-slate-100 text-slate-700 dark:text-slate-200 p-2 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs transition-all flex items-center gap-1 text-xs font-bold cursor-pointer"
+                  >
+                    {copiedAmount ? <Check size={14} /> : <Copy size={14} />}
+                    <span>{copiedAmount ? "Copied" : "Copy"}</span>
+                  </button>
+                </div>
+
+                {/* Step By Step Guide */}
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 text-xs space-y-1.5 text-slate-600 dark:text-slate-300">
+                  <p className="font-bold text-slate-800 dark:text-white flex items-center gap-1.5">
+                    <HelpCircle size={14} className="text-purple-600" /> কিভাবে পেমেন্ট করবেন:
+                  </p>
+                  <ol className="list-decimal pl-4 space-y-1 text-[11px]">
+                    <li>
+                      আপনার {selectedManualCode} অ্যাপ থেকে উপরে দেওয়া নম্বরে <strong>৳ {order.total_amount}</strong> Send Money করুন।
+                    </li>
+                    <li>
+                      পেমেন্ট সফল হলে এসএমএস থেকে <strong>Transaction ID (TrxID)</strong> কপি করুন।
+                    </li>
+                    <li>ডানপাশের ফর্মে TrxID বসিয়ে সাবমিট বাটনে ক্লিক করুন।</li>
+                  </ol>
                 </div>
               </div>
-            )}
+
+              {/* Right: Manual Submission Form */}
+              <div className="flex flex-col justify-between pt-2">
+                <div>
+                  <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-3 uppercase tracking-wider">
+                    2. Submit Transaction Details
+                  </h4>
+                  <form onSubmit={handleSubmitPayment} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                        Transaction ID / TrxID <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={transactionId}
+                        onChange={(e) => {
+                          isUserInputDirtyRef.current = true;
+                          setIsUserInputDirty(true);
+                          setTransactionId(e.target.value.toUpperCase());
+                        }}
+                        placeholder="e.g. BL92XK91M2"
+                        className="w-full uppercase font-mono bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-purple-500 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-white"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                        Sender Phone Number (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={senderNumber}
+                        onChange={(e) => {
+                          isUserInputDirtyRef.current = true;
+                          setIsUserInputDirty(true);
+                          setSenderNumber(e.target.value);
+                        }}
+                        placeholder="e.g. 017XXXXXXXX"
+                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-purple-500 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-white"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isSubmitting || !transactionId.trim()}
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white font-black py-3.5 rounded-xl text-xs transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2 uppercase tracking-wider disabled:opacity-50 cursor-pointer"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" /> Verifying...
+                        </>
+                      ) : isPaymentSubmitted ? (
+                        <>
+                          <RefreshCw size={14} /> Update Transaction Info
+                        </>
+                      ) : (
+                        <>
+                          <Zap size={16} /> Submit Manual TrxID
+                        </>
+                      )}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
