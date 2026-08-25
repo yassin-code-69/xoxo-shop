@@ -140,32 +140,32 @@ export function AddMoneyModal({ isOpen, onClose, onSuccess }: AddMoneyModalProps
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-neutral-900 rounded-[28px] max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-neutral-800 relative max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-neutral-900 rounded-2xl sm:rounded-3xl max-w-md w-full p-4 sm:p-6 shadow-2xl border border-slate-200 dark:border-neutral-800 relative max-h-[92vh] overflow-y-auto">
         {/* Close Button */}
         <button
           onClick={handleReset}
-          className="absolute top-5 right-5 w-8 h-8 rounded-full bg-slate-100 dark:bg-neutral-800 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+          className="absolute top-3.5 right-3.5 w-7 h-7 rounded-full bg-slate-100 dark:bg-neutral-800 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-colors cursor-pointer"
         >
-          <X size={18} />
+          <X size={14} />
         </button>
 
         {successData ? (
           /* Success Screen */
-          <div className="text-center py-4">
-            <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-4 border border-emerald-300 dark:border-emerald-700 shadow-md">
-              <Check size={32} strokeWidth={3} />
+          <div className="text-center py-2 sm:py-4">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-3 border border-emerald-300 dark:border-emerald-700 shadow-sm">
+              <Check size={26} strokeWidth={3} />
             </div>
-            <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            <h3 className="text-base sm:text-xl font-black text-slate-900 dark:text-white tracking-tight">
               Deposit Submitted!
             </h3>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
+            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs mx-auto">
               Your deposit request of{" "}
               <strong className="text-emerald-600 font-black">৳ {successData.amount}</strong> via{" "}
               <strong>{successData.method}</strong> has been received and is being verified.
             </p>
 
-            <div className="bg-slate-50 dark:bg-neutral-800/60 rounded-2xl p-4 my-5 text-left border border-slate-100 dark:border-neutral-700/60 text-xs flex flex-col gap-2">
+            <div className="bg-slate-50 dark:bg-neutral-800/60 rounded-xl p-3 my-3.5 text-left border border-slate-100 dark:border-neutral-700/60 text-[11px] flex flex-col gap-1.5">
               <div className="flex justify-between items-center text-slate-500 dark:text-slate-400">
                 <span>Transaction ID:</span>
                 <span className="font-mono font-bold text-slate-900 dark:text-white">
@@ -188,7 +188,7 @@ export function AddMoneyModal({ isOpen, onClose, onSuccess }: AddMoneyModalProps
 
             <button
               onClick={handleReset}
-              className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-3.5 rounded-xl text-xs uppercase tracking-wider transition-all shadow-lg active:scale-95 cursor-pointer"
+              className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-2.5 sm:py-3 rounded-xl text-xs uppercase tracking-wider transition-all shadow-md active:scale-95 cursor-pointer"
             >
               Done & View Balance
             </button>
@@ -196,34 +196,34 @@ export function AddMoneyModal({ isOpen, onClose, onSuccess }: AddMoneyModalProps
         ) : (
           /* Deposit Form */
           <div>
-            <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-10 rounded-2xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center">
-                <Sparkles size={20} />
+            <div className="flex items-center gap-2.5 mb-3.5">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                <Sparkles size={16} />
               </div>
               <div>
-                <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
+                <h3 className="text-sm sm:text-base font-black text-slate-900 dark:text-white tracking-tight">
                   Add Money to Wallet
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
                   Instant deposit via bKash, Nagad, or Rocket
                 </p>
               </div>
             </div>
 
             {error && (
-              <div className="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-semibold flex items-center gap-2">
-                <AlertCircle size={16} className="shrink-0" />
+              <div className="mb-3 p-2.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-[11px] font-semibold flex items-center gap-1.5">
+                <AlertCircle size={14} className="shrink-0" />
                 <span>{error}</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3">
               {/* 1. Payment Method Selection */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                   Select Payment Method
                 </label>
-                <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                <div className="grid grid-cols-3 gap-2">
                   {PAYMENT_METHODS.map((method) => {
                     const isSelected = selectedMethodCode === method.code;
                     return (
@@ -231,23 +231,23 @@ export function AddMoneyModal({ isOpen, onClose, onSuccess }: AddMoneyModalProps
                         type="button"
                         key={method.code}
                         onClick={() => setSelectedMethodCode(method.code)}
-                        className={`p-2 sm:p-2.5 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 relative overflow-hidden group ${
+                        className={`p-1.5 sm:p-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 relative overflow-hidden group ${
                           isSelected
-                            ? `${method.border} bg-purple-50/80 dark:bg-purple-950/40 shadow-sm ring-2 ring-purple-500/20`
-                            : "border-slate-200 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-800/40 hover:bg-slate-100 dark:hover:bg-neutral-800 text-slate-600 dark:text-slate-300"
+                            ? `${method.border} bg-purple-50/80 dark:bg-purple-950/40 shadow-xs ring-2 ring-purple-500/20`
+                            : "border-slate-200 dark:border-neutral-800 bg-slate-50/50 dark:bg-neutral-800/40 hover:bg-slate-100 text-slate-600 dark:text-slate-300"
                         }`}
                       >
-                        <div className="h-6 sm:h-7 flex items-center justify-center">
+                        <div className="h-5 sm:h-6 flex items-center justify-center">
                           <img
                             src={method.logo}
                             alt={method.name}
                             className="h-full object-contain group-hover:scale-105 transition-transform"
                           />
                         </div>
-                        <span className="text-[11px] sm:text-xs font-black text-slate-900 dark:text-white">
+                        <span className="text-[10px] sm:text-[11px] font-black text-slate-900 dark:text-white">
                           {method.name}
                         </span>
-                        <span className="text-[9px] text-slate-500 dark:text-slate-400 font-medium">
+                        <span className="text-[8px] sm:text-[9px] text-slate-500 dark:text-slate-400 font-medium">
                           Send Money
                         </span>
                       </button>
@@ -258,11 +258,11 @@ export function AddMoneyModal({ isOpen, onClose, onSuccess }: AddMoneyModalProps
 
               {/* 2. Amount Input & Presets */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
                   Deposit Amount (BDT ৳)
                 </label>
-                <div className="relative mb-2">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-sm font-bold text-slate-400">
+                <div className="relative mb-1.5">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-xs font-bold text-slate-400">
                     ৳
                   </span>
                   <input
@@ -272,21 +272,21 @@ export function AddMoneyModal({ isOpen, onClose, onSuccess }: AddMoneyModalProps
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="100"
-                    className="w-full pl-8 pr-4 py-2.5 bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl text-sm font-black text-slate-900 dark:text-white focus:outline-none focus:border-purple-500 focus:bg-white dark:focus:bg-neutral-900"
+                    className="w-full pl-7 pr-3 py-1.5 sm:py-2 bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-lg sm:rounded-xl text-xs sm:text-sm font-black text-slate-900 dark:text-white focus:outline-none focus:border-purple-500 focus:bg-white"
                     required
                   />
                 </div>
                 {/* Preset Chips */}
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-1">
                   {PRESET_AMOUNTS.map((amt) => (
                     <button
                       type="button"
                       key={amt}
                       onClick={() => setAmount(amt)}
-                      className={`text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition-all cursor-pointer ${
                         Number(amount) === amt
                           ? "bg-purple-600 text-white shadow-xs"
-                          : "bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-neutral-700"
+                          : "bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200"
                       }`}
                     >
                       +{amt}৳
@@ -296,33 +296,33 @@ export function AddMoneyModal({ isOpen, onClose, onSuccess }: AddMoneyModalProps
               </div>
 
               {/* 3. Send Money Box with 1-Click Copy */}
-              <div className="bg-slate-50 dark:bg-neutral-800/70 rounded-2xl p-3.5 border border-slate-200 dark:border-neutral-700/80">
+              <div className="bg-slate-50 dark:bg-neutral-800/70 rounded-xl p-2.5 sm:p-3 border border-slate-200 dark:border-neutral-700/80">
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-bold tracking-wider text-slate-500 uppercase">
+                    <span className="text-[9px] font-bold tracking-wider text-slate-500 uppercase">
                       {selectedMethod.name} {selectedMethod.type} Number
                     </span>
-                    <span className="text-base font-black text-slate-900 dark:text-white tracking-wider font-mono mt-0.5">
+                    <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white tracking-wider font-mono mt-0.2">
                       {selectedMethod.number}
                     </span>
                   </div>
                   <button
                     type="button"
                     onClick={handleCopy}
-                    className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-1.5 px-3 rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
+                    className="bg-purple-600 hover:bg-purple-700 text-white text-[10px] sm:text-xs font-bold py-1 px-2.5 rounded-lg flex items-center gap-1 transition-all shadow-xs active:scale-95 cursor-pointer"
                   >
                     {copied ? (
                       <>
-                        <Check size={13} strokeWidth={3} /> Copied!
+                        <Check size={11} strokeWidth={3} /> Copied!
                       </>
                     ) : (
                       <>
-                        <Copy size={13} /> Copy
+                        <Copy size={11} /> Copy
                       </>
                     )}
                   </button>
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2">
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-tight">
                   Go to your <strong>{selectedMethod.name} app</strong> &gt; Select{" "}
                   <strong>Send Money</strong> &gt; Send exact <strong>৳ {amount || 0}</strong> to
                   the number above.
@@ -330,30 +330,30 @@ export function AddMoneyModal({ isOpen, onClose, onSuccess }: AddMoneyModalProps
               </div>
 
               {/* 4. Sender Number & TrxID Input */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Sender Mobile Number
+                  <label className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Sender Number
                   </label>
                   <input
                     type="tel"
                     value={senderNumber}
                     onChange={(e) => setSenderNumber(e.target.value)}
                     placeholder="01XXXXXXXXX"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-purple-500 focus:bg-white dark:focus:bg-neutral-900 font-mono"
+                    className="w-full px-2.5 py-1.5 sm:py-2 bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-lg sm:rounded-xl text-[11px] font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-purple-500 font-mono"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Transaction ID (TrxID)
+                  <label className="block text-[10px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    TrxID <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={trxId}
                     onChange={(e) => setTrxId(e.target.value.toUpperCase())}
                     placeholder="e.g. BL92XK91M2"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl text-xs font-black text-purple-700 dark:text-purple-300 focus:outline-none focus:border-purple-500 focus:bg-white dark:focus:bg-neutral-900 font-mono uppercase"
+                    className="w-full px-2.5 py-1.5 sm:py-2 bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-lg sm:rounded-xl text-[11px] font-black text-purple-700 dark:text-purple-300 focus:outline-none focus:border-purple-500 font-mono uppercase"
                     required
                   />
                 </div>
@@ -363,21 +363,21 @@ export function AddMoneyModal({ isOpen, onClose, onSuccess }: AddMoneyModalProps
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 hover:from-purple-700 hover:to-indigo-700 text-white font-black py-3.5 rounded-xl text-xs uppercase tracking-wider transition-all shadow-lg hover:shadow-xl active:scale-98 flex items-center justify-center gap-2 mt-2 disabled:opacity-50 cursor-pointer"
+                className="w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 hover:from-purple-700 hover:to-indigo-700 text-white font-black py-2.5 sm:py-3 rounded-xl text-xs uppercase tracking-wider transition-all shadow-md active:scale-98 flex items-center justify-center gap-1.5 mt-1 disabled:opacity-50 cursor-pointer"
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 size={16} className="animate-spin" /> Verifying & Submitting...
+                    <Loader2 size={14} className="animate-spin" /> Verifying...
                   </>
                 ) : (
                   <>
-                    Confirm Deposit Request <ArrowRight size={15} />
+                    Confirm Deposit Request <ArrowRight size={13} />
                   </>
                 )}
               </button>
 
-              <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400 font-medium text-center">
-                <ShieldCheck size={14} className="text-emerald-500" />
+              <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400 font-medium text-center pt-0.5">
+                <ShieldCheck size={12} className="text-emerald-500" />
                 <span>100% Safe & Instant Automated Verification</span>
               </div>
             </form>
