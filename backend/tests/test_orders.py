@@ -48,6 +48,12 @@ async def test_order_customer_isolation(client, customer_headers):
     get_res = await client.get(f"/api/v1/orders/{public_id}", headers=other_headers)
     assert get_res.status_code == 403
 
+    # And an anonymous caller must not be able to read it either: orders expose the
+    # player UID, transaction id and sender number.
+    anon_res = await client.get(f"/api/v1/orders/{public_id}")
+    assert anon_res.status_code == 401
+    assert "999888777" not in anon_res.text
+
 
 @pytest.mark.asyncio
 async def test_get_public_feed(client, customer_headers):

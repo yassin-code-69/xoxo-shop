@@ -18,8 +18,9 @@ class FulfillmentService:
         self.db = db
 
     async def execute_fulfillment(self, order_id: str, is_retry: bool = False) -> ProviderOrder:
-        # Load order
-        result = await self.db.execute(select(Order).where(Order.id == order_id))
+        # Load and lock the order: two workers racing here would mean topping the same
+        # player up twice, which costs real diamonds. (SQLite ignores FOR UPDATE.)
+        result = await self.db.execute(select(Order).where(Order.id == order_id).with_for_update())
         order = result.scalars().first()
         if not order:
             raise NotFoundError(message=f"Order '{order_id}' not found", code="ORDER_NOT_FOUND")

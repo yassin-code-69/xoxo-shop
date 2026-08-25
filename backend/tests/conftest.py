@@ -10,7 +10,7 @@ import app.workers.tasks as workers_tasks_module
 from app.core.config import settings
 from app.core.security import create_access_token
 from app.db.base import Base
-from app.db.init_db import seed_initial_data
+from app.db.init_db import bootstrap_admin_auth_id, seed_initial_data
 from app.main import app
 
 TEST_DB_FILE = "./test_xoxo_db.sqlite"
@@ -97,8 +97,10 @@ def customer_headers(customer_token):
 
 @pytest.fixture
 def admin_token():
+    # Matches the bootstrap admin seeded by seed_initial_data(); admin rights come from
+    # the seeded role rows, never from the email claim in the token.
     payload = {
-        "sub": "test-admin-uid-99999",
+        "sub": bootstrap_admin_auth_id(settings.ADMIN_EMAIL),
         "email": settings.ADMIN_EMAIL,
         "user_metadata": {"full_name": "Admin Super", "role": "ADMIN"},
         "aud": "authenticated",

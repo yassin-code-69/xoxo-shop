@@ -1,11 +1,10 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.rate_limit import rate_limit
 from app.core.security import (
     AuthenticatedUser,
     get_current_user,
-    get_optional_current_user,
 )
 from app.db.session import get_db
 from app.modules.orders.schema import (
@@ -16,6 +15,7 @@ from app.modules.orders.schema import (
 from app.modules.orders.service import OrderService
 from app.modules.payments.schema import ManualPaymentSubmitRequest, PaymentPublicRead
 from app.modules.payments.service import PaymentService
+from app.shared.enums import RoleCode
 from app.shared.pagination import PaginatedResponse, PaginationParams
 
 router = APIRouter(tags=["Orders & Payments"])
@@ -37,13 +37,18 @@ async def create_order(
 @router.get("/orders/{public_order_id}", response_model=OrderPublicRead)
 async def get_order(
     public_order_id: str,
-    current_user: AuthenticatedUser | None = Depends(get_optional_current_user),
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    """Returns a single order. Orders carry player UIDs and transaction IDs, so this
+    always requires authentication and only ever returns the caller's own order."""
     service = OrderService(db)
-    user_id = current_user.id if current_user else None
-    is_admin = current_user.has_role("ADMIN", "SUPER_ADMIN") if current_user else False
-    order = await service.get_by_public_id(public_order_id=public_order_id, user_id=user_id, is_admin=is_admin)
+    is_admin = current_user.has_role(RoleCode.ADMIN, RoleCode.SUPER_ADMIN)
+    order = await service.get_by_public_id(
+        public_order_id=public_order_id,
+        user_id=current_user.id,
+        is_admin=is_admin,
+    )
     return service.map_to_public_read(order)
 
 
@@ -69,8 +74,8 @@ async def submit_manual_payment(
 
 @router.get("/me/orders", response_model=PaginatedResponse[OrderPublicRead])
 async def list_my_orders(
-    page: int = 1,
-    page_size: int = 20,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
     current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -79,9 +84,13 @@ async def list_my_orders(
     return await service.list_my_orders(user_id=current_user.id, params=params)
 
 
-@router.get("/orders/feed/recent", response_model=list[OrderPublicFeedItem])
+@router.get(
+    "/orders/feed/recent",
+    response_model=list[OrderPublicFeedItem],
+    dependencies=[Depends(rate_limit(max_requests=60, window_seconds=60))],
+)
 async def get_public_feed(
-    limit: int = 10,
+    limit: int = Query(10, ge=1, le=50),
     db: AsyncSession = Depends(get_db),
 ):
     service = OrderService(db)

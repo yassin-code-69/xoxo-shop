@@ -204,6 +204,96 @@ async def test_api_nagad_initiate_and_callback_flow(client, customer_headers):
 
 
 @pytest.mark.asyncio
+async def test_callback_cannot_mark_a_different_order_as_paid(client, customer_headers):
+    """A callback must only settle the order its own checkout session belongs to."""
+    # Cheap order, which the attacker actually pays for
+    cheap_res = await client.post(
+        "/api/v1/orders",
+        json={"product_id": "115-diamonds", "player_uid": "10101010", "quantity": 1, "payment_method": "BKASH"},
+        headers=customer_headers,
+    )
+    cheap_id = cheap_res.json()["public_order_id"]
+
+    # Expensive order, which the attacker wants for free
+    target_res = await client.post(
+        "/api/v1/orders",
+        json={"product_id": "5060-diamonds", "player_uid": "20202020", "quantity": 1, "payment_method": "BKASH"},
+        headers=customer_headers,
+    )
+    target_id = target_res.json()["public_order_id"]
+
+    init_res = await client.post(
+        f"/api/v1/payments/{cheap_id}/initiate-gateway",
+        json={"gateway": "BKASH"},
+        headers=customer_headers,
+    )
+    cheap_session = init_res.json()["payment_session_id"]
+
+    # Replay the cheap session against the expensive order id
+    await client.get(
+        f"/api/v1/payments/bkash/callback?paymentID={cheap_session}&status=success&order_id={target_id}",
+        follow_redirects=False,
+    )
+    await asyncio.sleep(0.1)
+
+    target_state = await client.get(f"/api/v1/orders/{target_id}", headers=customer_headers)
+    assert target_state.json()["payment_status"] == "PENDING"
+    assert target_state.json()["fulfillment_status"] == "NOT_STARTED"
+
+
+@pytest.mark.asyncio
+async def test_callback_with_wrong_amount_is_not_verified(client, customer_headers):
+    """If the gateway collected a different amount than the order total, do not settle."""
+    from app.integrations.payments.manager import gateway_manager
+
+    create_res = await client.post(
+        "/api/v1/orders",
+        json={"product_id": "610-diamonds", "player_uid": "30303030", "quantity": 1, "payment_method": "BKASH"},
+        headers=customer_headers,
+    )
+    public_id = create_res.json()["public_order_id"]
+
+    init_res = await client.post(
+        f"/api/v1/payments/{public_id}/initiate-gateway",
+        json={"gateway": "BKASH"},
+        headers=customer_headers,
+    )
+    session_id = init_res.json()["payment_session_id"]
+
+    # Gateway reports a 1 BDT payment for a much pricier order
+    gateway_manager.bkash._mock_amounts[session_id] = "1.00"
+
+    cb_res = await client.get(
+        f"/api/v1/payments/bkash/callback?paymentID={session_id}&status=success",
+        follow_redirects=False,
+    )
+    assert cb_res.status_code == 303
+    assert "status=failed" in cb_res.headers["location"]
+    await asyncio.sleep(0.1)
+
+    order_state = await client.get(f"/api/v1/orders/{public_id}", headers=customer_headers)
+    assert order_state.json()["payment_status"] == "PENDING"
+
+
+@pytest.mark.asyncio
+async def test_gateway_mock_mode_is_disabled_in_production(monkeypatch):
+    """Empty credentials in production must fail loudly, not silently mock a success."""
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "APP_ENV", "production")
+
+    bkash = BkashGatewayClient(app_key="", app_secret="", username="", password="")
+    assert bkash.is_mock_mode() is False
+    with pytest.raises(PaymentGatewayError):
+        await bkash.create_payment(order_id="ORD-PROD-1", amount=Decimal("100.00"))
+
+    nagad = NagadGatewayClient(merchant_id="", merchant_private_key="", pg_public_key="")
+    assert nagad.is_mock_mode() is False
+    with pytest.raises(PaymentGatewayError):
+        await nagad.initialize_payment(order_id="ORD-PROD-2", amount=Decimal("100.00"))
+
+
+@pytest.mark.asyncio
 async def test_initiate_gateway_unauthorized_access(client, customer_headers):
     # Customer 1 creates order
     create_res = await client.post(

@@ -8,6 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.exceptions import ConflictError, ForbiddenError, UnauthorizedError
+from app.core.logging import logger
+from app.core.rate_limit import rate_limit
 from app.core.security import (
     AuthenticatedUser,
     create_access_token,
@@ -93,11 +95,20 @@ async def sync_profile(
     )
 
 
-@router.post("/mock-token", response_model=MockTokenResponse)
+@router.post(
+    "/mock-token",
+    response_model=MockTokenResponse,
+    dependencies=[Depends(rate_limit(max_requests=10, window_seconds=60))],
+)
 async def generate_mock_token(data: MockTokenRequest):
-    """Helper for testing and frontend development without active Supabase backend."""
-    if settings.APP_ENV == "production" and not settings.DEBUG:
-        raise ForbiddenError(message="Mock tokens are disabled in production environment", code="MOCK_AUTH_DISABLED")
+    """Helper for testing and frontend development without active Supabase backend.
+
+    This mints a valid token for any email, so it is opt-in via ENABLE_MOCK_AUTH and can
+    never be switched on in production - relying on APP_ENV/DEBUG defaults being set
+    correctly would mean one missing env var away from an open token factory.
+    """
+    if settings.is_production or not settings.ENABLE_MOCK_AUTH:
+        raise ForbiddenError(message="Mock tokens are disabled on this server", code="MOCK_AUTH_DISABLED")
 
     auth_user_id = f"mock-user-{abs(hash(data.email)) % 1000000}"
     payload = {
@@ -110,7 +121,7 @@ async def generate_mock_token(data: MockTokenRequest):
         "aud": "authenticated",
         "role": "authenticated",
     }
-    token = create_access_token(payload, expires_delta=timedelta(days=7))
+    token = create_access_token(payload, expires_delta=timedelta(hours=settings.ACCESS_TOKEN_EXPIRE_HOURS))
     return MockTokenResponse(
         access_token=token,
         user={
@@ -122,7 +133,12 @@ async def generate_mock_token(data: MockTokenRequest):
     )
 
 
-@router.post("/register", response_model=AuthTokenResponse, status_code=201)
+@router.post(
+    "/register",
+    response_model=AuthTokenResponse,
+    status_code=201,
+    dependencies=[Depends(rate_limit(max_requests=5, window_seconds=300))],
+)
 async def register(
     data: UserRegisterRequest,
     db: AsyncSession = Depends(get_db),
@@ -148,7 +164,8 @@ async def register(
     db.add(profile)
     await db.flush()
 
-    default_role = RoleCode.ADMIN.value if email == settings.ADMIN_EMAIL else RoleCode.CUSTOMER.value
+    # Self-registration never grants elevated roles, whatever email is used.
+    default_role = RoleCode.CUSTOMER.value
     db.add(UserRole(user_id=profile.id, role_code=default_role))
     await db.commit()
     await db.refresh(profile)
@@ -164,7 +181,7 @@ async def register(
         "aud": "authenticated",
         "role": "authenticated",
     }
-    token = create_access_token(payload, expires_delta=timedelta(days=7))
+    token = create_access_token(payload, expires_delta=timedelta(hours=settings.ACCESS_TOKEN_EXPIRE_HOURS))
 
     return AuthTokenResponse(
         access_token=token,
@@ -185,7 +202,11 @@ async def register(
     )
 
 
-@router.post("/login", response_model=AuthTokenResponse)
+@router.post(
+    "/login",
+    response_model=AuthTokenResponse,
+    dependencies=[Depends(rate_limit(max_requests=10, window_seconds=300))],
+)
 async def login(
     data: UserLoginRequest,
     db: AsyncSession = Depends(get_db),
@@ -216,7 +237,7 @@ async def login(
         "aud": "authenticated",
         "role": "authenticated",
     }
-    token = create_access_token(payload, expires_delta=timedelta(days=7))
+    token = create_access_token(payload, expires_delta=timedelta(hours=settings.ACCESS_TOKEN_EXPIRE_HOURS))
 
     return AuthTokenResponse(
         access_token=token,
@@ -237,7 +258,10 @@ async def login(
     )
 
 
-@router.post("/change-password")
+@router.post(
+    "/change-password",
+    dependencies=[Depends(rate_limit(max_requests=5, window_seconds=300))],
+)
 async def change_password(
     data: ChangePasswordRequest,
     current_user: AuthenticatedUser = Depends(get_current_user),
@@ -248,6 +272,10 @@ async def change_password(
     if profile.password_hash:
         if not verify_password(data.old_password, profile.password_hash):
             raise UnauthorizedError(message="Incorrect current password", code="INVALID_PASSWORD")
+    else:
+        # Supabase-only account setting a local password for the first time: there is no
+        # old password to prove, the verified access token is the proof of identity.
+        logger.info(f"Setting first local password for profile {profile.id}")
     profile.password_hash = hash_password(data.new_password)
     await db.commit()
     return {"success": True, "message": "Password updated successfully"}

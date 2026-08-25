@@ -2,11 +2,16 @@
 # Root .gitignore for XoXo Shop
 # ==========================================
 
-# Environment Variables (Tracked for private repo)
-# .env
-# .env.local
-# backend/.env
-# frontend/.env.local
+# Environment Variables (NEVER commit real secrets)
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
 
 # Python / Backend
 __pycache__/

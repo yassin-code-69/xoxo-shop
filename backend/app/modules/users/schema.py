@@ -1,6 +1,33 @@
+import re
 from datetime import datetime
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, field_validator
+
+MIN_PASSWORD_LENGTH = 8
+
+# Deliberately simple: enough to reject junk like "admin" or "a@b", without pulling in a
+# full RFC 5322 parser. Deliverability is proven by mail, not by a regex.
+_EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$")
+
+
+def validate_email(value: str) -> str:
+    cleaned = value.strip().lower()
+    if not _EMAIL_PATTERN.match(cleaned) or len(cleaned) > 255:
+        raise ValueError("Enter a valid email address")
+    return cleaned
+
+
+EmailAddress = Annotated[str, AfterValidator(validate_email)]
+
+
+def validate_password_strength(value: str) -> str:
+    """Rejects the passwords that get broken first: short ones and single-class ones."""
+    if len(value) < MIN_PASSWORD_LENGTH:
+        raise ValueError(f"Password must be at least {MIN_PASSWORD_LENGTH} characters long")
+    if not re.search(r"[A-Za-z]", value) or not re.search(r"\d", value):
+        raise ValueError("Password must contain at least one letter and one number")
+    return value
 
 
 class ProfileRead(BaseModel):
@@ -49,7 +76,7 @@ class CustomerAdminRead(BaseModel):
 
 
 class CustomerAdminCreate(BaseModel):
-    email: str = Field(..., min_length=3, max_length=255)
+    email: EmailAddress
     full_name: str | None = None
     phone: str | None = None
     role: str = "CUSTOMER"
@@ -66,15 +93,22 @@ class CustomerAdminUpdate(BaseModel):
 
 
 class UserLoginRequest(BaseModel):
-    email: str = Field(..., min_length=3, max_length=255)
-    password: str = Field(..., min_length=6, max_length=128)
+    # Login deliberately keeps the loose password rules: existing accounts must still be
+    # able to sign in, and the strength check belongs on the endpoints that set one.
+    email: EmailAddress
+    password: str = Field(..., min_length=1, max_length=128)
 
 
 class UserRegisterRequest(BaseModel):
-    email: str = Field(..., min_length=3, max_length=255)
-    password: str = Field(..., min_length=6, max_length=128)
+    email: EmailAddress
+    password: str = Field(..., max_length=128)
     full_name: str | None = Field(None, max_length=255)
     phone: str | None = Field(None, max_length=32)
+
+    @field_validator("password")
+    @classmethod
+    def _check_password(cls, value: str) -> str:
+        return validate_password_strength(value)
 
 
 class AuthTokenResponse(BaseModel):
@@ -84,6 +118,11 @@ class AuthTokenResponse(BaseModel):
 
 
 class ChangePasswordRequest(BaseModel):
-    old_password: str = Field(..., min_length=6, max_length=128)
-    new_password: str = Field(..., min_length=6, max_length=128)
+    old_password: str = Field(..., min_length=1, max_length=128)
+    new_password: str = Field(..., max_length=128)
+
+    @field_validator("new_password")
+    @classmethod
+    def _check_password(cls, value: str) -> str:
+        return validate_password_strength(value)
 

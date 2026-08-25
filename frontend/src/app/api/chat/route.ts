@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
+import { getClientIp, isRateLimited } from "../../../lib/rateLimit";
 
-const SYSTEM_PROMPT = `You are the official AI Support Assistant for "XoXo Shop" (xoxoshop.com), the most trusted and fastest automated Free Fire diamond top-up platform in Bangladesh.
+// Every call here can spend Gemini quota, so it is capped per IP.
+const MAX_MESSAGES_PER_MINUTE = 12;
+const MAX_MESSAGE_LENGTH = 2000;
+
+const SYSTEM_PROMPT =`You are the official AI Support Assistant for "XoXo Shop" (xoxoshop.com), the most trusted and fastest automated Free Fire diamond top-up platform in Bangladesh.
 
 Shop Features & Knowledge:
 1. UID Topup: 100% safe, fast, automated diamond top-up via Free Fire Player UID. Delivery takes 1 to 5 minutes after payment verification.
@@ -22,6 +27,16 @@ Shop Features & Knowledge:
 
 export async function POST(req: Request) {
   try {
+    if (isRateLimited(`chat:${getClientIp(req)}`, MAX_MESSAGES_PER_MINUTE, 60_000)) {
+      return NextResponse.json(
+        {
+          reply:
+            "একটু ধীরে! কিছুক্ষণ পর আবার মেসেজ করুন, অথবা সরাসরি [Telegram Support](https://t.me/xoxoshop_support) এ যোগাযোগ করুন।",
+        },
+        { status: 429 },
+      );
+    }
+
     const body = await req.json();
     const { messages } = body;
 
@@ -29,7 +44,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid messages array" }, { status: 400 });
     }
 
-    const lastUserMessage = messages[messages.length - 1]?.content || "";
+    const lastUserMessage = String(messages[messages.length - 1]?.content ?? "").slice(
+      0,
+      MAX_MESSAGE_LENGTH,
+    );
     const apiKey = process.env.GEMINI_API_KEY || "";
     const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 

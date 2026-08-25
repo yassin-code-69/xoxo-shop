@@ -37,14 +37,29 @@ class NagadGatewayClient:
         self.base_url = (base_url or settings.NAGAD_BASE_URL).rstrip("/")
         self.callback_url = callback_url or settings.NAGAD_CALLBACK_URL
 
+        # Amounts of mock sessions, so mock callbacks reconcile like real ones
+        self._mock_amounts: dict[str, str] = {}
+
     def is_mock_mode(self) -> bool:
         """Determines if Nagad client should run in mock mode."""
+        if settings.is_production:
+            # Mock mode always reports success, which would mean free orders.
+            return False
+
         return (
             not self.merchant_id
             or self.merchant_id.strip().lower() in ("mock", "mock-merchant", "")
             or not self.merchant_private_key
             or not self.pg_public_key
         )
+
+    def _assert_configured(self) -> None:
+        """In production, missing credentials must fail loudly instead of mocking."""
+        if settings.is_production and not (self.merchant_id and self.merchant_private_key and self.pg_public_key):
+            raise PaymentGatewayError(
+                message="Nagad gateway is not configured on this server",
+                code="NAGAD_NOT_CONFIGURED",
+            )
 
     def _format_pem_key(self, key_str: str, is_public: bool = False) -> bytes:
         """Ensures PEM key string has proper headers and newlines."""
@@ -119,9 +134,11 @@ class NagadGatewayClient:
     ) -> dict[str, Any]:
         """Initializes Nagad payment session and returns redirect URL."""
         formatted_amount = f"{Decimal(str(amount)):.2f}"
+        self._assert_configured()
 
         if self.is_mock_mode():
             mock_payment_ref_id = f"NG_MOCK_{uuid.uuid4().hex[:12].upper()}"
+            self._mock_amounts[mock_payment_ref_id] = formatted_amount
             mock_nagad_url = (
                 f"{self.callback_url}?payment_ref_id={mock_payment_ref_id}&status=Success&order_id={order_id}"
             )
@@ -229,6 +246,8 @@ class NagadGatewayClient:
 
     async def verify_payment(self, payment_ref_id: str) -> dict[str, Any]:
         """Verifies payment status with Nagad."""
+        self._assert_configured()
+
         if self.is_mock_mode() or payment_ref_id.startswith("NG_MOCK_"):
             mock_trx_id = f"TRX_NG_{uuid.uuid4().hex[:10].upper()}"
             logger.info(f"[Nagad Gateway MOCK] Verified payment {payment_ref_id} -> TrxID: {mock_trx_id}")
@@ -237,7 +256,7 @@ class NagadGatewayClient:
                 "statusCode": "000_0000",
                 "paymentRefId": payment_ref_id,
                 "issuerPaymentRefNo": mock_trx_id,
-                "amount": "100.00",
+                "amount": self._mock_amounts.get(payment_ref_id, "0.00"),
                 "merchantId": self.merchant_id or "MOCK_MERCHANT",
                 "orderId": "order_mock",
                 "is_mock": True,

@@ -1,4 +1,5 @@
 from typing import Any
+from urllib.parse import quote, urlencode
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -61,10 +62,13 @@ def _handle_gateway_response(
     request: Request,
     order: Any | None,
     cb_result: Any,
-    default_order_id: str | None = None,
 ):
-    """Formats either a redirect or JSON response depending on client Accept header."""
-    public_id = order.public_order_id if order else default_order_id
+    """Formats either a redirect or JSON response depending on client Accept header.
+
+    The order id used here always comes from the order we resolved server-side, never
+    from the callback query string, so it cannot be used to shape the redirect URL.
+    """
+    public_id = order.public_order_id if order else None
     wants_json = "application/json" in request.headers.get("accept", "")
 
     if cb_result.success:
@@ -79,7 +83,10 @@ def _handle_gateway_response(
                     "message": cb_result.message,
                 }
             )
-        target_url = f"{settings.FRONTEND_URL}/payment/{public_id or ''}?status=success&trx_id={cb_result.trx_id or ''}&gateway={cb_result.gateway}"
+        query = urlencode(
+            {"status": "success", "trx_id": cb_result.trx_id or "", "gateway": cb_result.gateway}
+        )
+        target_url = f"{settings.FRONTEND_URL}/payment/{quote(public_id or '', safe='')}?{query}"
         return RedirectResponse(url=target_url, status_code=303)
 
     # Failure / cancellation
@@ -99,9 +106,11 @@ def _handle_gateway_response(
         )
 
     if public_id:
-        target_url = f"{settings.FRONTEND_URL}/payment/{public_id}?status={status_tag}&error={err_msg}&gateway={cb_result.gateway}"
+        query = urlencode({"status": status_tag, "error": err_msg, "gateway": cb_result.gateway})
+        target_url = f"{settings.FRONTEND_URL}/payment/{quote(public_id, safe='')}?{query}"
     else:
-        target_url = f"{settings.FRONTEND_URL}/orders?status={status_tag}&error={err_msg}"
+        query = urlencode({"status": status_tag, "error": err_msg})
+        target_url = f"{settings.FRONTEND_URL}/orders?{query}"
     return RedirectResponse(url=target_url, status_code=303)
 
 
@@ -119,8 +128,7 @@ async def bkash_payment_callback(
         query_params=query_params,
         body=body,
     )
-    fallback_id = query_params.get("order_id") or query_params.get("invoice")
-    return _handle_gateway_response(request, order, cb_result, default_order_id=fallback_id)
+    return _handle_gateway_response(request, order, cb_result)
 
 
 @router.get("/nagad/callback")
@@ -137,5 +145,4 @@ async def nagad_payment_callback(
         query_params=query_params,
         body=body,
     )
-    fallback_id = query_params.get("order_id") or query_params.get("invoice")
-    return _handle_gateway_response(request, order, cb_result, default_order_id=fallback_id)
+    return _handle_gateway_response(request, order, cb_result)

@@ -1,14 +1,34 @@
 import { NextResponse } from "next/server";
 import { supabase, isSupabaseConfigured } from "../../../lib/auth/supabase";
+import { getClientIp, isRateLimited } from "../../../lib/rateLimit";
+
+// This route spends a paid provider API key on every call, so it is capped per IP.
+const MAX_LOOKUPS_PER_MINUTE = 15;
+const UID_PATTERN = /^[0-9]{6,20}$/;
+const REGION_PATTERN = /^[A-Za-z]{2,5}$/;
 
 export async function POST(req: Request) {
   try {
+    if (isRateLimited(`uid-checker:${getClientIp(req)}`, MAX_LOOKUPS_PER_MINUTE, 60_000)) {
+      return NextResponse.json(
+        {
+          valid: false,
+          error: "অনেক বেশি রিকোয়েস্ট হয়েছে। এক মিনিট পর আবার চেষ্টা করুন।",
+        },
+        { status: 429 },
+      );
+    }
+
     const body = await req.json();
     const uid = (body.uid || "").toString().trim();
     let region = (body.region || "").toString().trim();
     const configId = body.config_id ? body.config_id.toString().trim() : null;
 
-    if (!uid || uid.length < 6) {
+    if (region && !REGION_PATTERN.test(region)) {
+      return NextResponse.json({ valid: false, error: "Invalid region code." }, { status: 400 });
+    }
+
+    if (!UID_PATTERN.test(uid)) {
       return NextResponse.json(
         {
           valid: false,
@@ -32,11 +52,13 @@ export async function POST(req: Request) {
 
     if (isSupabaseConfigured) {
       try {
-        let query = supabase.from("uid_checker_configs").select("*");
+        // Always constrained to active configs: config_id comes from the client, and
+        // without this it could select a disabled or unrelated provider key.
+        let query = supabase.from("uid_checker_configs").select("*").eq("is_active", true);
         if (configId) {
-          query = query.eq("id", configId);
+          query = query.eq("id", configId).limit(1);
         } else {
-          query = query.eq("is_active", true).order("is_primary", { ascending: false }).limit(1);
+          query = query.order("is_primary", { ascending: false }).limit(1);
         }
 
         const { data, error } = await query;
@@ -50,10 +72,18 @@ export async function POST(req: Request) {
 
     // Fallback to environment variables if not found in DB
     if (!activeConfig) {
-      const envKey =
-        process.env.GAMESKINBO_API_KEY ||
-        process.env.FF_UID_API_KEY ||
-        "oVsNJUK6TWHcU9UboX-NgA8BMyjdiLXNve9V8FWCU7w";
+      const envKey = process.env.GAMESKINBO_API_KEY || process.env.FF_UID_API_KEY;
+      if (!envKey) {
+        console.error("UID checker: no active config in DB and GAMESKINBO_API_KEY is not set");
+        return NextResponse.json(
+          {
+            valid: false,
+            error:
+              "UID যাচাই সেবা এই মুহূর্তে কনফিগার করা নেই। অনুগ্রহ করে সাপোর্টে যোগাযোগ করুন।",
+          },
+          { status: 503 },
+        );
+      }
 
       activeConfig = {
         provider_name: "Games Kinbo",
@@ -96,7 +126,6 @@ export async function POST(req: Request) {
           uid,
           provider: activeConfig.provider_name,
           error: `প্লেয়ার পাওয়া যায়নি: ${apiError} (Player not found on ${region} server)`,
-          raw: data,
         },
         { status: 200 },
       );
@@ -130,12 +159,15 @@ export async function POST(req: Request) {
       status: "Active & Verified",
       provider: activeConfig.provider_name,
       message: `প্লেয়ার আইডি সফলভাবে ভেরিফাইড হয়েছে (${accountInfo.AccountName})`,
-      raw: data,
       timestamp: new Date().toISOString(),
     });
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Internal error verifying Player UUID";
-    return NextResponse.json({ valid: false, error: msg }, { status: 500 });
+    // The upstream error text can name internal hosts and key handling; log it, don't ship it.
+    console.error("UID checker failure:", err);
+    return NextResponse.json(
+      { valid: false, error: "Player UUID যাচাই করা যায়নি। কিছুক্ষণ পর আবার চেষ্টা করুন।" },
+      { status: 500 },
+    );
   }
 }
 

@@ -1,4 +1,5 @@
 import json
+from decimal import Decimal, InvalidOperation
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -192,10 +193,14 @@ class PaymentService:
         admin_email: str,
         data: PaymentApproveRequest | None = None,
     ) -> Payment:
+        # The row is locked for the duration of this transaction so that two admins
+        # clicking "approve" at the same time cannot both pass the status check and
+        # enqueue fulfillment twice. (SQLite ignores FOR UPDATE; Postgres honours it.)
         query = (
             select(Payment)
             .options(selectinload(Payment.order))
             .where((Payment.id == payment_id) | (Payment.order_id == payment_id))
+            .with_for_update()
         )
         res = await self.db.execute(query)
         payment = res.scalars().first()
@@ -260,6 +265,7 @@ class PaymentService:
             select(Payment)
             .options(selectinload(Payment.order))
             .where((Payment.id == payment_id) | (Payment.order_id == payment_id))
+            .with_for_update()
         )
         res = await self.db.execute(query)
         payment = res.scalars().first()
@@ -412,6 +418,23 @@ class PaymentService:
             is_mock=init_res.is_mock,
         )
 
+    @staticmethod
+    def _callback_amount_matches(cb_result: GatewayCallbackResult, order: Order) -> bool:
+        """Checks the amount reported by the gateway against the order total."""
+        if cb_result.amount is None:
+            # A gateway that does not echo an amount cannot be reconciled here; the
+            # session binding is the only guarantee, so require the amount instead.
+            return False
+        try:
+            paid = Decimal(str(cb_result.amount))
+        except (InvalidOperation, ValueError):
+            return False
+
+        if cb_result.currency and cb_result.currency.upper() != (order.currency or "BDT").upper():
+            return False
+
+        return paid.quantize(Decimal("0.01")) == Decimal(str(order.total_amount)).quantize(Decimal("0.01"))
+
     async def process_gateway_callback(
         self,
         gateway: str,
@@ -434,26 +457,14 @@ class PaymentService:
             res = await self.db.execute(att_query)
             attempt = res.scalars().first()
 
+        # The order is resolved *only* through the attempt we created when the customer
+        # started this checkout. Trusting an order id from the callback query string would
+        # let anyone mark someone else's order as paid by replaying a cheap payment.
         order = None
         payment = None
         if attempt and attempt.payment and attempt.payment.order:
             payment = attempt.payment
             order = payment.order
-        else:
-            # Fallback lookup by public_order_id if present in callback
-            order_id_lookup = query_params.get("order_id") or query_params.get("invoice")
-            if order_id_lookup:
-                ord_query = (
-                    select(Order)
-                    .options(
-                        selectinload(Order.payment).selectinload(Payment.attempts),
-                    )
-                    .where(Order.public_order_id == order_id_lookup)
-                )
-                ord_res = await self.db.execute(ord_query)
-                order = ord_res.scalars().first()
-                if order:
-                    payment = order.payment
 
         if not order:
             logger.error(
@@ -469,6 +480,38 @@ class PaymentService:
             attempt.response_payload = json.dumps(cb_result.raw_data)
 
         if cb_result.success and cb_result.trx_id:
+            # The amount the gateway actually collected must match what the order costs.
+            if not self._callback_amount_matches(cb_result, order):
+                logger.error(
+                    f"[{gw_upper} Callback] Amount mismatch for order {order.public_order_id}: "
+                    f"gateway reported {cb_result.amount} {cb_result.currency}, order is "
+                    f"{order.total_amount} {order.currency}. Refusing to verify."
+                )
+                if attempt:
+                    attempt.status = "AMOUNT_MISMATCH"
+                self.db.add(
+                    OrderStatusHistory(
+                        order_id=order.id,
+                        status_type="PAYMENT",
+                        previous_status=order.payment_status,
+                        new_status=order.payment_status,
+                        reason=(
+                            f"{gw_upper} callback rejected: amount mismatch "
+                            f"(gateway {cb_result.amount}, expected {order.total_amount})"
+                        ),
+                        changed_by=f"GATEWAY_{gw_upper}",
+                    )
+                )
+                await self.db.commit()
+                return order, GatewayCallbackResult(
+                    success=False,
+                    gateway=gw_upper,
+                    payment_session_id=cb_result.payment_session_id,
+                    status="AMOUNT_MISMATCH",
+                    message="Payment amount does not match the order total. Please contact support.",
+                    raw_data=cb_result.raw_data,
+                )
+
             # Ensure payment exists
             if not payment:
                 payment = Payment(

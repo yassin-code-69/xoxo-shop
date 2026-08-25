@@ -65,6 +65,51 @@ async def test_invalid_token_handling(client):
 
 
 @pytest.mark.asyncio
+async def test_unsigned_token_is_rejected(client):
+    """A token we never signed must never be accepted, whatever claims it carries."""
+    import jwt as pyjwt
+    from datetime import UTC, datetime, timedelta
+
+    forged_claims = {
+        "sub": "attacker-forged-id",
+        "email": settings.ADMIN_EMAIL,
+        "aud": "authenticated",
+        "role": "authenticated",
+        "exp": datetime.now(UTC) + timedelta(days=1),
+    }
+
+    # 1. Token signed with an attacker-chosen key
+    wrong_key_token = pyjwt.encode(forged_claims, "attacker-chosen-key", algorithm="HS256")
+    res = await client.get("/api/v1/me/profile", headers={"Authorization": f"Bearer {wrong_key_token}"})
+    assert res.status_code == 401
+
+    # 2. Unsigned ("alg": "none") token
+    unsigned_token = pyjwt.encode(forged_claims, key="", algorithm="none")
+    res = await client.get("/api/v1/me/profile", headers={"Authorization": f"Bearer {unsigned_token}"})
+    assert res.status_code == 401
+
+    # 3. No admin account was created as a side effect of the forgery attempts
+    from sqlalchemy import select
+
+    from app.db.session import AsyncSessionLocal
+    from app.modules.users.model import Profile
+
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(select(Profile).where(Profile.auth_user_id == "attacker-forged-id"))
+        assert result.scalars().first() is None
+
+
+@pytest.mark.asyncio
+async def test_token_with_wrong_audience_is_rejected():
+    from app.core.exceptions import UnauthorizedError
+    from app.core.security import decode_access_token
+
+    token = create_access_token({"sub": "user-1", "email": "u@x.com", "aud": "some-other-service"})
+    with pytest.raises(UnauthorizedError):
+        decode_access_token(token)
+
+
+@pytest.mark.asyncio
 async def test_mock_token_disabled_in_production(client, monkeypatch):
     # Set APP_ENV to production and DEBUG to false
     monkeypatch.setattr(settings, "APP_ENV", "production")

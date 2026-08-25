@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.exceptions import ForbiddenError, UnauthorizedError
+from app.core.logging import logger
 from app.db.session import get_db
 from app.modules.roles.model import UserRole
 from app.modules.users.model import Profile
@@ -42,6 +43,38 @@ def verify_password(plain_password: str, hashed_password: str | None) -> bool:
 
 
 
+JWT_ALGORITHM = "HS256"
+
+# Ephemeral secret used only outside production when none is configured, so that
+# local dev / CI keeps working without ever falling back to a well-known key.
+_EPHEMERAL_DEV_SECRET = secrets.token_urlsafe(48)
+_warned_about_ephemeral_secret = False
+
+
+def _get_jwt_secret() -> str:
+    """Returns the HMAC secret used to sign and verify our access tokens."""
+    global _warned_about_ephemeral_secret
+
+    configured = (settings.SUPABASE_JWT_SECRET or "").strip()
+    if configured:
+        return configured
+
+    if settings.is_production:
+        # Never sign or accept tokens with a guessable key in production.
+        raise UnauthorizedError(
+            message="Authentication is not configured on this server",
+            code="JWT_SECRET_MISSING",
+        )
+
+    if not _warned_about_ephemeral_secret:
+        logger.warning(
+            "SUPABASE_JWT_SECRET is not set - using a random per-process secret. "
+            "Tokens will be invalidated on every restart. Set SUPABASE_JWT_SECRET in .env."
+        )
+        _warned_about_ephemeral_secret = True
+    return _EPHEMERAL_DEV_SECRET
+
+
 def create_access_token(
     payload: dict,
     expires_delta: timedelta | None = None,
@@ -50,43 +83,41 @@ def create_access_token(
     to_encode = payload.copy()
     expire = datetime.now(UTC) + (expires_delta or timedelta(hours=24))
     to_encode.update({"exp": expire, "iat": datetime.now(UTC)})
-    secret = (
-        secret_key or settings.SUPABASE_JWT_SECRET or "dev-secret-key-change-in-production-must-be-long-enough-32bytes"
-    )
-    return jwt.encode(to_encode, secret, algorithm="HS256")
+    secret = secret_key or _get_jwt_secret()
+    return jwt.encode(to_encode, secret, algorithm=JWT_ALGORITHM)
 
 
 def decode_access_token(token: str) -> dict:
-    secrets_to_try = [
-        settings.SUPABASE_JWT_SECRET,
-        "dev-secret-key-change-in-production-must-be-long-enough-32bytes",
-    ]
-    for secret in secrets_to_try:
-        if not secret:
-            continue
-        try:
-            payload = jwt.decode(
-                token,
-                secret,
-                algorithms=["HS256", "RS256"],
-                options={"verify_aud": False, "verify_signature": True},
-            )
-            return payload
-        except jwt.PyJWTError:
-            continue
+    """Decodes an access token, always verifying the signature and expiry.
 
-    # Fallback for Supabase tokens: verify expiration and essential claims
+    There is deliberately no unsigned fallback path: a token whose signature we
+    cannot verify is an untrusted token, no matter which claims it carries.
+    """
     try:
         payload = jwt.decode(
             token,
-            options={"verify_signature": False, "verify_aud": False, "verify_exp": True},
+            _get_jwt_secret(),
+            algorithms=[JWT_ALGORITHM],
+            options={
+                "verify_signature": True,
+                "verify_exp": True,
+                "verify_aud": False,  # audience checked manually below
+                "require": ["exp", "sub"],
+            },
         )
-        if payload and (payload.get("iss") == "supabase" or "sub" in payload or "email" in payload):
-            return payload
-    except Exception:
-        pass
+    except jwt.PyJWTError as exc:
+        logger.debug(f"Rejected access token: {type(exc).__name__}")
+        raise UnauthorizedError(message="Invalid or expired access token", code="INVALID_TOKEN") from exc
 
-    raise UnauthorizedError(message="Invalid or expired access token", code="INVALID_TOKEN")
+    # Supabase and our own tokens both carry aud="authenticated". Tokens issued for a
+    # different audience (e.g. another Supabase project role) must not be accepted.
+    audience = payload.get("aud")
+    if audience is not None:
+        presented = set(audience) if isinstance(audience, list) else {audience}
+        if settings.SUPABASE_JWT_AUDIENCE not in presented:
+            raise UnauthorizedError(message="Access token audience mismatch", code="INVALID_TOKEN_AUDIENCE")
+
+    return payload
 
 
 class AuthenticatedUser:
@@ -143,10 +174,9 @@ async def get_current_user(
         db.add(profile)
         await db.flush()
 
-        # Check if this is the default admin email
-        default_role = RoleCode.ADMIN.value if email == settings.ADMIN_EMAIL else RoleCode.CUSTOMER.value
-        user_role = UserRole(user_id=profile.id, role_code=default_role)
-        db.add(user_role)
+        # Newly seen accounts are always customers. Elevated roles are granted only by
+        # the bootstrap seed or by an existing admin, never by a claim in the token.
+        db.add(UserRole(user_id=profile.id, role_code=RoleCode.CUSTOMER.value))
         await db.commit()
         await db.refresh(profile)
 
@@ -170,7 +200,9 @@ async def get_optional_current_user(
         return None
     try:
         return await get_current_user(auth=auth, db=db)
-    except Exception:
+    except UnauthorizedError:
+        # An unreadable token is treated as "no token"; anything else (a blocked account,
+        # a database failure) must surface rather than silently downgrade to anonymous.
         return None
 
 

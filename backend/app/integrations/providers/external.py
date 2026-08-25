@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.logging import logger
 from app.modules.games.model import Game
 from app.modules.products.model import TopupProduct
+from app.shared.net import validate_outbound_url
 from app.shared.utils import slugify
 
 
@@ -33,8 +34,9 @@ class ExternalTopupProviderService:
             headers["x-api-key"] = api_key.strip()
 
         try:
-            async with httpx.AsyncClient(timeout=6.0, follow_redirects=True) as client:
-                resp = await client.get(api_url.strip(), headers=headers)
+            safe_url = validate_outbound_url(api_url)
+            async with httpx.AsyncClient(timeout=6.0, follow_redirects=False) as client:
+                resp = await client.get(safe_url, headers=headers)
                 status_code = resp.status_code
 
                 if resp.is_success:
@@ -145,8 +147,11 @@ class ExternalTopupProviderService:
             headers["Authorization"] = f"Bearer {api_key.strip()}"
             headers["x-api-key"] = api_key.strip()
 
-        async with httpx.AsyncClient(timeout=4.0, follow_redirects=True) as client:
-            resp = await client.get(api_url.strip(), headers=headers)
+        # follow_redirects stays off: a redirect is a second URL we never validated, and
+        # it is the standard way to slip past an SSRF check.
+        safe_url = validate_outbound_url(api_url)
+        async with httpx.AsyncClient(timeout=4.0, follow_redirects=False) as client:
+            resp = await client.get(safe_url, headers=headers)
             if resp.is_success:
                 return ExternalTopupProviderService._extract_packages(resp.json())
         return []

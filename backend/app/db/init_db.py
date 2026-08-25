@@ -1,8 +1,11 @@
+import hashlib
+import secrets
 from decimal import Decimal
 
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.logging import logger
 from app.core.security import hash_password
 from app.db.models import Base
@@ -417,31 +420,62 @@ async def seed_initial_data(db: AsyncSession):
             db.add(SiteSetting(key=k, value=v, is_public=is_pub))
     await db.commit()
 
-    # 7. Seed Default Admin User
-    admin_email = "admin@xoxoshop.com"
-    default_admin_password = "Admin@123456"
-    admin_res = await db.execute(select(Profile).where(Profile.email == admin_email))
-    admin_profile = admin_res.scalars().first()
-    if not admin_profile:
-        admin_profile = Profile(
-            auth_user_id="admin-root-001",
-            email=admin_email,
-            full_name="Super Administrator",
-            phone="01700000000",
-            password_hash=hash_password(default_admin_password),
-            status="ACTIVE",
-            is_active=True,
-        )
-        db.add(admin_profile)
-        await db.flush()
-
-        db.add(UserRole(user_id=admin_profile.id, role_code=RoleCode.ADMIN.value))
-        db.add(UserRole(user_id=admin_profile.id, role_code=RoleCode.SUPER_ADMIN.value))
-        await db.commit()
-    else:
-        # Ensure password_hash is set if missing
-        if not admin_profile.password_hash:
-            admin_profile.password_hash = hash_password(default_admin_password)
-            await db.commit()
+    # 7. Seed the bootstrap admin account
+    await seed_bootstrap_admin(db)
 
     logger.info("Database initialized and seeded successfully.")
+
+
+def bootstrap_admin_auth_id(email: str) -> str:
+    """Stable auth_user_id for the bootstrap admin of a given email."""
+    digest = hashlib.sha256(email.strip().lower().encode("utf-8")).hexdigest()[:12]
+    return f"admin-root-{digest}"
+
+
+async def seed_bootstrap_admin(db: AsyncSession) -> None:
+    """Creates the first admin account, if one is needed and a password is available.
+
+    The password always comes from ADMIN_INITIAL_PASSWORD. There is deliberately no
+    hardcoded default: a well-known password on a public deployment is a free
+    super-admin account for anyone who has read this file.
+    """
+    admin_email = settings.ADMIN_EMAIL.strip().lower()
+    admin_res = await db.execute(select(Profile).where(Profile.email == admin_email))
+    admin_profile = admin_res.scalars().first()
+
+    if admin_profile:
+        # An existing admin's password is never reset from here.
+        if not admin_profile.password_hash:
+            logger.warning(
+                f"Bootstrap admin '{admin_email}' exists without a password. "
+                "Sign in through Supabase, or set ADMIN_INITIAL_PASSWORD and recreate the account."
+            )
+        return
+
+    initial_password = (settings.ADMIN_INITIAL_PASSWORD or "").strip()
+    if not initial_password:
+        if settings.is_production:
+            logger.warning(
+                f"No admin account exists and ADMIN_INITIAL_PASSWORD is not set. "
+                f"Set it (and ADMIN_EMAIL, currently '{admin_email}') to bootstrap the first admin."
+            )
+            return
+        # Local dev convenience: a random password, printed once, never a known constant.
+        initial_password = secrets.token_urlsafe(16)
+        logger.warning(f"[dev bootstrap] Admin '{admin_email}' created with password: {initial_password}")
+
+    admin_profile = Profile(
+        auth_user_id=bootstrap_admin_auth_id(admin_email),
+        email=admin_email,
+        full_name="Super Administrator",
+        password_hash=hash_password(initial_password),
+        status="ACTIVE",
+        is_active=True,
+    )
+    db.add(admin_profile)
+    await db.flush()
+
+    db.add(UserRole(user_id=admin_profile.id, role_code=RoleCode.ADMIN.value))
+    db.add(UserRole(user_id=admin_profile.id, role_code=RoleCode.SUPER_ADMIN.value))
+    await db.commit()
+    logger.info(f"Bootstrap admin account created for '{admin_email}'.")

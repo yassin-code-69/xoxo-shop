@@ -128,7 +128,9 @@ class OrderService:
         if not order:
             raise NotFoundError(message=f"Order '{public_order_id}' not found", code="ORDER_NOT_FOUND")
 
-        if not is_admin and user_id and order.user_id != user_id:
+        # Note the missing `user_id and`: an unauthenticated caller (user_id=None) must be
+        # denied here, not waved through.
+        if not is_admin and order.user_id != user_id:
             raise ForbiddenError(message="You do not have permission to view this order", code="ORDER_ACCESS_DENIED")
 
         return order

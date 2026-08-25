@@ -39,8 +39,15 @@ class BkashGatewayClient:
         self._refresh_token: str | None = None
         self._token_expires_at: float = 0.0
 
+        # Amounts of mock sessions, so mock callbacks reconcile like real ones
+        self._mock_amounts: dict[str, str] = {}
+
     def is_mock_mode(self) -> bool:
         """Determines if the client should run in mock mode."""
+        if settings.is_production:
+            # Mock mode always reports success, which would mean free orders.
+            return False
+
         return (
             not self.app_key
             or self.app_key.strip().lower() in ("mock", "mock-key", "")
@@ -48,6 +55,14 @@ class BkashGatewayClient:
             or not self.username
             or not self.password
         )
+
+    def _assert_configured(self) -> None:
+        """In production, missing credentials must fail loudly instead of mocking."""
+        if settings.is_production and not (self.app_key and self.app_secret and self.username and self.password):
+            raise PaymentGatewayError(
+                message="bKash gateway is not configured on this server",
+                code="BKASH_NOT_CONFIGURED",
+            )
 
     async def get_token(self, force_refresh: bool = False) -> str:
         """Retrieves a valid grant ID token, using cache or refreshing if needed."""
@@ -109,9 +124,11 @@ class BkashGatewayClient:
         """Creates a bKash payment session and returns paymentID & bkashURL."""
         formatted_amount = f"{Decimal(str(amount)):.2f}"
         inv_no = invoice_number or order_id
+        self._assert_configured()
 
         if self.is_mock_mode():
             mock_payment_id = f"BK_MOCK_{uuid.uuid4().hex[:12].upper()}"
+            self._mock_amounts[mock_payment_id] = formatted_amount
             mock_bkash_url = (
                 f"{self.callback_url}?paymentID={mock_payment_id}&status=success&invoice={inv_no}"
             )
@@ -171,6 +188,8 @@ class BkashGatewayClient:
 
     async def execute_payment(self, payment_id: str) -> dict[str, Any]:
         """Executes/confirms payment with bKash and returns trxID & transaction status."""
+        self._assert_configured()
+
         if self.is_mock_mode() or payment_id.startswith("BK_MOCK_"):
             mock_trx_id = f"TRX_BK_{uuid.uuid4().hex[:10].upper()}"
             logger.info(f"[bKash Gateway MOCK] Executed mock payment {payment_id} -> TrxID: {mock_trx_id}")
@@ -180,7 +199,7 @@ class BkashGatewayClient:
                 "paymentID": payment_id,
                 "trxID": mock_trx_id,
                 "transactionStatus": "Completed",
-                "amount": "100.00",
+                "amount": self._mock_amounts.get(payment_id, "0.00"),
                 "currency": "BDT",
                 "intent": "sale",
                 "paymentExecuteTime": datetime.now(timezone.utc).isoformat(),
@@ -237,7 +256,7 @@ class BkashGatewayClient:
                 "paymentID": payment_id,
                 "trxID": f"TRX_BK_{payment_id[-8:]}",
                 "transactionStatus": "Completed",
-                "amount": "100.00",
+                "amount": self._mock_amounts.get(payment_id, "0.00"),
                 "currency": "BDT",
                 "is_mock": True,
             }
