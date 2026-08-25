@@ -380,7 +380,6 @@ export default function ProfilePage() {
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
-  const [showInstallBanner, setShowInstallBanner] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddMoneyModal, setShowAddMoneyModal] = useState(false);
   const [showOrdersHistory, setShowOrdersHistory] = useState(false);
@@ -1089,44 +1088,6 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
-
-      {/* 7. Bottom App Install Banner (Matching Screenshot Toast) */}
-      {showInstallBanner && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[90%] max-w-md bg-white dark:bg-slate-900 rounded-2xl p-3.5 shadow-2xl border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-5">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 flex items-center justify-center shrink-0">
-              <Download size={20} />
-            </div>
-            <div className="flex flex-col leading-tight">
-              <span className="text-xs font-bold text-slate-900 dark:text-white">Install App</span>
-              <span className="text-[11px] text-slate-400">
-                Install the app for better exper...
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                alert("Mobile App install prompt triggered!");
-                setShowInstallBanner(false);
-              }}
-              className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow cursor-pointer"
-            >
-              Install
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowInstallBanner(false)}
-              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
-              title="Dismiss"
-            >
-              <X size={16} />
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Edit Profile Modal */}
       {showEditModal && (
