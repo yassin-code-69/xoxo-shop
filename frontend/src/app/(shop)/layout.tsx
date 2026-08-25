@@ -19,9 +19,9 @@ export const metadata: Metadata = {
   title: "XoXo Shop",
   description: "Instant, safe, and automated Free Fire diamond top-up platform.",
   icons: {
-    icon: "/xoxo_logo.png",
-    shortcut: "/xoxo_logo.png",
-    apple: "/xoxo_logo.png",
+    icon: "/icon.png",
+    shortcut: "/favicon.ico",
+    apple: "/icon.png",
   },
 };
 

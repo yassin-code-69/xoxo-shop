@@ -15,9 +15,9 @@ export const metadata: Metadata = {
   title: "Admin Panel — XoXo Shop",
   description: "XoXo Shop Administration & Operations Console",
   icons: {
-    icon: "/xoxo_logo.png",
-    shortcut: "/xoxo_logo.png",
-    apple: "/xoxo_logo.png",
+    icon: "/icon.png",
+    shortcut: "/favicon.ico",
+    apple: "/icon.png",
   },
 };
 
