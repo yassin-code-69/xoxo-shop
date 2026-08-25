@@ -16,7 +16,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "XoXo Shop — Free Fire Diamond Top-Up",
+  title: "XoXo Shop",
   description: "Instant, safe, and automated Free Fire diamond top-up platform.",
 };
 
