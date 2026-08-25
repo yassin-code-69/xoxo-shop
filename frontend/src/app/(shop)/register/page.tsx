@@ -76,7 +76,10 @@ export default function RegisterPage() {
       <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
         <div className="p-8">
           <div className="text-center mb-6">
-            <h1 className="text-3xl font-black text-slate-900 dark:text-white mb-2">
+            <Link href="/" className="inline-block mb-3">
+              <img src="/xoxo_logo.png" alt="XoXo Shop" className="h-10 sm:h-12 w-auto object-contain mx-auto" />
+            </Link>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mb-1.5">
               Create Account
             </h1>
             <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">

@@ -14,6 +14,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Admin Panel — XoXo Shop",
   description: "XoXo Shop Administration & Operations Console",
+  icons: {
+    icon: "/xoxo_logo.png",
+    shortcut: "/xoxo_logo.png",
+    apple: "/xoxo_logo.png",
+  },
 };
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

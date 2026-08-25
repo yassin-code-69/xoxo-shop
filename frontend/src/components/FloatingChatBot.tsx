@@ -208,8 +208,8 @@ export function FloatingChatBot() {
           <div className="bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800 text-white p-4 flex items-center justify-between shadow-md">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-inner">
-                  <Bot size={22} className="text-purple-200" />
+                <div className="w-10 h-10 rounded-2xl bg-white p-1 flex items-center justify-center border border-white/40 shadow-inner">
+                  <img src="/xoxo_logo.png" alt="XoXo AI" className="w-full h-full object-contain" />
                 </div>
                 <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 border-2 border-purple-800 rounded-full"></span>
               </div>

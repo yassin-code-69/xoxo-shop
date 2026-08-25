@@ -60,21 +60,24 @@ export function AdminSidebar({ isOpen = false, onClose }: AdminSidebarProps) {
 
   const sidebarContent = (
     <div className="flex flex-col justify-between h-full bg-white dark:bg-[#0a0a0a]">
+      {/* Desktop Brand Header */}
+      <div className="hidden lg:flex items-center justify-between p-4 border-b border-slate-200/80 dark:border-[#1f1f1f]">
+        <Link href="/admin" className="flex items-center gap-2 select-none group">
+          <img src="/xoxo_logo.png" alt="XoXo Shop" className="h-7 w-auto object-contain transition-transform group-hover:scale-105" />
+          <span className="text-[10px] text-purple-700 dark:text-purple-300 font-black uppercase px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800">
+            Admin
+          </span>
+        </Link>
+      </div>
+
       {/* Mobile Drawer Header */}
       <div className="lg:hidden p-4 border-b border-slate-200 dark:border-[#1f1f1f] flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center font-black">
-            <ShieldCheck size={18} />
-          </div>
-          <div>
-            <span className="font-black text-slate-900 dark:text-white text-sm block">
-              XoXo Admin
-            </span>
-            <span className="text-[10px] text-purple-600 font-bold uppercase tracking-wider block">
-              Console Navigation
-            </span>
-          </div>
-        </div>
+        <Link href="/admin" onClick={handleLinkClick} className="flex items-center gap-2">
+          <img src="/xoxo_logo.png" alt="XoXo Shop" className="h-7 w-auto object-contain" />
+          <span className="text-[10px] text-purple-700 dark:text-purple-300 font-black uppercase px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800">
+            Admin
+          </span>
+        </Link>
         <button
           type="button"
           onClick={onClose}

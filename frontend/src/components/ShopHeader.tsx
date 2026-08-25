@@ -21,23 +21,12 @@ export function ShopHeader() {
       <header className="bg-white/95 dark:bg-[#120b22]/95 backdrop-blur-md sticky top-0 z-40 shadow-xs border-b border-slate-100 dark:border-purple-950/60 transition-colors duration-300">
         <div className="container mx-auto px-3 sm:px-4 max-w-6xl h-12 sm:h-16 md:h-20 flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-1.5 select-none">
-            <div className="flex items-center font-bold text-xl sm:text-2xl tracking-tighter">
-              <div className="flex relative items-center">
-                <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-3 sm:border-4 border-black dark:border-white mr-1 relative flex items-center justify-center transition-colors">
-                  <div className="w-1.5 sm:w-2.5 h-1.5 sm:h-2.5 bg-black dark:bg-white rounded-full mb-2 sm:mb-3 ml-1 sm:ml-2 transition-colors"></div>
-                  <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-purple-600 rounded-full"></div>
-                </div>
-                <div className="flex flex-col leading-none">
-                  <span className="text-black dark:text-white font-black text-[14px] sm:text-[18px] transition-colors">
-                    XoXo
-                  </span>
-                  <span className="text-purple-600 font-black text-[11px] sm:text-[14px]">
-                    Shop
-                  </span>
-                </div>
-              </div>
-            </div>
+          <Link href="/" className="flex items-center gap-2 select-none group">
+            <img
+              src="/xoxo_logo.png"
+              alt="XoXo Shop"
+              className="h-8 sm:h-10 md:h-12 w-auto object-contain transition-transform group-hover:scale-105"
+            />
           </Link>
 
           {/* Desktop Navigation Links */}

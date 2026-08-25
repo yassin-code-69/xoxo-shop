@@ -18,6 +18,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "XoXo Shop",
   description: "Instant, safe, and automated Free Fire diamond top-up platform.",
+  icons: {
+    icon: "/xoxo_logo.png",
+    shortcut: "/xoxo_logo.png",
+    apple: "/xoxo_logo.png",
+  },
 };
 
 export default function RootLayout({
@@ -109,11 +114,16 @@ export default function RootLayout({
                   </div>
                 </div>
 
-                <div className="pt-6 border-t border-primary-400/30 text-center text-[12px] text-primary-200 font-medium">
-                  <p>
-                    &copy; 2026 <span className="text-white font-bold">XoXo Shop</span> | All Rights
-                    Reserved
-                  </p>
+                <div className="pt-6 border-t border-primary-400/30 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left text-[12px] text-primary-200 font-medium">
+                  <div className="flex items-center gap-2">
+                    <img src="/xoxo_logo.png" alt="XoXo Shop" className="h-6 w-auto object-contain brightness-0 invert" />
+                    <span>&copy; 2026 <strong className="text-white">XoXo Shop</strong>. All Rights Reserved.</span>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs text-purple-200">
+                    <span>100% Secure Checkout</span>
+                    <span>•</span>
+                    <span>Instant Automated Top-Up</span>
+                  </div>
                 </div>
               </div>
             </footer>

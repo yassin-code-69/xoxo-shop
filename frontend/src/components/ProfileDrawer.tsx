@@ -56,9 +56,7 @@ export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
           {/* Drawer Header */}
           <div className="p-4 sm:p-5 flex items-center justify-between border-b border-slate-100 dark:border-purple-900/30">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-purple-600 text-white flex items-center justify-center text-xs font-black">
-                X
-              </div>
+              <img src="/xoxo_logo.png" alt="XoXo Shop" className="h-6 w-auto object-contain" />
               <span className="font-black text-sm tracking-tight text-slate-900 dark:text-white">
                 Account Menu
               </span>
