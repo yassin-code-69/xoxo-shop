@@ -176,40 +176,40 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Action Buttons (Side by Side on Mobile) */}
+      {/* Action Buttons (Compact & Sleek on Mobile) */}
       <div className="grid grid-cols-2 gap-2 sm:gap-4">
         <a
           href={settings["support_telegram"] || "https://t.me/xoxoshop"}
           target="_blank"
           rel="noopener noreferrer"
-          className="bg-gradient-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl sm:rounded-2xl p-2.5 sm:p-4 flex items-center justify-start gap-2 sm:gap-3 transition-all shadow-xs hover:shadow-md hover:-translate-y-0.5 group"
+          className="bg-gradient-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg sm:rounded-2xl p-1.5 sm:p-4 flex items-center justify-start gap-1.5 sm:gap-3 transition-all shadow-xs hover:shadow-md hover:-translate-y-0.5 group"
         >
-          <div className="bg-white/20 backdrop-blur-md rounded-lg sm:rounded-xl p-2 sm:p-2.5 text-white group-hover:scale-105 transition-transform shrink-0">
-            <Send size={16} className="sm:w-5 sm:h-5 ml-0.5" />
+          <div className="bg-white/20 backdrop-blur-md rounded-md sm:rounded-xl p-1.5 sm:p-2.5 text-white group-hover:scale-105 transition-transform shrink-0 flex items-center justify-center">
+            <Send size={13} className="sm:w-5 sm:h-5 ml-0.2" />
           </div>
           <div className="text-left flex flex-col min-w-0">
-            <span className="text-[8px] sm:text-[10px] uppercase font-bold text-white/70 tracking-tight leading-none truncate">
+            <span className="text-[7.5px] sm:text-[10px] uppercase font-bold text-white/75 tracking-tight leading-none">
               24/7 Support
             </span>
-            <span className="font-black text-xs sm:text-base leading-tight mt-0.5 truncate">
-              Telegram Helpdesk
+            <span className="font-extrabold text-[10px] xs:text-[11px] sm:text-base leading-tight mt-0.5 truncate">
+              Telegram
             </span>
           </div>
         </a>
 
         <Link
           href="/contact"
-          className="bg-gradient-to-br from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white rounded-xl sm:rounded-2xl p-2.5 sm:p-4 flex items-center justify-start gap-2 sm:gap-3 transition-all shadow-xs hover:shadow-md hover:-translate-y-0.5 group"
+          className="bg-gradient-to-br from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white rounded-lg sm:rounded-2xl p-1.5 sm:p-4 flex items-center justify-start gap-1.5 sm:gap-3 transition-all shadow-xs hover:shadow-md hover:-translate-y-0.5 group"
         >
-          <div className="bg-white/20 backdrop-blur-md rounded-lg sm:rounded-xl p-2 sm:p-2.5 text-white group-hover:scale-105 transition-transform shrink-0">
-            <Users size={16} className="sm:w-5 sm:h-5" />
+          <div className="bg-white/20 backdrop-blur-md rounded-md sm:rounded-xl p-1.5 sm:p-2.5 text-white group-hover:scale-105 transition-transform shrink-0 flex items-center justify-center">
+            <Users size={13} className="sm:w-5 sm:h-5" />
           </div>
           <div className="text-left flex flex-col min-w-0">
-            <span className="text-[8px] sm:text-[10px] uppercase font-bold text-white/70 tracking-tight leading-none truncate">
-              Assistance & FAQ
+            <span className="text-[7.5px] sm:text-[10px] uppercase font-bold text-white/75 tracking-tight leading-none">
+              Assistance
             </span>
-            <span className="font-black text-xs sm:text-base leading-tight mt-0.5 truncate">
-              Customer Helpline
+            <span className="font-extrabold text-[10px] xs:text-[11px] sm:text-base leading-tight mt-0.5 truncate">
+              Helpline
             </span>
           </div>
         </Link>
