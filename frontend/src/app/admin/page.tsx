@@ -295,13 +295,13 @@ export default function AdminDashboard() {
       {/* 3. Quick Action Operations Bar & Gateway Health Status Widgets */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Quick Actions Panel */}
-        <div className="lg:col-span-1 bg-gradient-to-br from-purple-900 to-indigo-950 text-white p-6 rounded-3xl shadow-md flex flex-col justify-between gap-4">
+        <div className="lg:col-span-1 bg-white dark:bg-[#111111] p-6 rounded-3xl border border-slate-200/80 dark:border-[#222222] shadow-xs flex flex-col justify-between gap-4">
           <div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-purple-300 block mb-1">
+            <span className="text-[10px] font-black uppercase tracking-widest text-purple-600 dark:text-purple-400 block mb-1">
               Command Actions
             </span>
-            <h3 className="text-lg font-black text-white">Quick Operations</h3>
-            <p className="text-xs text-purple-200/80 mt-1 leading-relaxed">
+            <h3 className="text-lg font-black text-slate-900 dark:text-white">Quick Operations</h3>
+            <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 leading-relaxed">
               Instant shortcuts for high-frequency administrator tasks
             </p>
           </div>
@@ -309,26 +309,26 @@ export default function AdminDashboard() {
           <div className="flex flex-col gap-2.5">
             <Link
               href="/admin/payments"
-              className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-between transition-all"
+              className="bg-slate-50 hover:bg-purple-50/70 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-white font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-between transition-all group"
             >
               <div className="flex items-center gap-2">
-                <Clock size={15} className="text-amber-400" />
-                <span>Verify Pending Payments</span>
+                <Clock size={15} className="text-amber-500" />
+                <span className="group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">Verify Pending Payments</span>
               </div>
-              <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-full">
+              <span className="bg-amber-100 text-amber-800 dark:bg-amber-400 dark:text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-full border border-amber-200 dark:border-transparent">
                 {data?.pending_payments || 0}
               </span>
             </Link>
 
             <Link
               href="/admin/orders?fulfillmentStatus=FAILED"
-              className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-between transition-all"
+              className="bg-slate-50 hover:bg-red-50/70 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-white font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-between transition-all group"
             >
               <div className="flex items-center gap-2">
-                <RotateCw size={15} className="text-red-400" />
-                <span>Retry Failed Orders</span>
+                <RotateCw size={15} className="text-red-500" />
+                <span className="group-hover:text-red-700 dark:group-hover:text-red-300 transition-colors">Retry Failed Orders</span>
               </div>
-              <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">
+              <span className="bg-red-100 text-red-700 dark:bg-red-500 dark:text-white text-[10px] font-black px-2 py-0.5 rounded-full border border-red-200 dark:border-transparent">
                 {data?.failed_fulfillment || 0}
               </span>
             </Link>
@@ -337,13 +337,13 @@ export default function AdminDashboard() {
               type="button"
               onClick={handleQuickSync}
               disabled={isSyncing}
-              className="bg-purple-600 hover:bg-purple-500 text-white font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-between transition-all cursor-pointer disabled:opacity-50"
+              className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-3.5 py-2.5 rounded-xl text-xs flex items-center justify-between transition-all cursor-pointer disabled:opacity-50 shadow-xs shadow-purple-600/20"
             >
               <div className="flex items-center gap-2">
                 <RefreshCw size={15} className={isSyncing ? "animate-spin" : ""} />
                 <span>Sync Diamond Packages</span>
               </div>
-              <span className="text-[10px] font-mono text-purple-200">Live API</span>
+              <span className="text-[10px] font-mono text-purple-100 bg-purple-700/80 px-2 py-0.5 rounded-md">Live API</span>
             </button>
           </div>
         </div>
