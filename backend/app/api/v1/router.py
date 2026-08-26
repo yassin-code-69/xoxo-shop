@@ -11,6 +11,7 @@ from app.api.v1 import (
     products,
     profile,
     settings,
+    uid_checker,
 )
 from app.api.v1.admin import (
     audit_logs as admin_audit_logs,
@@ -63,6 +64,7 @@ api_router.include_router(contact.router)
 api_router.include_router(profile.router)
 api_router.include_router(banners.router)
 api_router.include_router(settings.router)
+api_router.include_router(uid_checker.router)
 
 # Admin APIs
 api_router.include_router(dashboard.router)

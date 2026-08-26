@@ -2,16 +2,21 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getClientIp, isRateLimited } from "../../../lib/rateLimit";
 
-// Rate limit: 30 lookups per IP per minute
-const MAX_LOOKUPS_PER_MINUTE = 30;
+export const dynamic = "force-dynamic";
+
+// Rate limit: 35 lookups per IP per minute
+const MAX_LOOKUPS_PER_MINUTE = 35;
 const UID_PATTERN = /^[0-9]{6,20}$/;
 const REGION_PATTERN = /^[A-Za-z]{2,5}$/;
 
 const DEFAULT_GAMESKINBO_KEY = "oVsNJUK6TWHcU9UboX-NgA8BMyjdiLXNve9V8FWCU7w";
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://mqrtqldebapvllidkcgs.supabase.co";
+const SUPABASE_URL =
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "https://mqrtqldebapvllidkcgs.supabase.co";
 const SUPABASE_SERVICE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY ||
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xcnRxbGRlYmFwdmxsaWRrY2dzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NzU5MzQzMiwiZXhwIjoyMTAzMTY5NDMyfQ.e_JecxkaenT8OWdIXa-37b4EoPkwlXRp4H9q76eM-n0";
+const BACKEND_API_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "https://xoxo-shop-production.up.railway.app/api/v1";
 
 // Server-side privileged client to bypass RLS on uid_checker_configs
 const serverSupabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
@@ -60,7 +65,7 @@ export async function POST(req: Request) {
 
     try {
       let query = serverSupabase.from("uid_checker_configs").select("*").eq("is_active", true);
-      if (configId) {
+      if (configId && configId !== "primary") {
         query = query.eq("id", configId).limit(1);
       } else {
         query = query.order("is_primary", { ascending: false }).limit(1);
@@ -92,10 +97,17 @@ export async function POST(req: Request) {
       region = activeConfig.default_region || "BD";
     }
 
-    // 2. Call the provider endpoint
+    // 2. Query provider with browser headers
     const queryUrl = `${activeConfig.endpoint_url}${activeConfig.endpoint_url.includes("?") ? "&" : "?"}uid=${encodeURIComponent(uid)}&region=${encodeURIComponent(region)}`;
 
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      Accept: "application/json, text/plain, */*",
+      "Accept-Language": "en-US,en;q=0.9",
+      Referer: "https://gameskinbo.com/",
+    };
+
     if (activeConfig.header_name.toLowerCase() === "authorization") {
       headers["Authorization"] = activeConfig.api_key.startsWith("Bearer ")
         ? activeConfig.api_key
@@ -104,30 +116,69 @@ export async function POST(req: Request) {
       headers[activeConfig.header_name] = activeConfig.api_key;
     }
 
-    const apiRes = await fetch(queryUrl, {
-      method: "GET",
-      headers,
-      next: { revalidate: 15 },
-    });
+    let data: any = null;
+    let isSuccess = false;
 
-    let data: any = {};
+    // Attempt direct provider lookup
     try {
-      data = await apiRes.json();
-    } catch {
-      data = { error: "Invalid response format from provider." };
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 9000);
+
+      const apiRes = await fetch(queryUrl, {
+        method: "GET",
+        headers,
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      const rawText = await apiRes.text();
+      try {
+        data = JSON.parse(rawText);
+        if (apiRes.ok && data && !data.error) {
+          isSuccess = true;
+        }
+      } catch {
+        console.warn("Direct UID checker parse error, raw response:", rawText.slice(0, 150));
+      }
+    } catch (fetchErr) {
+      console.warn("Direct provider fetch error, attempting backend proxy:", fetchErr);
     }
 
-    if (!apiRes.ok || data.error) {
-      const rawError = data.error || "Player UUID not found on this server.";
+    // Fallback to Railway backend proxy if direct call failed or returned error
+    if (!isSuccess && (!data || !data.AccountInfo)) {
+      try {
+        const proxyUrl = `${BACKEND_API_URL}/uid-checker/lookup?uid=${encodeURIComponent(uid)}&region=${encodeURIComponent(region)}&api_key=${encodeURIComponent(activeConfig.api_key)}&endpoint_url=${encodeURIComponent(activeConfig.endpoint_url)}`;
+        const backendRes = await fetch(proxyUrl, {
+          method: "GET",
+          cache: "no-store",
+        });
+        if (backendRes.ok) {
+          const backendData = await backendRes.json();
+          if (backendData.valid) {
+            return NextResponse.json(backendData);
+          } else if (backendData.error) {
+            return NextResponse.json(backendData, { status: 200 });
+          }
+        }
+      } catch (proxyErr) {
+        console.warn("Backend proxy lookup failed:", proxyErr);
+      }
+    }
+
+    // Process provider response
+    if (!data || data.error) {
+      const rawError = data?.error || "Player UUID not found on this server.";
       const isInvalidUid =
         typeof rawError === "string" &&
         (rawError.toLowerCase().includes("invalid uid") ||
           rawError.toLowerCase().includes("not found") ||
-          rawError.toLowerCase().includes("error"));
+          rawError.toLowerCase().includes("error") ||
+          rawError.toLowerCase().includes("please try again"));
 
       const userFriendlyError = isInvalidUid
         ? "প্লেয়ার আইডি পাওয়া যায়নি। অনুগ্রহ করে সঠিক Free Fire Player UID দিন।"
-        : `প্লেয়ার যাচাই করা যায়নি: ${rawError}`;
+        : (data?.error || "প্লেয়ার আইডি যাচাই করা যায়নি। অনুগ্রহ করে পুনরায় চেষ্টা করুন।");
 
       return NextResponse.json(
         {
@@ -151,14 +202,17 @@ export async function POST(req: Request) {
         .eq("id", activeConfig.id);
     }
 
-    const accountInfo = data.AccountInfo || {};
-    const profileInfo = data.AccountProfileInfo || {};
-    const guildInfo = data.GuildInfo || {};
+    const accountInfo = data.AccountInfo || data.account_info || {};
+    const profileInfo = data.AccountProfileInfo || data.account_profile_info || {};
+    const guildInfo = data.GuildInfo || data.guild_info || {};
+
+    const playerName =
+      accountInfo.AccountName || data.player_name || data.nickname || "Unknown Player";
 
     return NextResponse.json({
       valid: true,
       uid,
-      player_name: accountInfo.AccountName || "Unknown Player",
+      player_name: playerName,
       level: accountInfo.AccountLevel || null,
       likes: accountInfo.AccountLikes || null,
       region: accountInfo.AccountRegion || region,
@@ -167,11 +221,10 @@ export async function POST(req: Request) {
       cs_rank_points: profileInfo.CsRankPoint || null,
       status: "Active & Verified",
       provider: activeConfig.provider_name,
-      message: `প্লেয়ার আইডি সফলভাবে ভেরিফাইড হয়েছে (${accountInfo.AccountName})`,
+      message: `প্লেয়ার আইডি সফলভাবে ভেরিফাইড হয়েছে (${playerName})`,
       timestamp: new Date().toISOString(),
     });
   } catch (err: unknown) {
-    // The upstream error text can name internal hosts and key handling; log it, don't ship it.
     console.error("UID checker failure:", err);
     return NextResponse.json(
       { valid: false, error: "Player UUID যাচাই করা যায়নি। কিছুক্ষণ পর আবার চেষ্টা করুন।" },

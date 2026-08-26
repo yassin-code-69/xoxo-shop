@@ -75,6 +75,12 @@ export default function AdminUidCheckerPage() {
     try {
       const data = await getUidCheckerConfigs();
       setConfigs(data);
+      setTestConfigId((prev) => {
+        if (prev !== "primary" && !data.some((c) => c.id === prev)) {
+          return "primary";
+        }
+        return prev;
+      });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to load API configurations.";
       setError(msg);
