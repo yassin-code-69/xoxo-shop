@@ -476,112 +476,77 @@ export const payOrderWithWallet = async (publicOrderId: string) => {
 // ==========================================
 
 export const getUidCheckerConfigs = async (): Promise<UidCheckerConfig[]> => {
-  if (isSupabaseConfigured) {
-    const { data, error } = await supabase
-      .from("uid_checker_configs")
-      .select("*")
-      .order("is_primary", { ascending: false })
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("Failed to fetch uid_checker_configs:", error);
-      throw error;
+  try {
+    const res = await fetch("/api/uid-checker/configs", {
+      method: "GET",
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "Failed to fetch UID checker configs");
     }
-    return (data || []) as UidCheckerConfig[];
+    return (await res.json()) as UidCheckerConfig[];
+  } catch (err: unknown) {
+    console.error("Failed to fetch uid_checker_configs:", err);
+    throw err;
   }
-  return [];
 };
 
 export const createUidCheckerConfig = async (
   input: CreateUidCheckerConfigInput,
 ): Promise<UidCheckerConfig> => {
-  if (isSupabaseConfigured) {
-    // If setting as primary, demote other configs first
-    if (input.is_primary) {
-      await supabase
-        .from("uid_checker_configs")
-        .update({ is_primary: false, updated_at: new Date().toISOString() })
-        .neq("id", "none");
-    }
+  const res = await fetch("/api/uid-checker/configs", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
 
-    const { data, error } = await supabase
-      .from("uid_checker_configs")
-      .insert({
-        provider_name: input.provider_name.trim(),
-        endpoint_url: input.endpoint_url.trim(),
-        api_key: input.api_key.trim(),
-        header_name: input.header_name?.trim() || "x-api-key",
-        default_region: input.default_region?.trim() || "BD",
-        is_active: input.is_active ?? true,
-        is_primary: input.is_primary ?? false,
-        rate_limit_per_min: input.rate_limit_per_min || 30,
-        notes: input.notes?.trim() || null,
-        usage_count: 0,
-        updated_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data as UidCheckerConfig;
+  const data = await res.json();
+  if (!res.ok || data.error) {
+    throw new Error(data.error || "Failed to save API configuration.");
   }
-  throw new Error("Supabase is not configured.");
+  return data as UidCheckerConfig;
 };
 
 export const updateUidCheckerConfig = async (
   id: string,
   input: Partial<CreateUidCheckerConfigInput>,
 ): Promise<UidCheckerConfig> => {
-  if (isSupabaseConfigured) {
-    // If setting as primary, demote other configs first
-    if (input.is_primary) {
-      await supabase
-        .from("uid_checker_configs")
-        .update({ is_primary: false, updated_at: new Date().toISOString() })
-        .neq("id", id);
-    }
+  const res = await fetch("/api/uid-checker/configs", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, ...input }),
+  });
 
-    const updatePayload: Record<string, any> = {
-      ...input,
-      updated_at: new Date().toISOString(),
-    };
-
-    const { data, error } = await supabase
-      .from("uid_checker_configs")
-      .update(updatePayload)
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data as UidCheckerConfig;
+  const data = await res.json();
+  if (!res.ok || data.error) {
+    throw new Error(data.error || "Failed to update API configuration.");
   }
-  throw new Error("Supabase is not configured.");
+  return data as UidCheckerConfig;
 };
 
 export const deleteUidCheckerConfig = async (id: string): Promise<{ success: boolean }> => {
-  if (isSupabaseConfigured) {
-    const { error } = await supabase.from("uid_checker_configs").delete().eq("id", id);
-    if (error) throw error;
-    return { success: true };
+  const res = await fetch(`/api/uid-checker/configs?id=${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+
+  const data = await res.json();
+  if (!res.ok || data.error) {
+    throw new Error(data.error || "Failed to delete API configuration.");
   }
-  throw new Error("Supabase is not configured.");
+  return { success: true };
 };
 
 export const setPrimaryUidCheckerConfig = async (id: string): Promise<{ success: boolean }> => {
-  if (isSupabaseConfigured) {
-    await supabase
-      .from("uid_checker_configs")
-      .update({ is_primary: false, updated_at: new Date().toISOString() })
-      .neq("id", id);
+  const res = await fetch("/api/uid-checker/configs", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, is_primary: true, is_active: true }),
+  });
 
-    const { error } = await supabase
-      .from("uid_checker_configs")
-      .update({ is_primary: true, is_active: true, updated_at: new Date().toISOString() })
-      .eq("id", id);
-
-    if (error) throw error;
-    return { success: true };
+  const data = await res.json();
+  if (!res.ok || data.error) {
+    throw new Error(data.error || "Failed to set primary API configuration.");
   }
-  throw new Error("Supabase is not configured.");
+  return { success: true };
 };
