@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -249,21 +249,21 @@ export default function Home() {
       </div>
 
       {/* Action Buttons */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-6">
         <a
           href={settings["support_telegram"] || "https://t.me/xoxoshop"}
           target="_blank"
           rel="noopener noreferrer"
-          className="bg-gradient-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-2xl p-4 sm:p-5 flex items-center justify-center gap-4 transition-all shadow-md hover:shadow-xl hover:-translate-y-0.5 group"
+          className="bg-gradient-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl sm:rounded-2xl p-2.5 sm:p-5 flex items-center justify-start sm:justify-center gap-2 sm:gap-4 transition-all shadow-md hover:shadow-xl hover:-translate-y-0.5 group min-w-0"
         >
-          <div className="bg-white/20 backdrop-blur-md rounded-xl p-3 text-white group-hover:scale-110 transition-transform shrink-0">
-            <Send size={24} className="ml-0.5" />
+          <div className="bg-white/20 backdrop-blur-md rounded-lg sm:rounded-xl p-2 sm:p-3 text-white group-hover:scale-110 transition-transform shrink-0 flex items-center justify-center">
+            <Send className="w-4 h-4 sm:w-6 sm:h-6 ml-0.5" />
           </div>
-          <div className="text-left flex flex-col">
-            <span className="text-[10px] sm:text-xs uppercase font-bold text-white/70 tracking-wider">
+          <div className="text-left flex flex-col min-w-0 overflow-hidden">
+            <span className="text-[9px] sm:text-xs uppercase font-bold text-white/70 tracking-wider truncate">
               24/7 Live Support
             </span>
-            <span className="font-black text-sm sm:text-lg leading-none mt-1">
+            <span className="font-black text-xs sm:text-lg leading-tight sm:leading-none mt-0.5 sm:mt-1 truncate">
               Telegram Helpdesk
             </span>
           </div>
@@ -271,16 +271,16 @@ export default function Home() {
 
         <Link
           href="/contact"
-          className="bg-gradient-to-br from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white rounded-2xl p-4 sm:p-5 flex items-center justify-center gap-4 transition-all shadow-md hover:shadow-xl hover:-translate-y-0.5 group"
+          className="bg-gradient-to-br from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white rounded-xl sm:rounded-2xl p-2.5 sm:p-5 flex items-center justify-start sm:justify-center gap-2 sm:gap-4 transition-all shadow-md hover:shadow-xl hover:-translate-y-0.5 group min-w-0"
         >
-          <div className="bg-white/20 backdrop-blur-md rounded-xl p-3 text-white group-hover:scale-110 transition-transform shrink-0">
-            <Users size={24} />
+          <div className="bg-white/20 backdrop-blur-md rounded-lg sm:rounded-xl p-2 sm:p-3 text-white group-hover:scale-110 transition-transform shrink-0 flex items-center justify-center">
+            <Users className="w-4 h-4 sm:w-6 sm:h-6" />
           </div>
-          <div className="text-left flex flex-col">
-            <span className="text-[10px] sm:text-xs uppercase font-bold text-white/70 tracking-wider">
+          <div className="text-left flex flex-col min-w-0 overflow-hidden">
+            <span className="text-[9px] sm:text-xs uppercase font-bold text-white/70 tracking-wider truncate">
               Assistance & FAQ
             </span>
-            <span className="font-black text-sm sm:text-lg leading-none mt-1">
+            <span className="font-black text-xs sm:text-lg leading-tight sm:leading-none mt-0.5 sm:mt-1 truncate">
               Customer Helpline
             </span>
           </div>
