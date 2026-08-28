@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
-import { Image as ImageIcon, Plus, Trash2, Edit2, CheckCircle2, Loader2 } from "lucide-react";
+import { Plus, Trash2, Edit2, CheckCircle2, Loader2 } from "lucide-react";
 import { Banner } from "../../../lib/api/types";
 import {
   getAdminBanners,
@@ -9,6 +9,7 @@ import {
   updateAdminBanner,
   deleteAdminBanner,
 } from "../../../lib/api/endpoints";
+import { ImageUpload } from "../../../components/ImageUpload";
 
 export default function AdminBannersPage() {
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -41,7 +42,7 @@ export default function AdminBannersPage() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingBanner?.title || !editingBanner?.image_url) {
-      setNotification({ type: "error", text: "Please enter banner title and image URL." });
+      setNotification({ type: "error", text: "Please enter banner title and upload an image." });
       return;
     }
 
@@ -92,56 +93,50 @@ export default function AdminBannersPage() {
 
         <button
           onClick={() => {
-            setIsCreating(true);
             setEditingBanner({
               title: "",
               subtitle: "",
               image_url: "",
               link_url: "/uid-topup",
               active: true,
-              sort_order: banners.length + 1,
+              sort_order: (banners.length || 0) + 1,
             });
+            setIsCreating(true);
           }}
-          className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+          className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-sm transition-all cursor-pointer self-start sm:self-auto"
         >
-          <Plus size={16} /> Add Hero Banner
+          <Plus size={16} /> Add New Banner
         </button>
       </div>
 
       {notification && (
         <div
-          className={`p-4 rounded-2xl text-xs font-bold flex items-center justify-between shadow-xs ${
+          className={`p-4 rounded-2xl text-xs font-bold border transition-all ${
             notification.type === "success"
-              ? "bg-green-50 dark:bg-green-950/40 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800"
-              : "bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800"
+              ? "bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800"
+              : "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800"
           }`}
         >
-          <span>{notification.text}</span>
-          <button
-            onClick={() => setNotification(null)}
-            className="uppercase text-[10px] ml-4 font-black cursor-pointer"
-          >
-            Dismiss
-          </button>
+          {notification.text}
         </div>
       )}
 
       {isLoading ? (
-        <div className="p-12 text-center text-slate-400 dark:text-zinc-500">
-          <Loader2 className="animate-spin inline-block mr-2" size={24} /> Loading banners...
+        <div className="flex flex-col items-center justify-center py-20 gap-3">
+          <Loader2 className="animate-spin text-purple-600" size={32} />
+          <p className="text-xs text-slate-500 font-bold">Loading promotional banners...</p>
         </div>
       ) : banners.length === 0 ? (
-        <div className="bg-white dark:bg-[#111111] rounded-3xl p-12 text-center border border-slate-200/80 dark:border-[#222222] shadow-xs">
-          <ImageIcon size={36} className="mx-auto text-slate-400 dark:text-zinc-500 mb-2" />
-          <h3 className="font-bold text-slate-800 dark:text-white text-base">
-            No Banners Configured
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
-            Add banners to display featured offers on the homepage.
+        <div className="bg-white dark:bg-[#111111] border border-slate-200/80 dark:border-[#222222] rounded-3xl p-12 text-center flex flex-col items-center gap-3">
+          <p className="text-sm font-bold text-slate-700 dark:text-zinc-300">
+            No promotional banners active yet.
+          </p>
+          <p className="text-xs text-slate-400 max-w-sm">
+            Create your first hero promotional slider to display on the storefront homepage.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {banners.map((b) => (
             <div
               key={b.id}
@@ -151,6 +146,7 @@ export default function AdminBannersPage() {
                 <img
                   src={b.image_url}
                   alt={b.title || "Banner"}
+                  referrerPolicy="no-referrer"
                   className="w-full h-full object-cover"
                 />
                 <span
@@ -199,12 +195,12 @@ export default function AdminBannersPage() {
       {/* Edit / Create Banner Modal */}
       {editingBanner && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#111111] rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-200 dark:border-[#222222] animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-[#111111] rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-slate-200 dark:border-[#222222] animate-in fade-in zoom-in-95 duration-200">
             <h3 className="text-xl font-black text-slate-900 dark:text-white mb-1">
               {isCreating ? "Add Promotional Banner" : "Edit Banner"}
             </h3>
             <p className="text-xs text-slate-500 dark:text-zinc-400 mb-6">
-              Enter promotional image URL and call-to-action link
+              Upload promotional banner image directly to ImgBB and set action link
             </p>
 
             <form onSubmit={handleSave} className="space-y-4">
@@ -235,21 +231,13 @@ export default function AdminBannersPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">
-                  Image URL *
-                </label>
-                <input
-                  type="url"
-                  value={editingBanner.image_url || ""}
-                  onChange={(e) =>
-                    setEditingBanner({ ...editingBanner, image_url: e.target.value })
-                  }
-                  placeholder="https://..."
-                  className="w-full px-3.5 py-2.5 text-xs font-mono bg-slate-50 dark:bg-[#171717] border border-slate-200 dark:border-[#262626] text-slate-800 dark:text-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600"
-                  required
-                />
-              </div>
+              {/* ImgBB Direct Image Upload Component */}
+              <ImageUpload
+                value={editingBanner.image_url || ""}
+                onChange={(url) => setEditingBanner({ ...editingBanner, image_url: url })}
+                label="Banner Image *"
+                hint="Click to upload image directly to ImgBB"
+              />
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">
@@ -293,7 +281,7 @@ export default function AdminBannersPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={isSaving}
+                  disabled={isSaving || !editingBanner.image_url}
                   className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
                 >
                   {isSaving ? (

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { FaFacebook, FaInstagram, FaYoutube, FaTelegram } from "react-icons/fa";
+import { Share2, Headphones, Smartphone } from "lucide-react";
 import {
   Sliders,
   CheckCircle2,
@@ -228,73 +230,187 @@ export default function AdminSettingsPage() {
       {activeTab === "general" && (
         <form
           onSubmit={handleSave}
-          className="bg-white dark:bg-[#111111] rounded-3xl p-6 sm:p-8 border border-slate-200/80 dark:border-[#222222] shadow-xs space-y-5"
+          className="bg-white dark:bg-[#111111] rounded-3xl p-6 sm:p-8 border border-slate-200/80 dark:border-[#222222] shadow-xs space-y-6"
         >
-          <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">
-              Store Brand Title
-            </label>
-            <input
-              type="text"
-              value={settings["site_title"] || ""}
-              onChange={(e) => setSettings({ ...settings, site_title: e.target.value })}
-              className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#171717] border border-slate-200 dark:border-[#262626] rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 text-slate-800 dark:text-zinc-200 font-medium"
-            />
-          </div>
+          {/* Section: Basic Store Info */}
+          <div className="space-y-4">
+            <h3 className="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-[#1f1f1f]">
+              <Sliders size={16} className="text-purple-600" /> Basic Store Info & Notice
+            </h3>
 
-          <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">
-              Top Notice Announcement Bar
-            </label>
-            <textarea
-              rows={2}
-              value={settings["notice"] || ""}
-              onChange={(e) => setSettings({ ...settings, notice: e.target.value })}
-              className="w-full p-3 text-xs bg-slate-50 dark:bg-[#171717] border border-slate-200 dark:border-[#262626] rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 leading-relaxed text-slate-800 dark:text-zinc-200 font-medium"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">
-                Support Phone Helpline
+                Store Brand Title
               </label>
               <input
                 type="text"
-                value={settings["support_phone"] || ""}
-                onChange={(e) => setSettings({ ...settings, support_phone: e.target.value })}
-                className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#171717] border border-slate-200 dark:border-[#262626] rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 text-slate-800 dark:text-zinc-200 font-medium"
+                value={settings["site_title"] || ""}
+                onChange={(e) => setSettings({ ...settings, site_title: e.target.value })}
+                placeholder="XoXo Shop"
+                className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#171717] border border-slate-200 dark:border-[#262626] rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 text-slate-800 dark:text-zinc-200 font-bold"
               />
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">
-                Telegram Support Link
+                Top Notice Announcement Bar
               </label>
-              <input
-                type="text"
-                value={settings["support_telegram"] || ""}
-                onChange={(e) => setSettings({ ...settings, support_telegram: e.target.value })}
-                className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#171717] border border-slate-200 dark:border-[#262626] rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 text-slate-800 dark:text-zinc-200 font-medium"
-              />
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">
-                Facebook Community Group / Page URL
-              </label>
-              <input
-                type="text"
-                value={settings["support_facebook_group"] || ""}
-                onChange={(e) =>
-                  setSettings({ ...settings, support_facebook_group: e.target.value })
-                }
-                placeholder="https://facebook.com/groups/..."
-                className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#171717] border border-slate-200 dark:border-[#262626] rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 text-slate-800 dark:text-zinc-200 font-medium"
+              <textarea
+                rows={2}
+                value={settings["notice"] || ""}
+                onChange={(e) => setSettings({ ...settings, notice: e.target.value })}
+                placeholder="১৮ বছরের নিচে কেউ অর্ডার করবেন না..."
+                className="w-full p-3 text-xs bg-slate-50 dark:bg-[#171717] border border-slate-200 dark:border-[#262626] rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 leading-relaxed text-slate-800 dark:text-zinc-200 font-medium"
               />
             </div>
           </div>
 
+          {/* Section: Social Media Links */}
+          <div className="space-y-4 pt-2">
+            <h3 className="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-[#1f1f1f]">
+              <Share2 size={16} className="text-purple-600" /> Social Media Icons (Footer)
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1 flex items-center gap-1.5">
+                  <FaFacebook className="text-blue-600" /> Facebook Page / Group URL
+                </label>
+                <input
+                  type="url"
+                  value={settings["support_facebook"] || settings["support_facebook_group"] || ""}
+                  onChange={(e) =>
+                    setSettings({
+                      ...settings,
+                      support_facebook: e.target.value,
+                      support_facebook_group: e.target.value,
+                    })
+                  }
+                  placeholder="https://facebook.com/xoxoshop"
+                  className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#171717] border border-slate-200 dark:border-[#262626] rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 text-slate-800 dark:text-zinc-200 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1 flex items-center gap-1.5">
+                  <FaInstagram className="text-pink-600" /> Instagram Profile URL
+                </label>
+                <input
+                  type="url"
+                  value={settings["support_instagram"] || ""}
+                  onChange={(e) => setSettings({ ...settings, support_instagram: e.target.value })}
+                  placeholder="https://instagram.com/xoxoshop"
+                  className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#171717] border border-slate-200 dark:border-[#262626] rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 text-slate-800 dark:text-zinc-200 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1 flex items-center gap-1.5">
+                  <FaYoutube className="text-red-600" /> YouTube Channel URL
+                </label>
+                <input
+                  type="url"
+                  value={settings["support_youtube"] || ""}
+                  onChange={(e) => setSettings({ ...settings, support_youtube: e.target.value })}
+                  placeholder="https://youtube.com/@xoxoshop"
+                  className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#171717] border border-slate-200 dark:border-[#262626] rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 text-slate-800 dark:text-zinc-200 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1 flex items-center gap-1.5">
+                  Support Email (Mailto Link)
+                </label>
+                <input
+                  type="email"
+                  value={settings["support_email"] || ""}
+                  onChange={(e) => setSettings({ ...settings, support_email: e.target.value })}
+                  placeholder="support@xoxoshop.com"
+                  className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#171717] border border-slate-200 dark:border-[#262626] rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 text-slate-800 dark:text-zinc-200 font-mono"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Section: Support Helpline & Telegram */}
+          <div className="space-y-4 pt-2">
+            <h3 className="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-[#1f1f1f]">
+              <Headphones size={16} className="text-purple-600" /> Helpline & Telegram Support Button
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1 flex items-center gap-1.5">
+                  <FaTelegram className="text-sky-500" /> Telegram Support Group / User Link *
+                </label>
+                <input
+                  type="url"
+                  value={settings["support_telegram"] || ""}
+                  onChange={(e) => setSettings({ ...settings, support_telegram: e.target.value })}
+                  placeholder="https://t.me/xoxoshop"
+                  className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#171717] border border-slate-200 dark:border-[#262626] rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 text-slate-800 dark:text-zinc-200 font-mono font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">
+                  Helpline Working Hours Text
+                </label>
+                <input
+                  type="text"
+                  value={settings["telegram_helpline_text"] || ""}
+                  onChange={(e) =>
+                    setSettings({ ...settings, telegram_helpline_text: e.target.value })
+                  }
+                  placeholder="Help line [9AM-12PM]"
+                  className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#171717] border border-slate-200 dark:border-[#262626] rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 text-slate-800 dark:text-zinc-200 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">
+                  Telegram Button Title Label
+                </label>
+                <input
+                  type="text"
+                  value={settings["telegram_helpline_label"] || ""}
+                  onChange={(e) =>
+                    setSettings({ ...settings, telegram_helpline_label: e.target.value })
+                  }
+                  placeholder="টেলিগ্রাম সাপোর্ট"
+                  className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#171717] border border-slate-200 dark:border-[#262626] rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 text-slate-800 dark:text-zinc-200 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">
+                  Emergency Phone Support
+                </label>
+                <input
+                  type="text"
+                  value={settings["support_phone"] || ""}
+                  onChange={(e) => setSettings({ ...settings, support_phone: e.target.value })}
+                  placeholder="+880 1700-000000"
+                  className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#171717] border border-slate-200 dark:border-[#262626] rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 text-slate-800 dark:text-zinc-200 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1 flex items-center gap-1.5">
+                  <Smartphone size={14} className="text-purple-600" /> Google Play / Mobile App Link
+                </label>
+                <input
+                  type="url"
+                  value={settings["app_download_url"] || ""}
+                  onChange={(e) => setSettings({ ...settings, app_download_url: e.target.value })}
+                  placeholder="https://play.google.com/store/apps/details?id=..."
+                  className="w-full px-3.5 py-2.5 text-xs bg-slate-50 dark:bg-[#171717] border border-slate-200 dark:border-[#262626] rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 text-slate-800 dark:text-zinc-200 font-mono"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Maintenance Mode */}
           <div className="p-4 bg-amber-50/50 dark:bg-amber-950/20 rounded-2xl border border-amber-200/80 dark:border-amber-900/40 flex items-center justify-between">
             <div>
               <span className="font-bold text-xs text-amber-900 dark:text-amber-300 block">
@@ -332,7 +448,7 @@ export default function AdminSettingsPage() {
               ) : (
                 <CheckCircle2 size={14} />
               )}
-              Save General Settings
+              Save Settings & Social Links
             </button>
           </div>
         </form>

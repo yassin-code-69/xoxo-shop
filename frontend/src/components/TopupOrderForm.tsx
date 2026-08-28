@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -17,7 +17,7 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { Product } from "../lib/api/types";
-import { getProducts, createOrder, payOrderWithWallet } from "../lib/api/endpoints";
+import { getProducts, createOrder, payOrderWithWallet, getSiteSettings } from "../lib/api/endpoints";
 import { useAuth } from "../lib/auth/AuthContext";
 import { AddMoneyModal } from "./AddMoneyModal";
 
@@ -62,15 +62,20 @@ export function TopupOrderForm({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [showAddMoney, setShowAddMoney] = useState(false);
+  const [siteSettings, setSiteSettings] = useState<Record<string, string>>({});
 
   useEffect(() => {
     async function loadData() {
-      setIsLoading(true);
+      setIsLoadingProducts(true);
       try {
-        const prods = await getProducts(category);
+        const [prods, settingsData] = await Promise.all([
+          getProducts(category),
+          getSiteSettings().catch(() => ({} as Record<string, string>)),
+        ]);
         setProducts(prods);
+        if (settingsData) setSiteSettings(settingsData);
         if (prods.length > 0) {
           setSelectedProduct(prods[0]);
         }
@@ -78,7 +83,7 @@ export function TopupOrderForm({
         console.error("Failed to load products:", err);
         setError("Could not load products. Please check if backend is running.");
       } finally {
-        setIsLoading(false);
+        setIsLoadingProducts(false);
       }
     }
     void loadData();
@@ -179,7 +184,7 @@ export function TopupOrderForm({
 
   return (
     <div className="flex flex-col gap-3.5 sm:gap-6 py-3 sm:py-6 px-2.5 sm:px-4 max-w-6xl mx-auto">
-      {/* 1. Header Hero Card matching Screenshot */}
+      {/* 1. Header Hero Card */}
       <div className="bg-gradient-to-r from-purple-50 to-white dark:from-[#170e2c] dark:to-[#120b22] rounded-xl sm:rounded-2xl shadow-xs border border-slate-100 dark:border-purple-950/60 p-3.5 sm:p-6 flex items-center gap-3.5 sm:gap-6">
         <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl overflow-hidden shadow-sm shrink-0 border border-slate-100 dark:border-purple-900/40 bg-purple-900/10">
           <img
@@ -195,7 +200,7 @@ export function TopupOrderForm({
           <h1 className="text-base sm:text-2xl font-black text-[#0b132b] dark:text-white mb-1 sm:mb-2 tracking-tight">
             {title}
           </h1>
-          <div className="bg-purple-50 dark:bg-purple-950/50 text-[#6b46c1] dark:text-purple-300 text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-full inline-flex items-center gap-1 w-max border border-purple-100 dark:border-purple-900/40 shadow-xs">
+          <div className="bg-purple-50 dark:bg-purple-950/50 text-[#663cbc] dark:text-purple-300 text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-full inline-flex items-center gap-1 w-max border border-purple-100 dark:border-purple-900/40 shadow-xs">
             <Zap size={12} className="text-amber-500 fill-amber-500" /> {badgeText}
           </div>
         </div>
@@ -215,33 +220,33 @@ export function TopupOrderForm({
       )}
 
       {/* Main 2-Column Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5 sm:gap-6 items-start">
-        {/* Left Column: Select Recharge Packages */}
-        <div className="lg:col-span-2 flex flex-col gap-3.5 sm:gap-4">
-          <div className="bg-white dark:bg-[#120b22] rounded-xl sm:rounded-2xl shadow-xs border border-slate-100 dark:border-purple-950/60 overflow-hidden">
-            {/* Step Header */}
-            <div className="bg-slate-50 dark:bg-[#18112e] border-b border-slate-100 dark:border-purple-950/60 p-3 sm:p-4 flex items-center gap-2">
-              <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#6b46c1] text-white flex items-center justify-center font-bold text-[10px] sm:text-xs shadow-xs">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+        {/* Left Column: Step 1 (Select Recharge) */}
+        <div className="flex flex-col gap-6">
+          <div className="bg-white dark:bg-[#120b22] rounded-2xl shadow-xs border border-slate-100 dark:border-purple-950/60 overflow-hidden">
+            <div className="bg-slate-50 dark:bg-[#18112e] border-b border-slate-100 dark:border-purple-950/60 p-4 flex items-center gap-2.5">
+              <div className="w-6 h-6 rounded-full bg-[#663cbc] text-white flex items-center justify-center font-bold text-xs shadow-xs">
                 1
               </div>
-              <h2 className="font-bold text-[#0b132b] dark:text-white text-xs sm:text-base">
+              <h2 className="font-bold text-[#0b132b] dark:text-white text-sm sm:text-base">
                 Select Recharge
               </h2>
             </div>
 
-            {/* Packages Grid */}
-            <div className="p-3 sm:p-5">
-              {isLoading ? (
-                <div className="flex items-center justify-center py-12 text-slate-400 gap-2 font-medium">
-                  <Loader2 className="animate-spin text-[#6b46c1]" size={24} />
-                  <span>Loading packages...</span>
+            <div className="p-4 sm:p-5">
+              {isLoadingProducts ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                  <Loader2 className="animate-spin text-purple-600" size={32} />
+                  <p className="text-slate-500 dark:text-slate-400 text-xs font-medium">
+                    Loading packages...
+                  </p>
                 </div>
               ) : products.length === 0 ? (
-                <div className="text-center py-8 text-slate-500 font-medium">
+                <div className="text-center py-8 text-slate-500 dark:text-slate-400 text-xs font-medium">
                   No active packages found.
                 </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
                   {products.map((pkg) => {
                     const isSelected = selectedProduct?.id === pkg.id;
                     return (
@@ -249,23 +254,23 @@ export function TopupOrderForm({
                         key={pkg.id}
                         type="button"
                         onClick={() => setSelectedProduct(pkg)}
-                        className={`rounded-xl py-3 px-2 flex flex-col items-center justify-center transition-all group outline-none cursor-pointer relative ${
+                        className={`rounded-xl py-3 px-2.5 sm:px-4 flex items-center justify-center gap-1.5 sm:gap-2 text-center transition-all group outline-none cursor-pointer relative ${
                           isSelected
-                            ? "border-2 border-[#6b46c1] dark:border-purple-500 bg-purple-50/50 dark:bg-purple-950/40 shadow-xs ring-2 ring-[#6b46c1]/20"
-                            : "border border-slate-200 dark:border-purple-950/60 bg-white dark:bg-[#150a2b] hover:border-[#6b46c1] hover:shadow-xs"
+                            ? "border-2 border-[#663cbc] dark:border-purple-500 bg-purple-50/50 dark:bg-purple-950/30 shadow-xs ring-2 ring-[#663cbc]/20"
+                            : "border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-[#111111] hover:border-[#663cbc] hover:shadow-xs"
                         }`}
                       >
                         <span
-                          className={`font-bold text-xs sm:text-[13px] uppercase text-center transition-colors ${
+                          className={`font-bold text-xs sm:text-sm truncate transition-colors ${
                             isSelected
-                              ? "text-[#6b46c1] dark:text-purple-300 font-black"
-                              : "text-[#1e3a8a] dark:text-slate-200 group-hover:text-[#6b46c1]"
+                              ? "text-[#663cbc] dark:text-purple-300 font-black"
+                              : "text-slate-900 dark:text-zinc-100 group-hover:text-[#663cbc]"
                           }`}
                         >
                           {pkg.name}
                         </span>
-                        <span className="text-[11px] text-[#6b46c1] dark:text-purple-400 font-black mt-1">
-                          BDT {pkg.selling_price}
+                        <span className="font-bold text-xs sm:text-sm text-purple-600 dark:text-purple-400 shrink-0">
+                          ৳ {pkg.selling_price}
                         </span>
                       </button>
                     );
@@ -281,7 +286,7 @@ export function TopupOrderForm({
                 className="text-[#00d084] text-xs sm:text-sm font-bold flex items-center gap-1.5 hover:underline w-max transition-colors"
               >
                 <ExternalLink size={15} />
-                <span>কিভাবে অর্ডার করবেন?</span>
+                <span>কীভাবে অর্ডার করবেন?</span>
                 <span>→</span>
               </Link>
             </div>
@@ -293,7 +298,7 @@ export function TopupOrderForm({
           {/* Step 2: Account Info & UUID Checker */}
           <div className="bg-white dark:bg-[#120b22] rounded-2xl shadow-xs border border-slate-100 dark:border-purple-950/60 overflow-hidden">
             <div className="bg-slate-50 dark:bg-[#18112e] border-b border-slate-100 dark:border-purple-950/60 p-4 flex items-center gap-2.5">
-              <div className="w-6 h-6 rounded-full bg-[#6b46c1] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+              <div className="w-6 h-6 rounded-full bg-[#663cbc] text-white flex items-center justify-center font-bold text-xs shadow-xs">
                 2
               </div>
               <h2 className="font-bold text-[#0b132b] dark:text-white text-sm sm:text-base">
@@ -315,7 +320,7 @@ export function TopupOrderForm({
                   }
                 }}
                 placeholder="এখানে গেমের আইডি কোড দিন"
-                className="w-full border border-blue-200 dark:border-purple-950/80 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-[#6b46c1] focus:ring-1 focus:ring-[#6b46c1] bg-white dark:bg-[#150a2b] transition-all font-mono"
+                className="w-full border border-blue-200 dark:border-purple-950/80 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-[#663cbc] focus:ring-1 focus:ring-[#663cbc] bg-white dark:bg-[#150a2b] transition-all font-mono"
               />
 
               <button
@@ -325,7 +330,7 @@ export function TopupOrderForm({
                 className={`w-full font-bold py-2.5 rounded-xl text-xs transition-colors shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 ${
                   checkResult?.valid
                     ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                    : "bg-[#6b46c1] hover:bg-purple-700 text-white"
+                    : "bg-[#663cbc] hover:bg-purple-700 text-white"
                 }`}
               >
                 {isCheckingUid ? (
@@ -412,7 +417,7 @@ export function TopupOrderForm({
           {/* Step 3: Select one option (Payment Options) */}
           <div className="bg-white dark:bg-[#120b22] rounded-2xl shadow-xs border border-slate-100 dark:border-purple-950/60 overflow-hidden">
             <div className="bg-slate-50 dark:bg-[#18112e] border-b border-slate-100 dark:border-purple-950/60 p-4 flex items-center gap-2.5">
-              <div className="w-6 h-6 rounded-full bg-[#6b46c1] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+              <div className="w-6 h-6 rounded-full bg-[#663cbc] text-white flex items-center justify-center font-bold text-xs shadow-xs">
                 3
               </div>
               <h2 className="font-bold text-[#0b132b] dark:text-white text-sm sm:text-base">
@@ -439,7 +444,7 @@ export function TopupOrderForm({
                   )}
                   <div className="h-14 flex items-center justify-center bg-white dark:bg-[#150a2b] p-2">
                     <img
-                      src="/FF/p1.png"
+                      src={siteSettings["wallet_pay_image"] || "/FF/p1.png"} referrerPolicy="no-referrer"
                       alt="Wallet Pay"
                       className="h-full object-contain"
                       onError={(e) => {
@@ -474,7 +479,7 @@ export function TopupOrderForm({
                   )}
                   <div className="h-14 flex items-center justify-center bg-white dark:bg-[#150a2b] p-2">
                     <img
-                      src="/FF/p2.png"
+                      src={siteSettings["instant_pay_image"] || "/FF/p2.png"} referrerPolicy="no-referrer"
                       alt="Instant Pay"
                       className="h-full object-contain"
                       onError={(e) => {
@@ -493,7 +498,7 @@ export function TopupOrderForm({
                 <p className="flex items-center gap-1.5">
                   <Info size={14} className="text-purple-600 shrink-0" />
                   <span>
-                    প্রোডাক্ট কিনতে আপনার প্রয়োজন{" "}
+                    প্রোডাক্ট কিনতে আপনার প্রয়োজন{" "}
                     <strong className="text-slate-900 dark:text-white font-black">
                       {currentPrice}
                     </strong>{" "}
@@ -530,7 +535,7 @@ export function TopupOrderForm({
               {!isAuthenticated ? (
                 <Link
                   href="/login"
-                  className="w-full bg-[#6b46c1] hover:bg-purple-700 text-white font-bold py-2.5 rounded-xl text-xs sm:text-sm transition-colors shadow-xs flex items-center justify-center"
+                  className="w-full bg-[#663cbc] hover:bg-purple-700 text-white font-bold py-2.5 rounded-xl text-xs sm:text-sm transition-colors shadow-xs flex items-center justify-center"
                 >
                   Login to Purchase
                 </Link>
@@ -547,7 +552,7 @@ export function TopupOrderForm({
                   type="button"
                   onClick={handlePurchase}
                   disabled={isSubmitting || !selectedProduct}
-                  className="w-full bg-[#6b46c1] hover:bg-purple-700 text-white font-bold py-3 rounded-xl text-xs sm:text-sm transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="w-full bg-[#663cbc] hover:bg-purple-700 text-white font-bold py-3 rounded-xl text-xs sm:text-sm transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {isSubmitting ? (
                     <>
@@ -569,7 +574,7 @@ export function TopupOrderForm({
       {/* Bottom Card: Rules & Conditions */}
       <div className="mt-2 bg-white dark:bg-[#120b22] rounded-2xl shadow-xs border border-slate-100 dark:border-purple-950/60 overflow-hidden">
         <div className="bg-slate-50 dark:bg-[#18112e] border-b border-slate-100 dark:border-purple-950/60 p-4 flex items-center gap-2.5">
-          <div className="text-[#6b46c1]">
+          <div className="text-[#663cbc]">
             <FileText size={18} />
           </div>
           <h2 className="font-bold text-[#0b132b] dark:text-white text-xs sm:text-sm">
@@ -580,21 +585,21 @@ export function TopupOrderForm({
           <ul className="space-y-4 text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium">
             <li className="flex items-start gap-2.5">
               <span className="text-purple-600 font-bold mt-0.5 text-xs">◉</span>
-              <span>শুধুমাত্র Bangladesh সার্ভারে ID Code দিয়ে টপ আপ হবে</span>
+              <span>শুধুমাত্র Bangladesh সার্ভারে ID Code দিয়ে টপ আপ হবে</span>
             </li>
             <li className="flex items-start gap-2.5">
               <span className="text-purple-600 font-bold mt-0.5 text-xs">◉</span>
-              <span>Player ID ভুল দিয়ে Diamond না পেলে Offer TopUp / XoXo Shop কর্তৃপক্ষ দায়ী নয়</span>
+              <span>Player ID ভুল দিয়ে Diamond না পেলে Offer TopUp / XoXo Shop কর্তৃপক্ষ দায়ী নয়</span>
             </li>
             <li className="flex items-start gap-2.5">
               <span className="text-purple-600 font-bold mt-0.5 text-xs">◉</span>
-              <span>Order কমপ্লিট হওয়ার পরেও আইডিতে ডায়মন্ড না গেলে চেক করার জন্য ID Pass দিতে হবে</span>
+              <span>Order কমপ্লিট হওয়ার পরেও আইডিতে ডায়মন্ড না গেলে চেক করার জন্য ID Pass দিতে হবে</span>
             </li>
             <li className="flex items-start gap-2.5">
               <span className="text-purple-600 font-bold mt-0.5 text-xs">◉</span>
               <span>
-                অর্ডার Cancel হলে কি কারণে তা Cancel হয়েছে তা অর্ডার হিস্টরিতে দেওয়া থাকে অনুগ্রহ পূর্বক দেখে পুনরায়
-                সঠিক তথ্য দিয়ে অর্ডার করবেন।
+                অর্ডার Cancel হলে কি কারণে তা Cancel হয়েছে তা অর্ডার হিস্টোরিতে দেওয়া থাকে অনুগ্রহ পূর্বক দেখে পুনরায়
+                সঠিক তথ্য দিয়ে অর্ডার করবেন।
               </span>
             </li>
           </ul>

@@ -579,7 +579,7 @@ function PaymentContent() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-xs shrink-0">
-                      <img src="/images/bkash.svg" alt="bKash" className="w-full h-full object-contain" />
+                      <img src={paymentMethods.find((m) => m.code === "BKASH")?.logo_url || "/images/bkash.svg"} alt="bKash" referrerPolicy="no-referrer" className="w-full h-full object-contain" />
                     </div>
                     <div>
                       <span className="text-base font-black tracking-tight block">
@@ -616,7 +616,7 @@ function PaymentContent() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-xs shrink-0">
-                      <img src="/images/nagad.svg" alt="Nagad" className="w-full h-full object-contain" />
+                      <img src={paymentMethods.find((m) => m.code === "NAGAD")?.logo_url || "/images/nagad.svg"} alt="Nagad" referrerPolicy="no-referrer" className="w-full h-full object-contain" />
                     </div>
                     <div>
                       <span className="text-base font-black tracking-tight block">

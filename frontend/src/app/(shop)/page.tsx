@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -19,10 +19,78 @@ import {
 import { Banner, OrderPublicFeedItem } from "../../lib/api/types";
 import { getBanners, getSiteSettings, getPublicOrderFeed } from "../../lib/api/endpoints";
 
+export interface HomepageService {
+  id: string;
+  name: string;
+  src: string;
+  href: string;
+  tag?: string;
+  active: boolean;
+  sort_order: number;
+}
+
+const defaultServices: HomepageService[] = [
+  {
+    id: "uid-topup-bd",
+    name: "UID TOPUP (BD)",
+    src: "/FF/2.jpg",
+    href: "/uid-topup",
+    tag: "INSTANT",
+    active: true,
+    sort_order: 1,
+  },
+  {
+    id: "weekly-monthly",
+    name: "Weekly & Monthly",
+    src: "/FF/3.jpg",
+    href: "/weekly-monthly",
+    tag: "BEST VALUE",
+    active: true,
+    sort_order: 2,
+  },
+  {
+    id: "weekly-lite",
+    name: "Weekly Lite",
+    src: "/FF/4.jpg",
+    href: "/weekly-lite",
+    tag: "",
+    active: true,
+    sort_order: 3,
+  },
+  {
+    id: "level-up-pass",
+    name: "Level Up Pass",
+    src: "/FF/5.jpg",
+    href: "/level-up-pass",
+    tag: "REWARD",
+    active: true,
+    sort_order: 4,
+  },
+  {
+    id: "indo-server",
+    name: "Indo Server",
+    src: "/FF/6.jpg",
+    href: "/indonesia-server",
+    tag: "",
+    active: true,
+    sort_order: 5,
+  },
+  {
+    id: "ff-likes",
+    name: "FF Likes",
+    src: "/FF/1.jpg",
+    href: "/ff-likes",
+    tag: "",
+    active: true,
+    sort_order: 6,
+  },
+];
+
 export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showNotice, setShowNotice] = useState(true);
   const [banners, setBanners] = useState<Banner[]>([]);
+  const [services, setServices] = useState<HomepageService[]>(defaultServices);
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [recentOrders, setRecentOrders] = useState<OrderPublicFeedItem[]>([]);
   const [isRefreshingFeed, setIsRefreshingFeed] = useState(false);
@@ -30,14 +98,20 @@ export default function Home() {
 
   const loadHomeData = async () => {
     try {
-      const [fetchedBanners, fetchedSettings, feed] = await Promise.all([
+      const [fetchedBanners, fetchedSettings, feed, fetchedServices] = await Promise.all([
         getBanners().catch(() => []),
         getSiteSettings().catch(() => ({})),
         getPublicOrderFeed(8).catch(() => []),
+        fetch("/api/homepage-services?active=true", { cache: "no-store" })
+          .then((res) => (res.ok ? res.json() : defaultServices))
+          .catch(() => defaultServices),
       ]);
       setBanners(fetchedBanners);
       setSettings(fetchedSettings);
       setRecentOrders(feed);
+      if (Array.isArray(fetchedServices) && fetchedServices.length > 0) {
+        setServices(fetchedServices);
+      }
     } finally {
       setIsLoading(false);
       setIsRefreshingFeed(false);
@@ -83,22 +157,23 @@ export default function Home() {
   };
 
   const noticeText =
-    settings["notice"] || "১০০% নিরাপদ ও ইনস্ট্যান্ট ফ্রি ফায়ার ডায়মন্ড টপ-আপ। ২৪/৭ কাস্টমার সাপোর্ট।";
+    settings["notice"] ||
+    "১৮ বছরের নিচে কেউ অর্ডার করবেন না! বাবা/মা বা ফ্যামিলির টাকা চুরি করে অর্ডার করলে তার বিরুদ্ধে আইনগত ব্যবস্থা নেওয়া হবে!";
 
   return (
-    <div className="flex flex-col gap-3.5 sm:gap-6 py-3 sm:py-6 px-2.5 sm:px-4 lg:px-6 max-w-7xl mx-auto">
-      {/* Dynamic Announcement Notice Bar */}
+    <div className="flex flex-col gap-5 py-4 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      {/* Dynamic Announcement Notice Bar (offertopup.com style) */}
       {showNotice && (
-        <div className="bg-white dark:bg-[#0a0a0a] border border-slate-200/90 dark:border-[#1f1f1f] rounded-lg sm:rounded-xl shadow-xs flex items-center h-8 sm:h-11 overflow-hidden relative transition-all">
+        <div className="bg-white dark:bg-[#0a0a0a] border border-slate-200/90 dark:border-[#1f1f1f] rounded-xl shadow-xs flex items-center h-11 sm:h-12 overflow-hidden relative transition-all">
           {/* Left Attached NOTICE Badge */}
-          <div className="h-full px-2.5 sm:px-4 bg-[#7e22ce] text-white flex items-center gap-1.5 shrink-0 font-black text-[10px] sm:text-xs uppercase tracking-wider shadow-[3px_0_10px_rgba(126,34,206,0.2)] z-10 select-none">
-            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white ring-2 ring-white/40 inline-block animate-pulse shrink-0" />
+          <div className="h-full px-4 sm:px-5 bg-[#7e22ce] text-white flex items-center gap-2 shrink-0 font-black text-xs uppercase tracking-wider shadow-[4px_0_12px_rgba(126,34,206,0.2)] z-10 select-none">
+            <span className="w-2.5 h-2.5 rounded-full bg-white ring-2 ring-white/40 inline-block animate-pulse shrink-0" />
             <span>NOTICE</span>
           </div>
 
           {/* Scrolling Marquee Message */}
-          <div className="flex-1 overflow-hidden relative flex items-center px-2 sm:px-4">
-            <div className="animate-marquee whitespace-nowrap text-[11px] sm:text-sm font-semibold text-slate-800 dark:text-zinc-200">
+          <div className="flex-1 overflow-hidden relative flex items-center px-4">
+            <div className="animate-marquee whitespace-nowrap text-xs sm:text-sm font-semibold text-slate-800 dark:text-zinc-200">
               {noticeText}
             </div>
           </div>
@@ -107,25 +182,25 @@ export default function Home() {
           <button
             onClick={() => setShowNotice(false)}
             aria-label="Close Notice"
-            className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#7e22ce] hover:bg-[#6b21a8] text-white flex items-center justify-center shrink-0 mr-2 sm:mr-3 transition-transform hover:scale-105 shadow-xs z-10"
+            className="w-6 h-6 rounded-full bg-[#7e22ce] hover:bg-[#6b21a8] text-white flex items-center justify-center shrink-0 mr-3 transition-transform hover:scale-105 shadow-xs z-10"
           >
-            <X size={10} strokeWidth={2.5} />
+            <X size={12} strokeWidth={2.5} />
           </button>
         </div>
       )}
 
       {/* Hero Banner Slider */}
       <div className="w-full flex flex-col items-center group">
-        <div className="w-full rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 shadow-md sm:shadow-xl relative overflow-hidden border border-slate-200 dark:border-slate-800">
-          <div className="w-full h-[135px] xs:h-[160px] sm:h-[240px] md:h-[340px] lg:h-[380px] relative flex items-center justify-center overflow-hidden">
+        <div className="w-full rounded-2xl sm:rounded-3xl bg-white dark:bg-slate-900 shadow-md relative overflow-hidden border border-slate-200 dark:border-slate-800">
+          <div className="w-full h-[180px] sm:h-[280px] md:h-[360px] lg:h-[400px] relative flex items-center justify-center overflow-hidden">
             <div
               className="flex w-full h-full transition-transform duration-700 cubic-bezier(0.4, 0, 0.2, 1)"
               style={{ transform: `translateX(-${currentSlide * 100}%)` }}
             >
-              {activeSlides.map((slide, idx) => (
-                <div key={slide.id || idx} className="w-full h-full flex-shrink-0 relative">
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent z-10"></div>
+              {activeSlides.map((slide, idx) => {
+                const img = (
                   <Image
+                    unoptimized
                     src={slide.image_url}
                     alt={slide.title || `Promotion ${idx + 1}`}
                     fill
@@ -133,40 +208,37 @@ export default function Home() {
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1200px"
                     className="object-cover"
                   />
-                  <div className="absolute bottom-3 sm:bottom-8 left-3.5 sm:left-8 z-20 text-white max-w-lg pr-4">
-                    <span className="px-2 py-0.5 sm:px-3 sm:py-1 bg-purple-600 text-[9px] sm:text-xs font-black uppercase rounded-full mb-1 sm:mb-2 inline-block shadow-md">
-                      Featured Top-Up
-                    </span>
-                    <h2 className="text-sm xs:text-base sm:text-3xl font-black mb-0.5 sm:mb-1.5 drop-shadow-md leading-tight">
-                      {slide.title}
-                    </h2>
-                    {slide.subtitle && (
-                      <p className="text-white/85 text-[10px] sm:text-sm font-medium drop-shadow-sm line-clamp-1 sm:line-clamp-2">
-                        {slide.subtitle}
-                      </p>
-                    )}
-                    {slide.link_url && (
-                      <Link
-                        href={slide.link_url}
-                        className="mt-1.5 sm:mt-3 inline-flex items-center gap-1 bg-white text-purple-900 hover:bg-purple-50 font-black text-[10px] sm:text-xs uppercase px-3 py-1 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl shadow-md transition-transform hover:scale-105"
-                      >
-                        Order Now <ChevronRight size={12} />
-                      </Link>
-                    )}
+                );
+
+                if (slide.link_url) {
+                  return (
+                    <Link
+                      key={slide.id || idx}
+                      href={slide.link_url}
+                      className="w-full h-full flex-shrink-0 relative block cursor-pointer"
+                    >
+                      {img}
+                    </Link>
+                  );
+                }
+
+                return (
+                  <div key={slide.id || idx} className="w-full h-full flex-shrink-0 relative">
+                    {img}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
           {activeSlides.length > 1 && (
-            <div className="absolute bottom-2.5 right-3 sm:bottom-5 sm:right-6 z-20 flex gap-1.5 sm:gap-2">
+            <div className="absolute bottom-3 right-3 sm:bottom-5 sm:right-5 z-20 flex gap-1.5">
               {activeSlides.map((_, idx) => (
                 <button
                   key={idx}
                   onClick={() => setCurrentSlide(idx)}
-                  className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
-                    currentSlide === idx ? "w-5 sm:w-8 bg-white" : "w-1.5 sm:w-2 bg-white/50 hover:bg-white/80"
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    currentSlide === idx ? "w-6 bg-white" : "w-1.5 bg-white/50 hover:bg-white/80"
                   }`}
                   aria-label={`Go to slide ${idx + 1}`}
                 />
@@ -176,105 +248,82 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Action Buttons (Compact & Sleek on Mobile) */}
-      <div className="grid grid-cols-2 gap-2 sm:gap-4">
+      {/* Action Buttons */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         <a
           href={settings["support_telegram"] || "https://t.me/xoxoshop"}
           target="_blank"
           rel="noopener noreferrer"
-          className="bg-gradient-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg sm:rounded-2xl p-1.5 sm:p-4 flex items-center justify-start gap-1.5 sm:gap-3 transition-all shadow-xs hover:shadow-md hover:-translate-y-0.5 group"
+          className="bg-gradient-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-2xl p-4 sm:p-5 flex items-center justify-center gap-4 transition-all shadow-md hover:shadow-xl hover:-translate-y-0.5 group"
         >
-          <div className="bg-white/20 backdrop-blur-md rounded-md sm:rounded-xl p-1.5 sm:p-2.5 text-white group-hover:scale-105 transition-transform shrink-0 flex items-center justify-center">
-            <Send size={13} className="sm:w-5 sm:h-5 ml-0.2" />
+          <div className="bg-white/20 backdrop-blur-md rounded-xl p-3 text-white group-hover:scale-110 transition-transform shrink-0">
+            <Send size={24} className="ml-0.5" />
           </div>
-          <div className="text-left flex flex-col min-w-0">
-            <span className="text-[7.5px] sm:text-[10px] uppercase font-bold text-white/75 tracking-tight leading-none">
-              24/7 Support
+          <div className="text-left flex flex-col">
+            <span className="text-[10px] sm:text-xs uppercase font-bold text-white/70 tracking-wider">
+              24/7 Live Support
             </span>
-            <span className="font-extrabold text-[10px] xs:text-[11px] sm:text-base leading-tight mt-0.5 truncate">
-              Telegram
+            <span className="font-black text-sm sm:text-lg leading-none mt-1">
+              Telegram Helpdesk
             </span>
           </div>
         </a>
 
         <Link
           href="/contact"
-          className="bg-gradient-to-br from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white rounded-lg sm:rounded-2xl p-1.5 sm:p-4 flex items-center justify-start gap-1.5 sm:gap-3 transition-all shadow-xs hover:shadow-md hover:-translate-y-0.5 group"
+          className="bg-gradient-to-br from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white rounded-2xl p-4 sm:p-5 flex items-center justify-center gap-4 transition-all shadow-md hover:shadow-xl hover:-translate-y-0.5 group"
         >
-          <div className="bg-white/20 backdrop-blur-md rounded-md sm:rounded-xl p-1.5 sm:p-2.5 text-white group-hover:scale-105 transition-transform shrink-0 flex items-center justify-center">
-            <Users size={13} className="sm:w-5 sm:h-5" />
+          <div className="bg-white/20 backdrop-blur-md rounded-xl p-3 text-white group-hover:scale-110 transition-transform shrink-0">
+            <Users size={24} />
           </div>
-          <div className="text-left flex flex-col min-w-0">
-            <span className="text-[7.5px] sm:text-[10px] uppercase font-bold text-white/75 tracking-tight leading-none">
-              Assistance
+          <div className="text-left flex flex-col">
+            <span className="text-[10px] sm:text-xs uppercase font-bold text-white/70 tracking-wider">
+              Assistance & FAQ
             </span>
-            <span className="font-extrabold text-[10px] xs:text-[11px] sm:text-base leading-tight mt-0.5 truncate">
-              Helpline
+            <span className="font-black text-sm sm:text-lg leading-none mt-1">
+              Customer Helpline
             </span>
           </div>
         </Link>
       </div>
 
-      {/* Topup Categories */}
-      <div className="mt-1 sm:mt-2">
-        <div className="flex items-center justify-between mb-2.5 sm:mb-4">
-          <h2 className="text-sm sm:text-xl font-black text-slate-800 dark:text-white flex items-center gap-1.5">
-            <Trophy size={16} className="text-purple-600 dark:text-purple-400 sm:w-5 sm:h-5" /> Diamond Packages & Services
-          </h2>
-        </div>
+      {/* Topup Categories (Dynamic from Admin Panel) */}
+      {services.length > 0 && (
+        <div className="mt-1 sm:mt-2">
+          <div className="flex items-center justify-between mb-2.5 sm:mb-4">
+            <h2 className="text-sm sm:text-xl font-black text-slate-800 dark:text-white flex items-center gap-1.5">
+              <Trophy size={16} className="text-purple-600 dark:text-purple-400 sm:w-5 sm:h-5" /> Diamond Packages & Services
+            </h2>
+          </div>
 
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3.5">
-          {[
-            {
-              name: "UID TOPUP (BD)",
-              src: "/FF/2.jpg",
-              href: "/uid-topup",
-              tag: "Instant",
-            },
-            {
-              name: "Weekly & Monthly",
-              src: "/FF/3.jpg",
-              href: "/weekly-monthly",
-              tag: "Best Value",
-            },
-            { name: "Weekly Lite", src: "/FF/4.jpg", href: "/weekly-lite" },
-            {
-              name: "Level Up Pass",
-              src: "/FF/5.jpg",
-              href: "/level-up-pass",
-              tag: "Reward",
-            },
-            {
-              name: "Indo Server",
-              src: "/FF/6.jpg",
-              href: "/indonesia-server",
-            },
-            { name: "FF Likes", src: "/FF/1.jpg", href: "/ff-likes" },
-          ].map((item, idx) => (
-            <Link href={item.href} key={idx} className="group">
-              <div className="bg-white dark:bg-slate-800 rounded-xl p-1.5 sm:p-2.5 shadow-xs hover:shadow-md border border-slate-100 dark:border-slate-700 transition-all duration-200 hover:-translate-y-1 flex flex-col h-full relative overflow-hidden">
-                {item.tag && (
-                  <div className="absolute top-0 right-0 bg-purple-600 text-white text-[8px] font-black uppercase px-1.5 py-0.2 rounded-bl-md z-20">
-                    {item.tag}
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3.5">
+            {services.map((item) => (
+              <Link href={item.href} key={item.id} className="group">
+                <div className="bg-white dark:bg-slate-800 rounded-xl p-1.5 sm:p-2.5 shadow-xs hover:shadow-md border border-slate-100 dark:border-slate-700 transition-all duration-200 hover:-translate-y-1 flex flex-col h-full relative overflow-hidden">
+                  {item.tag && (
+                    <div className="absolute top-0 right-0 bg-purple-600 text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded-bl-md z-20 shadow-xs">
+                      {item.tag}
+                    </div>
+                  )}
+                  <div className="w-full aspect-square rounded-lg overflow-hidden relative mb-1.5 bg-slate-100 dark:bg-slate-700/50">
+                    <Image
+                      unoptimized
+                      src={item.src}
+                      alt={item.name}
+                      fill
+                      sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, 16vw"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
                   </div>
-                )}
-                <div className="w-full aspect-square rounded-lg overflow-hidden relative mb-1.5 bg-slate-100 dark:bg-slate-700/50">
-                  <Image
-                    src={item.src}
-                    alt={item.name}
-                    fill
-                    sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, 16vw"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
+                  <h3 className="font-bold text-[10px] sm:text-xs text-center text-slate-800 dark:text-slate-200 group-hover:text-purple-600 dark:group-hover:text-purple-400 line-clamp-1 mt-auto">
+                    {item.name}
+                  </h3>
                 </div>
-                <h3 className="font-bold text-[10px] sm:text-xs text-center text-slate-800 dark:text-slate-200 group-hover:text-purple-600 dark:group-hover:text-purple-400 line-clamp-1 mt-auto">
-                  {item.name}
-                </h3>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Real Live Purchases Feed */}
       <div className="mt-3 sm:mt-6 bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl shadow-sm sm:shadow-md border border-slate-200 dark:border-slate-800 overflow-hidden relative">
@@ -331,7 +380,7 @@ export default function Home() {
                       {order.customer_display_name.charAt(0)}
                     </div>
                     <div className="min-w-0">
-                      <div className="flex items-center gap-1.5 mb-0.2">
+                      <div className="flex items-center gap-1.5 mb-0.5">
                         <h4 className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-200 truncate">
                           {order.customer_display_name}
                         </h4>

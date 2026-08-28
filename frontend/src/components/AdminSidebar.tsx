@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   MessageSquare,
   KeyRound,
+  LayoutGrid,
 } from "lucide-react";
 import { useAuth } from "../lib/auth/AuthContext";
 
@@ -34,6 +35,7 @@ export function AdminSidebar({ isOpen = false, onClose }: AdminSidebarProps) {
     { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
     { href: "/admin/payments", label: "Payments & Verify", icon: CreditCard },
     { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
+    { href: "/admin/services", label: "Diamond Services", icon: LayoutGrid },
     { href: "/admin/products", label: "Diamond Packages", icon: Package },
     { href: "/admin/payment-methods", label: "Payment Methods", icon: Zap },
     { href: "/admin/banners", label: "Hero Banners", icon: ImageIcon },

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -19,14 +19,18 @@ export function ShopHeader() {
   return (
     <>
       <header className="bg-white/95 dark:bg-[#120b22]/95 backdrop-blur-md sticky top-0 z-40 shadow-xs border-b border-slate-100 dark:border-purple-950/60 transition-colors duration-300">
-        <div className="container mx-auto px-3 sm:px-4 max-w-6xl h-12 sm:h-16 md:h-20 flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 select-none group">
+        <div className="container mx-auto px-3 sm:px-4 max-w-6xl h-14 sm:h-16 md:h-20 flex items-center justify-between">
+          {/* Logo & Brand Name */}
+          <Link href="/" className="flex items-center gap-2 sm:gap-2.5 select-none group">
             <img
               src="/xoxo_logo.png"
               alt="XoXo Shop"
               className="h-8 sm:h-10 md:h-12 w-auto object-contain transition-transform group-hover:scale-105"
             />
+            <span className="font-black text-sm sm:text-base md:text-xl tracking-tight uppercase flex items-center gap-1">
+              <span className="text-slate-900 dark:text-white">XOXO</span>
+              <span className="text-purple-600 dark:text-purple-400">SHOP</span>
+            </span>
           </Link>
 
           {/* Desktop Navigation Links */}
@@ -81,7 +85,7 @@ export function ShopHeader() {
 
           {/* Mobile View: Reduced Navbar with Wallet Pill + Profile Trigger */}
           <div className="flex md:hidden items-center gap-2">
-            {/* Mobile Wallet Balance Pill matching Screenshot */}
+            {/* Mobile Wallet Balance Pill */}
             {isAuthenticated ? (
               <button
                 type="button"
