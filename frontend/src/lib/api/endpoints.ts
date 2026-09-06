@@ -81,6 +81,8 @@ export const registerWithBackend = (data: {
   phone?: string;
 }) => api.post<{ access_token: string; token_type: string; user: Profile }>("/auth/register", data);
 
+export const logoutBackend = () => api.post<{ status: string }>("/auth/logout");
+
 export const getMockToken = (email: string, fullName: string, role: string = "CUSTOMER") =>
   api.post<{ access_token: string; user: unknown }>("/auth/mock-token", {
     email,

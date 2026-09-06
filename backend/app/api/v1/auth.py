@@ -73,12 +73,20 @@ async def sync_profile(
 ):
     """Syncs user metadata from Supabase session to backend profile."""
     profile = current_user.profile
-    if data.full_name and not profile.full_name:
+    changed = False
+    if data.full_name and profile.full_name != data.full_name:
         profile.full_name = data.full_name
-    if data.avatar_url and not profile.avatar_url:
+        changed = True
+    if data.avatar_url and profile.avatar_url != data.avatar_url:
         profile.avatar_url = data.avatar_url
-    await db.commit()
-    await db.refresh(profile)
+        changed = True
+    if changed:
+        await db.commit()
+        await db.refresh(profile)
+
+    # Invalidate cached AuthenticatedUser on every sync to prevent stale auth cache
+    from app.core.cache import cache
+    cache.invalidate(f"auth_user:{profile.auth_user_id}")
 
     return ProfileRead(
         id=profile.id,
@@ -93,6 +101,16 @@ async def sync_profile(
         created_at=profile.created_at,
         updated_at=profile.updated_at,
     )
+
+
+@router.post("/logout")
+async def logout(
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
+    """Invalidates backend auth cache on user logout."""
+    from app.core.cache import cache
+    cache.invalidate(f"auth_user:{current_user.profile.auth_user_id}")
+    return {"status": "ok"}
 
 
 @router.post(
@@ -265,7 +283,11 @@ async def change_password(
     db: AsyncSession = Depends(get_db),
 ):
     """Change current user password."""
-    profile = current_user.profile
+    result = await db.execute(select(Profile).where(Profile.id == current_user.profile.id))
+    profile = result.scalars().first()
+    if not profile:
+        raise UnauthorizedError(message="Profile not found", code="NOT_FOUND")
+
     if profile.password_hash:
         if not verify_password(data.old_password, profile.password_hash):
             raise UnauthorizedError(message="Incorrect current password", code="INVALID_PASSWORD")
@@ -273,7 +295,12 @@ async def change_password(
         # Supabase-only account setting a local password for the first time: there is no
         # old password to prove, the verified access token is the proof of identity.
         logger.info(f"Setting first local password for profile {profile.id}")
+
     profile.password_hash = hash_password(data.new_password)
     await db.commit()
+
+    from app.core.cache import cache
+    cache.invalidate(f"auth_user:{profile.auth_user_id}")
+
     return {"success": True, "message": "Password updated successfully"}
 

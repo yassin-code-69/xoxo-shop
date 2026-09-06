@@ -138,7 +138,7 @@ export default function AdminHomepageServicesPage() {
             <Trophy className="text-purple-600 dark:text-purple-400" /> Diamond Packages & Services
           </h1>
           <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
-            Manage the category service cards on the homepage (toggle display ON/OFF, change graphics via ImgBB, edit tags & links)
+            Manage the category service cards on the homepage (toggle display ON/OFF, upload graphics, edit tags & links)
           </p>
         </div>
 
@@ -277,7 +277,7 @@ export default function AdminHomepageServicesPage() {
               {isCreating ? "Add Service Card" : "Edit Service Card"}
             </h3>
             <p className="text-xs text-slate-500 dark:text-zinc-400 mb-6">
-              Update card image via ImgBB, title, action link, and display status
+              Update card image, title, action link, and display status
             </p>
 
             <form onSubmit={handleSave} className="space-y-4">
@@ -308,12 +308,12 @@ export default function AdminHomepageServicesPage() {
                 />
               </div>
 
-              {/* ImgBB Image Upload */}
+              {/* Direct Fast Image Upload */}
               <ImageUpload
                 value={editingService.src || ""}
                 onChange={(url) => setEditingService({ ...editingService, src: url })}
                 label="Card Graphic / Image *"
-                hint="Upload HD square graphic directly to ImgBB"
+                hint="Upload HD square graphic (JPG, PNG, WEBP)"
               />
 
               <div>

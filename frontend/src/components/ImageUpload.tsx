@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useRef } from "react";
 import { Upload, X, Loader2, Image as ImageIcon, Link as LinkIcon } from "lucide-react";
@@ -14,7 +14,7 @@ export function ImageUpload({
   value,
   onChange,
   label = "Banner Image",
-  hint = "PNG, JPG, WEBP up to 10MB (Auto-hosted on ImgBB)",
+  hint = "PNG, JPG, WEBP up to 10MB",
 }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -128,7 +128,7 @@ export function ImageUpload({
           {isUploading ? (
             <div className="flex flex-col items-center gap-2 py-2">
               <Loader2 className="animate-spin text-purple-600" size={30} />
-              <span className="text-xs font-black text-purple-600">Uploading image to ImgBB...</span>
+              <span className="text-xs font-black text-purple-600">Uploading image...</span>
               <span className="text-[10px] text-slate-400">Please wait a moment</span>
             </div>
           ) : (
@@ -137,7 +137,7 @@ export function ImageUpload({
                 <Upload size={20} />
               </div>
               <span className="text-xs font-black text-slate-800 dark:text-zinc-200 mt-1">
-                Click to upload image to ImgBB
+                Click to upload image
               </span>
               <span className="text-[10px] text-slate-400 dark:text-zinc-500">{hint}</span>
             </div>

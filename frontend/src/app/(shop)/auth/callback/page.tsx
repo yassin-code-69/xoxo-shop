@@ -27,12 +27,23 @@ function CallbackHandler() {
 
         const next = searchParams.get("next") || "/";
         const code = searchParams.get("code");
+        const hasNewAuth = !!code || (window.location.hash && window.location.hash !== "#");
 
-        // Fast path 0: If already authenticated in localStorage, redirect immediately
+        // Fast path 0: If already authenticated and NO new auth arriving, redirect
         const existingToken = typeof window !== "undefined" ? localStorage.getItem("xoxo_auth_token") : null;
-        if (existingToken && !code && (!window.location.hash || window.location.hash === "#")) {
+        if (existingToken && !hasNewAuth) {
           window.location.replace(next);
           return;
+        }
+
+        // Clear stale auth state when a fresh OAuth code/hash arrives.
+        // Without this, the old token stays in localStorage and the
+        // AuthContext's init useEffect races with this callback, sending
+        // the STALE token to the backend which returns a cached profile
+        // for the wrong session.
+        if (hasNewAuth) {
+          localStorage.removeItem("xoxo_auth_token");
+          localStorage.removeItem("xoxo_user_profile");
         }
 
         let sessionToken: string | null = null;
@@ -124,51 +135,72 @@ function CallbackHandler() {
               };
               localStorage.setItem("xoxo_user_profile", JSON.stringify(userProfile));
 
-              // Non-blocking sync to backend
-              void syncProfile({
-                email: userProfile.email,
-                full_name: userProfile.full_name,
-                avatar_url: userProfile.avatar_url || undefined,
-              }).catch(() => {});
+              // Await syncProfile so backend creates the record and invalidates stale cache
+              try {
+                await Promise.race([
+                  syncProfile({
+                    email: userProfile.email,
+                    full_name: userProfile.full_name,
+                    avatar_url: userProfile.avatar_url || undefined,
+                  }),
+                  new Promise((resolve) => setTimeout(resolve, 1500)),
+                ]);
+              } catch (syncErr) {
+                console.warn("Backend profile sync notice:", syncErr);
+              }
             }
           } catch {}
 
-          // Non-blocking profile refresh
-          void refreshProfile().catch(() => {});
+          // Refresh profile in AuthContext
+          try {
+            await refreshProfile();
+          } catch {}
 
-          // Instant redirect
-          window.location.replace(next);
+          // Brief delay so the user sees success feedback before redirecting
+          setTimeout(() => {
+            window.location.replace(next);
+          }, 400);
           return;
         }
 
         // 4. Fallback listener if session is still arriving
-        const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+        const { data: listener } = supabase.auth.onAuthStateChange(async (event, session) => {
           if (session?.access_token) {
             localStorage.setItem("xoxo_auth_token", session.access_token);
             setStatus("success");
             listener.subscription.unsubscribe();
 
             if (session.user) {
-              void syncProfile({
-                email: session.user.email,
-                full_name:
-                  session.user.user_metadata?.full_name ||
-                  session.user.user_metadata?.name ||
-                  session.user.email?.split("@")[0],
-                avatar_url:
-                  session.user.user_metadata?.avatar_url ||
-                  session.user.user_metadata?.picture,
-              }).catch(() => {});
+              try {
+                await Promise.race([
+                  syncProfile({
+                    email: session.user.email,
+                    full_name:
+                      session.user.user_metadata?.full_name ||
+                      session.user.user_metadata?.name ||
+                      session.user.email?.split("@")[0],
+                    avatar_url:
+                      session.user.user_metadata?.avatar_url ||
+                      session.user.user_metadata?.picture,
+                  }),
+                  new Promise((resolve) => setTimeout(resolve, 1500)),
+                ]);
+              } catch (syncErr) {
+                console.warn("Backend profile sync notice:", syncErr);
+              }
             }
 
-            void refreshProfile().catch(() => {});
-            window.location.replace(next);
+            try {
+              await refreshProfile();
+            } catch {}
+
+            setTimeout(() => {
+              window.location.replace(next);
+            }, 400);
           }
         });
 
         // 5. Safety timeout: give Supabase enough time to deliver the session.
-        // Cloud instances (especially Tokyo region) can take 1-2s for the
-        // auth state change event to fire, so 500ms was too aggressive.
         setTimeout(() => {
           listener.subscription.unsubscribe();
           const finalCheck = localStorage.getItem("xoxo_auth_token");
@@ -180,8 +212,12 @@ function CallbackHandler() {
                 localStorage.setItem("xoxo_auth_token", data.session.access_token);
                 window.location.replace(next);
               } else {
-                console.warn("Auth callback: no session found after timeout, redirecting home");
-                window.location.replace("/");
+                console.warn("Auth callback: no session found after timeout, redirecting to login");
+                setStatus("error");
+                setErrorMessage("Authentication session expired or code already used. Please try signing in again.");
+                setTimeout(() => {
+                  window.location.replace("/login");
+                }, 1500);
               }
             });
           }

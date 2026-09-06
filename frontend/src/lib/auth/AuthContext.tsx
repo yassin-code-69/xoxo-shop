@@ -8,6 +8,7 @@ import {
   syncProfile,
   loginWithBackend,
   registerWithBackend,
+  logoutBackend,
 } from "../api/endpoints";
 import { ApiError } from "../api/client";
 import { supabase, isSupabaseConfigured } from "./supabase";
@@ -56,12 +57,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     if (isLoggingOutRef.current) return;
+    if (typeof window !== "undefined" && window.location.pathname.includes("/auth/callback")) {
+      return; // Never log out while on OAuth callback page
+    }
     isLoggingOutRef.current = true;
 
     try {
       if (isSupabaseConfigured) {
         await supabase.auth.signOut().catch(() => {});
       }
+      // Notify backend to invalidate cached user session
+      void logoutBackend().catch(() => {});
     } catch (e) {
       console.error("Logout error:", e);
     } finally {
@@ -168,6 +174,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [updateProfile]);
 
   useEffect(() => {
+    // If on callback page with incoming OAuth code or hash, let CallbackHandler handle auth
+    if (typeof window !== "undefined" && window.location.pathname.includes("/auth/callback")) {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get("code") || (window.location.hash && window.location.hash !== "#")) {
+        setIsLoading(false);
+        return;
+      }
+    }
+
     const storedToken =
       typeof window !== "undefined" ? localStorage.getItem("xoxo_auth_token") : null;
     const storedProfile =
@@ -228,6 +243,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
           await refreshProfile();
         } else if (event === "SIGNED_OUT") {
+          // Never log out while on OAuth callback flow
+          if (typeof window !== "undefined" && window.location.pathname.includes("/auth/callback")) {
+            return;
+          }
           // If a backend token is in localStorage, verify before logging out
           const stored = typeof window !== "undefined" ? localStorage.getItem("xoxo_auth_token") : null;
           if (stored) {
@@ -258,6 +277,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!isSupabaseConfigured) {
         throw new Error("Supabase authentication is not configured.");
       }
+
+      // Clear any stale tokens or cached profiles before initiating OAuth flow
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("xoxo_auth_token");
+        localStorage.removeItem("xoxo_user_profile");
+      }
+      setToken(null);
+      setProfile(null);
+
       const origin = typeof window !== "undefined" ? window.location.origin : "";
       const redirectTo = `${origin}/auth/callback`;
 
