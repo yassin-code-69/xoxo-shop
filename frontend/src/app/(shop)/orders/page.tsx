@@ -16,6 +16,7 @@ import {
 import { Order } from "../../../lib/api/types";
 import { getMyOrders } from "../../../lib/api/endpoints";
 import { useAuth } from "../../../lib/auth/AuthContext";
+import { formatPrice } from "../../../lib/utils/format";
 
 export default function MyOrdersPage() {
   const router = useRouter();
@@ -149,7 +150,7 @@ export default function MyOrdersPage() {
 
                   <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4 w-full sm:w-auto pl-11 sm:pl-0 shrink-0">
                     <span className="font-black text-xs sm:text-base text-slate-900 dark:text-white">
-                      ৳ {o.total_amount}
+                      ৳ {formatPrice(o.total_amount)}
                     </span>
                     <span
                       className={`px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-wider ${

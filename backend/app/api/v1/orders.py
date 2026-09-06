@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.cache import cache
 from app.core.rate_limit import rate_limit
 from app.core.security import (
     AuthenticatedUser,
@@ -31,6 +32,7 @@ async def create_order(
 ):
     service = OrderService(db)
     order = await service.create_order(user_id=current_user.id, data=data)
+    cache.invalidate("public_feed")
     return service.map_to_public_read(order)
 
 
@@ -93,5 +95,12 @@ async def get_public_feed(
     limit: int = Query(10, ge=1, le=50),
     db: AsyncSession = Depends(get_db),
 ):
+    cache_key = f"public_feed_{limit}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     service = OrderService(db)
-    return await service.get_public_feed(limit=limit)
+    feed = await service.get_public_feed(limit=limit)
+    cache.set(cache_key, feed, ttl_seconds=30)
+    return feed

@@ -30,6 +30,7 @@ import {
 import { supabase, isSupabaseConfigured } from "../../../../lib/auth/supabase";
 import { useAuth } from "../../../../lib/auth/AuthContext";
 import { AddMoneyModal } from "../../../../components/AddMoneyModal";
+import { formatPrice } from "../../../../lib/utils/format";
 
 function PaymentContent() {
   const params = useParams();
@@ -509,7 +510,7 @@ function PaymentContent() {
                   Amount to Pay
                 </span>
                 <span className="text-2xl sm:text-3xl font-black text-purple-600 dark:text-white font-mono">
-                  ৳ {order.total_amount}
+                  ৳ {formatPrice(order.total_amount)}
                 </span>
               </div>
             </div>
@@ -527,13 +528,13 @@ function PaymentContent() {
                         Your Wallet Balance
                       </span>
                       <span className="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-500/30">
-                        Available: ৳ {profile?.balance || 0}
+                        Available: ৳ {formatPrice(profile?.balance || 0)}
                       </span>
                     </div>
                     <p className="text-xs text-slate-600 dark:text-purple-200/70 mt-0.5">
                       {Number(profile?.balance || 0) >= Number(order.total_amount)
                         ? "You have enough balance to complete this order instantly!"
-                        : `Need ৳ ${Number(order.total_amount) - Number(profile?.balance || 0)} more to pay with wallet.`}
+                        : `Need ৳ ${formatPrice(Number(order.total_amount) - Number(profile?.balance || 0))} more to pay with wallet.`}
                     </p>
                   </div>
                 </div>
@@ -551,7 +552,7 @@ function PaymentContent() {
                           <Loader2 size={16} className="animate-spin" /> Processing...
                         </>
                       ) : (
-                        <>Pay ৳ {order.total_amount} with Wallet</>
+                        <>Pay ৳ {formatPrice(order.total_amount)} with Wallet</>
                       )}
                     </button>
                   ) : (
@@ -601,7 +602,7 @@ function PaymentContent() {
                 <div className="mt-3 flex items-center justify-between text-xs text-pink-100 border-t border-white/15 pt-2">
                   <span>Zero Fee • Instant Top-up</span>
                   <span className="font-bold group-hover:translate-x-1 transition-transform">
-                    Pay ৳{order.total_amount} →
+                    Pay ৳{formatPrice(order.total_amount)} →
                   </span>
                 </div>
               </button>
@@ -638,7 +639,7 @@ function PaymentContent() {
                 <div className="mt-3 flex items-center justify-between text-xs text-orange-100 border-t border-white/15 pt-2">
                   <span>Secure DFS • Instant Top-up</span>
                   <span className="font-bold group-hover:translate-x-1 transition-transform">
-                    Pay ৳{order.total_amount} →
+                    Pay ৳{formatPrice(order.total_amount)} →
                   </span>
                 </div>
               </button>
@@ -745,7 +746,7 @@ function PaymentContent() {
                       Amount to Send
                     </span>
                     <span className="text-xl font-black text-purple-600 dark:text-purple-400">
-                      ৳ {order.total_amount}
+                      ৳ {formatPrice(order.total_amount)}
                     </span>
                   </div>
                   <button
@@ -765,7 +766,7 @@ function PaymentContent() {
                   </p>
                   <ol className="list-decimal pl-4 space-y-1 text-[11px]">
                     <li>
-                      আপনার {selectedManualCode} অ্যাপ থেকে উপরে দেওয়া নম্বরে <strong>৳ {order.total_amount}</strong> Send Money করুন।
+                      আপনার {selectedManualCode} অ্যাপ থেকে উপরে দেওয়া নম্বরে <strong>৳ {formatPrice(order.total_amount)}</strong> Send Money করুন।
                     </li>
                     <li>
                       পেমেন্ট সফল হলে এসএমএস থেকে <strong>Transaction ID (TrxID)</strong> কপি করুন।
@@ -865,7 +866,7 @@ function PaymentContent() {
           <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60">
             <span className="text-slate-500 block">Total Amount</span>
             <span className="font-bold text-purple-600 dark:text-purple-400 mt-0.5 block">
-              ৳ {order.total_amount} {order.currency}
+              ৳ {formatPrice(order.total_amount)} {order.currency}
             </span>
           </div>
           <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60">

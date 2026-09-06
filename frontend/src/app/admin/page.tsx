@@ -28,7 +28,7 @@ import { useAuth } from "../../lib/auth/AuthContext";
 import { AdminAnalyticsChart } from "../../components/AdminAnalyticsChart";
 
 export default function AdminDashboard() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, isSupport, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [data, setData] = useState<DashboardMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -45,6 +45,7 @@ export default function AdminDashboard() {
     try {
       const res = await getAdminDashboard();
       setData(res);
+      setError(null);
     } catch (err: any) {
       setError(err.message || "Failed to load dashboard metrics.");
     } finally {
@@ -54,8 +55,10 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    fetchDashboard(true);
-  }, []);
+    if (isAuthenticated && (isAdmin || isSupport)) {
+      fetchDashboard(true);
+    }
+  }, [isAuthenticated, isAdmin, isSupport]);
 
   const handleQuickSync = async () => {
     setIsSyncing(true);
@@ -151,8 +154,15 @@ export default function AdminDashboard() {
       )}
 
       {error && (
-        <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-semibold">
-          {error}
+        <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 text-xs font-semibold flex items-center justify-between shadow-xs">
+          <span>{error}</span>
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            className="text-[10px] uppercase font-black tracking-wider text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 ml-4 cursor-pointer"
+          >
+            Dismiss
+          </button>
         </div>
       )}
 

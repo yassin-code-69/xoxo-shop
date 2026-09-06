@@ -14,6 +14,7 @@ export default function NotFound() {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
+        suppressHydrationWarning
         className={`${inter.variable} antialiased bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans items-center justify-center`}
       >
         <div className="flex flex-col items-center text-center px-4 max-w-lg">

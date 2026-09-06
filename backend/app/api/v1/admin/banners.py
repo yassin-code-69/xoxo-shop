@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.cache import cache
 from app.core.security import AuthenticatedUser, get_current_admin
 from app.db.session import get_db
 from app.modules.banners.schema import BannerCreate, BannerRead, BannerUpdate
@@ -25,7 +26,9 @@ async def create_banner(
     db: AsyncSession = Depends(get_db),
 ):
     service = BannerService(db)
-    return await service.create_banner(data)
+    banner = await service.create_banner(data)
+    cache.invalidate("public_banners")
+    return banner
 
 
 @router.patch("/{banner_id}", response_model=BannerRead)
@@ -36,7 +39,9 @@ async def update_banner(
     db: AsyncSession = Depends(get_db),
 ):
     service = BannerService(db)
-    return await service.update_banner(banner_id=banner_id, data=data)
+    banner = await service.update_banner(banner_id=banner_id, data=data)
+    cache.invalidate("public_banners")
+    return banner
 
 
 @router.delete("/{banner_id}")
@@ -47,4 +52,5 @@ async def delete_banner(
 ):
     service = BannerService(db)
     await service.delete_banner(banner_id=banner_id)
+    cache.invalidate("public_banners")
     return {"status": "success"}

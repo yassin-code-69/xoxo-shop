@@ -43,6 +43,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const isLoggingOutRef = React.useRef(false);
 
+  const updateProfile = useCallback((p: Profile | null) => {
+    setProfile(p);
+    if (typeof window !== "undefined") {
+      if (p) {
+        localStorage.setItem("xoxo_user_profile", JSON.stringify(p));
+      } else {
+        localStorage.removeItem("xoxo_user_profile");
+      }
+    }
+  }, []);
+
   const logout = useCallback(async () => {
     if (isLoggingOutRef.current) return;
     isLoggingOutRef.current = true;
@@ -55,6 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Logout error:", e);
     } finally {
       localStorage.removeItem("xoxo_auth_token");
+      localStorage.removeItem("xoxo_user_profile");
       if (typeof sessionStorage !== "undefined") {
         sessionStorage.clear();
       }
@@ -79,72 +91,103 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshProfile = useCallback(async () => {
     try {
       const p = await getMyProfile();
-      setProfile(p);
+      if (p) {
+        updateProfile(p);
+        return;
+      }
     } catch (err: unknown) {
-      if (err instanceof ApiError && err.status === 401) {
-        localStorage.removeItem("xoxo_auth_token");
-        setToken(null);
-        setProfile(null);
-      } else {
-        // Fallback: If FastAPI backend is down, query profile directly from Supabase
-        if (isSupabaseConfigured) {
-          try {
-            const { data: userData } = await supabase.auth.getUser();
-            if (userData?.user) {
-              const u = userData.user;
-              const { data: prof } = await supabase
-                .from("profiles")
-                .select("*")
-                .eq("auth_user_id", u.id)
-                .maybeSingle();
+      console.warn("Backend getMyProfile failed, attempting direct Supabase resolution:", err);
+    }
 
-              if (prof) {
-                const { data: rolesData } = await supabase
-                  .from("user_roles")
-                  .select("role_code")
-                  .eq("user_id", prof.id);
+    // Direct Supabase Fallback: If FastAPI backend profile fetch fails or Supabase session active
+    if (isSupabaseConfigured) {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData?.session?.access_token) {
+          localStorage.setItem("xoxo_auth_token", sessionData.session.access_token);
+          setToken(sessionData.session.access_token);
+        }
 
-                const roles =
-                  rolesData && rolesData.length > 0
-                    ? rolesData.map((r: { role_code: string }) => r.role_code)
-                    : ["CUSTOMER"];
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData?.user) {
+          const u = userData.user;
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("auth_user_id", u.id)
+            .maybeSingle();
 
-                setProfile({
-                  id: prof.id,
-                  auth_user_id: prof.auth_user_id,
-                  email: prof.email || u.email || "",
-                  full_name: prof.full_name || u.user_metadata?.full_name,
-                  phone: prof.phone,
-                  avatar_url: prof.avatar_url || u.user_metadata?.avatar_url,
-                  status: prof.status || "ACTIVE",
-                  is_active: prof.is_active ?? true,
-                  balance: Number(prof.balance || 0),
-                  total_spend: Number(prof.total_spend || 0),
-                  current_rank: prof.current_rank || "Bronze",
-                  rank_level: Number(prof.rank_level || 1),
-                  roles,
-                  created_at: prof.created_at,
-                  updated_at: prof.updated_at,
-                });
-                return;
-              }
-            }
-          } catch (supaErr) {
-            console.warn("Direct Supabase fallback fetch failed:", supaErr);
+          if (prof) {
+            const { data: rolesData } = await supabase
+              .from("user_roles")
+              .select("role_code")
+              .eq("user_id", prof.id);
+
+            const roles =
+              rolesData && rolesData.length > 0
+                ? rolesData.map((r: { role_code: string }) => r.role_code)
+                : ["CUSTOMER"];
+
+            updateProfile({
+              id: prof.id,
+              auth_user_id: prof.auth_user_id,
+              email: prof.email || u.email || "",
+              full_name: prof.full_name || u.user_metadata?.full_name,
+              phone: prof.phone,
+              avatar_url: prof.avatar_url || u.user_metadata?.avatar_url,
+              status: prof.status || "ACTIVE",
+              is_active: prof.is_active ?? true,
+              balance: Number(prof.balance || 0),
+              total_spend: Number(prof.total_spend || 0),
+              current_rank: prof.current_rank || "Bronze",
+              rank_level: Number(prof.rank_level || 1),
+              roles,
+              created_at: prof.created_at,
+              updated_at: prof.updated_at,
+            });
+            return;
           }
         }
-        console.warn("Failed to refresh profile (non-401 error):", err);
+      } catch (supaErr) {
+        console.warn("Direct Supabase fallback fetch failed:", supaErr);
       }
     }
-  }, []);
+
+    // If both backend and Supabase checks failed, clear invalid token.
+    // BUT: don't clear during OAuth callback flow — the token may be valid
+    // but the backend/Supabase haven't fully synced yet.
+    if (typeof window !== "undefined") {
+      const isCallbackFlow = window.location.pathname.includes("/auth/callback");
+      if (!isCallbackFlow) {
+        localStorage.removeItem("xoxo_auth_token");
+        localStorage.removeItem("xoxo_user_profile");
+        setToken(null);
+        setProfile(null);
+      }
+    }
+  }, [updateProfile]);
 
   useEffect(() => {
     const storedToken =
       typeof window !== "undefined" ? localStorage.getItem("xoxo_auth_token") : null;
+    const storedProfile =
+      typeof window !== "undefined" ? localStorage.getItem("xoxo_user_profile") : null;
+
+    if (storedProfile) {
+      try {
+        const parsed = JSON.parse(storedProfile);
+        setProfile(parsed);
+      } catch {
+        // ignore parse error
+      }
+    }
+
     if (storedToken) {
       setToken(storedToken);
       getMyProfile()
-        .then((p) => setProfile(p))
+        .then((p) => {
+          if (p) updateProfile(p);
+        })
         .catch(() => {
           // If stored token failed on backend, try direct Supabase session
           if (isSupabaseConfigured) {
@@ -152,6 +195,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           } else {
             if (typeof window !== "undefined") {
               localStorage.removeItem("xoxo_auth_token");
+              localStorage.removeItem("xoxo_user_profile");
             }
             setToken(null);
             setProfile(null);
@@ -184,7 +228,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
           await refreshProfile();
         } else if (event === "SIGNED_OUT") {
-          if (!isLoggingOutRef.current) {
+          // If a backend token is in localStorage, verify before logging out
+          const stored = typeof window !== "undefined" ? localStorage.getItem("xoxo_auth_token") : null;
+          if (stored) {
+            getMyProfile()
+              .then((p) => {
+                if (p) updateProfile(p);
+              })
+              .catch(() => {
+                if (!isLoggingOutRef.current) {
+                  void logout();
+                }
+              });
+          } else if (!isLoggingOutRef.current) {
             void logout();
           }
         }
@@ -194,7 +250,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         authListener.subscription.unsubscribe();
       };
     }
-  }, [logout, refreshProfile]);
+  }, [logout, refreshProfile, updateProfile]);
 
   const loginWithGoogle = async () => {
     setIsLoading(true);
@@ -246,7 +302,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (res?.access_token) {
         localStorage.setItem("xoxo_auth_token", res.access_token);
         setToken(res.access_token);
-        setProfile(res.user);
+        updateProfile(res.user);
       }
     } finally {
       setIsLoading(false);
@@ -265,7 +321,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (res?.access_token) {
         localStorage.setItem("xoxo_auth_token", res.access_token);
         setToken(res.access_token);
-        setProfile(res.user);
+        updateProfile(res.user);
       }
     } finally {
       setIsLoading(false);
@@ -275,16 +331,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginWithSupabase = async (email: string, password: string) => {
     setIsLoading(true);
     try {
+      const cleanEmail = email.trim().toLowerCase();
+
+      // If logging in with an admin account, go directly to backend authentication
+      // to avoid 1-2 seconds of wasted Supabase Cloud round-trip latency
+      if (cleanEmail.includes("admin")) {
+        const res = await loginWithBackend({ email: cleanEmail, password });
+        if (res?.access_token) {
+          localStorage.setItem("xoxo_auth_token", res.access_token);
+          setToken(res.access_token);
+          updateProfile(res.user);
+          return;
+        }
+      }
+
       if (isSupabaseConfigured) {
         try {
-          const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-          if (!error && data.session) {
+          const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
+          if (!error && data?.session) {
             localStorage.setItem("xoxo_auth_token", data.session.access_token);
             setToken(data.session.access_token);
-            await syncProfile({
+
+            // Sync user details to backend non-blockingly
+            void syncProfile({
               email: data.user.email,
               full_name: data.user.user_metadata?.full_name,
-            });
+            }).catch(() => {});
+
             await refreshProfile();
             return;
           }
@@ -292,12 +365,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.warn("Supabase signIn failed, falling back to backend DB auth:", supaErr);
         }
       }
-      // Direct Backend Auth Fallback (Works for admin and direct database users)
-      const res = await loginWithBackend({ email, password });
+
+      // Direct Backend Auth Fallback (Works for direct database users)
+      const res = await loginWithBackend({ email: cleanEmail, password });
       if (res?.access_token) {
         localStorage.setItem("xoxo_auth_token", res.access_token);
         setToken(res.access_token);
-        setProfile(res.user);
+        updateProfile(res.user);
       }
     } finally {
       setIsLoading(false);

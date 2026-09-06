@@ -19,4 +19,4 @@ class Profile(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     roles: Mapped[list["UserRole"]] = relationship(
         "UserRole", back_populates="user", lazy="selectin", cascade="all, delete-orphan"
     )
-    orders: Mapped[list["Order"]] = relationship("Order", back_populates="user", lazy="selectin")
+    orders: Mapped[list["Order"]] = relationship("Order", back_populates="user", lazy="select")

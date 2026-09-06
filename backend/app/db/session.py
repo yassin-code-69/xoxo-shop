@@ -17,7 +17,9 @@ if db_url.startswith("postgres://"):
 elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+asyncpg://"):
     db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
-engine_kwargs = {"echo": settings.DB_ECHO}
+engine_kwargs = {
+    "echo": settings.DB_ECHO,
+}
 if db_url.startswith("sqlite"):
     engine_kwargs["connect_args"] = {"check_same_thread": False}
 elif "asyncpg" in db_url:
@@ -25,7 +27,12 @@ elif "asyncpg" in db_url:
     engine_kwargs["connect_args"] = {
         "statement_cache_size": 0,
         "prepared_statement_cache_size": 0,
+        "server_settings": {"application_name": "xoxo_shop_api"},
     }
+    engine_kwargs["pool_pre_ping"] = True
+    engine_kwargs["pool_recycle"] = 300
+    engine_kwargs["pool_size"] = 10
+    engine_kwargs["max_overflow"] = 20
 
 async_engine: AsyncEngine = create_async_engine(
     db_url,

@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, LayoutGrid, Headset, PlaySquare, User, CreditCard } from "lucide-react";
@@ -9,12 +9,18 @@ import { UserNav } from "./UserNav";
 import { useAuth } from "../lib/auth/AuthContext";
 import { ProfileDrawer } from "./ProfileDrawer";
 import { AddMoneyModal } from "./AddMoneyModal";
+import { formatPrice } from "../lib/utils/format";
 
 export function ShopHeader() {
   const pathname = usePathname();
   const { profile, isAuthenticated } = useAuth();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isAddMoneyOpen, setIsAddMoneyOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <>
@@ -86,7 +92,14 @@ export function ShopHeader() {
           {/* Mobile View: Reduced Navbar with Wallet Pill + Profile Trigger */}
           <div className="flex md:hidden items-center gap-2">
             {/* Mobile Wallet Balance Pill */}
-            {isAuthenticated ? (
+            {!mounted || !isAuthenticated ? (
+              <Link
+                href="/login"
+                className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm"
+              >
+                Login
+              </Link>
+            ) : (
               <button
                 type="button"
                 onClick={() => setIsAddMoneyOpen(true)}
@@ -94,15 +107,8 @@ export function ShopHeader() {
                 title="Wallet Balance / Add Money"
               >
                 <CreditCard size={13} />
-                <span>{profile?.balance || 0}৳</span>
+                <span>{formatPrice(profile?.balance || 0)}৳</span>
               </button>
-            ) : (
-              <Link
-                href="/login"
-                className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm"
-              >
-                Login
-              </Link>
             )}
 
             {/* Profile Avatar / Drawer Trigger */}

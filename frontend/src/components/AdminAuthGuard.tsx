@@ -5,9 +5,10 @@ import { Loader2, ShieldAlert, KeyRound, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isAdmin, isSupport, isLoading } = useAuth();
+  const { profile, isAuthenticated, isAdmin, isSupport, isLoading } = useAuth();
 
-  if (isLoading) {
+  // Only block the whole page with a full-screen spinner if we do not have a profile yet
+  if (isLoading && !profile) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
         <Loader2 className="animate-spin text-purple-600" size={36} />
@@ -36,7 +37,7 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
 
         <div className="flex flex-col gap-2.5 w-full">
           <Link
-            href="/login"
+            href="/login?redirect=/admin"
             className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer text-center"
           >
             <KeyRound size={16} />

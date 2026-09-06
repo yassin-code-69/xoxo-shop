@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.cache import cache
 from app.core.security import AuthenticatedUser, get_current_admin
 from app.db.session import get_db
 from app.modules.audit.service import AuditService
@@ -29,6 +30,7 @@ async def create_product(
 ):
     service = ProductService(db)
     product = await service.create_product(data)
+    cache.invalidate("public_product")
 
     audit = AuditService(db)
     await audit.log_event(
@@ -52,6 +54,7 @@ async def update_product(
 ):
     service = ProductService(db)
     product = await service.update_product(product_id=product_id, data=data)
+    cache.invalidate("public_product")
 
     audit = AuditService(db)
     await audit.log_event(
@@ -74,4 +77,5 @@ async def delete_product(
 ):
     service = ProductService(db)
     await service.delete_product(product_id)
+    cache.invalidate("public_product")
     return {"status": "success", "message": "Product deactivated successfully"}

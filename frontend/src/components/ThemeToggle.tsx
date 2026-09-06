@@ -15,7 +15,13 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <button className="w-10 h-10 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+      <button
+        type="button"
+        aria-label="Toggle theme"
+        className="w-10 h-10 rounded-full flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+      >
+        <Moon size={20} className="block dark:hidden" />
+        <Sun size={20} className="hidden dark:block" />
         <span className="sr-only">Toggle theme</span>
       </button>
     );

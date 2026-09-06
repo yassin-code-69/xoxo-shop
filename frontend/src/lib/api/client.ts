@@ -1,8 +1,24 @@
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  (typeof window !== "undefined" && window.location.hostname === "localhost"
-    ? "http://localhost:8000/api/v1"
-    : "https://xoxo-shop-production.up.railway.app/api/v1");
+import { supabase, isSupabaseConfigured } from "../auth/supabase";
+
+export function getApiBaseUrl(): string {
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+    // When accessing via localhost/127.0.0.1 in the browser during local dev:
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      if (
+        process.env.NEXT_PUBLIC_API_BASE_URL?.includes("localhost") ||
+        process.env.NEXT_PUBLIC_API_BASE_URL?.includes("127.0.0.1")
+      ) {
+        return process.env.NEXT_PUBLIC_API_BASE_URL;
+      }
+      return "http://127.0.0.1:8000/api/v1";
+    }
+  }
+  return (
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    "https://xoxo-shop-production.up.railway.app/api/v1"
+  );
+}
 
 export class ApiError extends Error {
   code: string;
@@ -30,13 +46,14 @@ function getStoredToken(): string | null {
 
 export async function apiClient<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = getStoredToken();
+  const apiBaseUrl = getApiBaseUrl();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
 
   // Only attach authorization header to relative endpoints or same API_BASE_URL
-  const isInternalUrl = endpoint.startsWith("/") || endpoint.startsWith(API_BASE_URL);
+  const isInternalUrl = endpoint.startsWith("/") || endpoint.startsWith(apiBaseUrl);
 
   if (token && isInternalUrl) {
     headers["Authorization"] = `Bearer ${token}`;
@@ -44,12 +61,48 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
 
   const url = endpoint.startsWith("http")
     ? endpoint
-    : `${API_BASE_URL}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
+    : `${apiBaseUrl}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
 
-  const response = await fetch(url, {
+  let response = await fetch(url, {
     ...options,
     headers,
   });
+
+  // If 401 Unauthorized, try refreshing token via Supabase session and retry once
+  if (response.status === 401 && typeof window !== "undefined") {
+    let refreshed = false;
+    if (isSupabaseConfigured) {
+      try {
+        const { data: refreshData } = await supabase.auth.refreshSession();
+        if (refreshData?.session?.access_token) {
+          const freshToken = refreshData.session.access_token;
+          localStorage.setItem("xoxo_auth_token", freshToken);
+          headers["Authorization"] = `Bearer ${freshToken}`;
+          response = await fetch(url, {
+            ...options,
+            headers,
+          });
+          refreshed = true;
+        }
+      } catch (refreshErr) {
+        console.warn("Silent token refresh failed:", refreshErr);
+      }
+    }
+
+    // Only clear the token for persistent 401s that are NOT part of the
+    // OAuth callback flow.  During Google login the token is saved in
+    // localStorage *before* the Supabase SDK fully persists its internal
+    // session, so a transient 401 on /auth/sync or /auth/me is expected.
+    // Clearing the token here would undo a successful Google login.
+    const isSyncOrCallback =
+      endpoint.includes("/auth/sync") ||
+      endpoint.includes("/auth/me") ||
+      window.location.pathname.includes("/auth/callback");
+
+    if (!refreshed && !response.ok && !isSyncOrCallback) {
+      localStorage.removeItem("xoxo_auth_token");
+    }
+  }
 
   const contentType = response.headers.get("content-type");
   let data: Record<string, unknown> | string | null = null;
@@ -60,9 +113,6 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
   }
 
   if (!response.ok) {
-    if (response.status === 401 && typeof window !== "undefined") {
-      localStorage.removeItem("xoxo_auth_token");
-    }
     let errorMessage = response.statusText || `Request failed with status ${response.status}`;
     let errorCode = `HTTP_${response.status}`;
     let errorDetails: unknown = null;

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -63,7 +63,7 @@ export function AdminSidebar({ isOpen = false, onClose }: AdminSidebarProps) {
   const sidebarContent = (
     <div className="flex flex-col justify-between h-full bg-white dark:bg-[#0a0a0a]">
       {/* Desktop Brand Header */}
-      <div className="hidden lg:flex items-center justify-between p-4 border-b border-slate-200/80 dark:border-[#1f1f1f]">
+      <div className="hidden lg:flex items-center justify-between h-16 px-6 border-b border-slate-200/80 dark:border-[#1f1f1f]">
         <Link href="/admin" className="flex items-center gap-2 select-none group">
           <img src="/xoxo_logo.png" alt="XoXo Shop" className="h-7 w-auto object-contain transition-transform group-hover:scale-105" />
           <span className="text-[10px] text-purple-700 dark:text-purple-300 font-black uppercase px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800">
@@ -180,7 +180,7 @@ export function AdminSidebar({ isOpen = false, onClose }: AdminSidebarProps) {
   return (
     <>
       {/* 1. Desktop Docked Sidebar (>= 1024px) */}
-      <aside className="hidden lg:flex w-64 border-r border-slate-200/80 dark:border-[#1f1f1f] flex-col justify-between h-[calc(100vh-4rem)] sticky top-16 select-none z-30 shrink-0">
+      <aside className="hidden lg:flex w-64 border-r border-slate-200/80 dark:border-[#1f1f1f] flex-col justify-between h-screen select-none z-30 shrink-0 bg-white dark:bg-[#0a0a0a]">
         {sidebarContent}
       </aside>
 

@@ -155,6 +155,13 @@ async def get_current_user(
     if not auth_user_id:
         raise UnauthorizedError(message="Invalid token claims: user ID missing", code="INVALID_CLAIMS")
 
+    from app.core.cache import cache
+
+    cache_key = f"auth_user:{auth_user_id}"
+    cached_auth = cache.get(cache_key)
+    if cached_auth is not None:
+        return cached_auth
+
     # Lookup user profile in database
     result = await db.execute(select(Profile).where(Profile.auth_user_id == str(auth_user_id)))
     profile = result.scalars().first()
@@ -183,13 +190,12 @@ async def get_current_user(
     if not profile.is_active or profile.status == "BLOCKED":
         raise ForbiddenError(message="Account is deactivated or blocked", code="ACCOUNT_BLOCKED")
 
-    # Fetch user roles
-    role_result = await db.execute(select(UserRole.role_code).where(UserRole.user_id == profile.id))
-    roles = [r for r in role_result.scalars().all()]
-    if not roles:
-        roles = [RoleCode.CUSTOMER.value]
+    # Use already loaded profile roles
+    roles = [r.role_code for r in profile.roles] if profile.roles else [RoleCode.CUSTOMER.value]
 
-    return AuthenticatedUser(profile=profile, roles=roles, auth_claims=claims)
+    auth_user = AuthenticatedUser(profile=profile, roles=roles, auth_claims=claims)
+    cache.set(cache_key, auth_user, ttl_seconds=60)
+    return auth_user
 
 
 async def get_optional_current_user(

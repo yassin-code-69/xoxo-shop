@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 
@@ -95,6 +95,9 @@ async function writeServices(services: HomepageService[]): Promise<void> {
   await fs.writeFile(dataFilePath, JSON.stringify(services, null, 2), "utf8");
 }
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // GET: Return all services (or active only if ?active=true)
 export async function GET(req: NextRequest) {
   try {
@@ -127,7 +130,7 @@ export async function POST(req: NextRequest) {
         src: body.src || "/FF/2.jpg",
         href: body.href || "/uid-topup",
         tag: body.tag || "",
-        active: body.active !== undefined ? body.active : true,
+        active: body.active !== undefined ? Boolean(body.active) : true,
         sort_order: Number(body.sort_order) || services.length + 1,
       };
       services.push(newService);
@@ -143,32 +146,44 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// PUT: Update an existing service by ID
+// PUT: Update or upsert an existing service by ID
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
-    if (!body.id) {
-      return NextResponse.json({ error: "Service ID is required" }, { status: 400 });
-    }
+    const serviceId = body.id || `service-${Date.now()}`;
 
     const services = await readServices();
-    const index = services.findIndex((s) => s.id === body.id);
+    const index = services.findIndex((s) => s.id === serviceId);
+
+    let updatedService: HomepageService;
 
     if (index === -1) {
-      return NextResponse.json({ error: "Service not found" }, { status: 404 });
+      // Upsert if not found
+      updatedService = {
+        id: serviceId,
+        name: body.name || "Service",
+        src: body.src || "/FF/2.jpg",
+        href: body.href || "/uid-topup",
+        tag: body.tag || "",
+        active: body.active !== undefined ? Boolean(body.active) : true,
+        sort_order: body.sort_order !== undefined ? Number(body.sort_order) : services.length + 1,
+      };
+      services.push(updatedService);
+    } else {
+      updatedService = {
+        ...services[index],
+        ...body,
+        id: serviceId,
+        sort_order: body.sort_order !== undefined ? Number(body.sort_order) : services[index].sort_order,
+        active: body.active !== undefined ? Boolean(body.active) : services[index].active,
+      };
+      services[index] = updatedService;
     }
-
-    services[index] = {
-      ...services[index],
-      ...body,
-      sort_order: body.sort_order !== undefined ? Number(body.sort_order) : services[index].sort_order,
-      active: body.active !== undefined ? Boolean(body.active) : services[index].active,
-    };
 
     services.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
     await writeServices(services);
 
-    return NextResponse.json({ success: true, data: services[index] });
+    return NextResponse.json({ success: true, data: updatedService });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Failed to update service";
     return NextResponse.json({ error: msg }, { status: 500 });

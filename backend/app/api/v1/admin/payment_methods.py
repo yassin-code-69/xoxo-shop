@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.cache import cache
 from app.core.security import AuthenticatedUser, get_current_admin
 from app.db.session import get_db
 from app.modules.audit.service import AuditService
@@ -32,6 +33,7 @@ async def update_payment_method(
 ):
     service = PaymentMethodService(db)
     method = await service.update_method(method_id=method_id, data=data)
+    cache.invalidate("public_payment_methods")
 
     audit = AuditService(db)
     await audit.log_event(

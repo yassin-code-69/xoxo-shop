@@ -33,6 +33,7 @@ import { useAuth } from "../../../lib/auth/AuthContext";
 import { getMyOrders, updateMyProfile } from "../../../lib/api/endpoints";
 import { Order } from "../../../lib/api/types";
 import { AddMoneyModal } from "../../../components/AddMoneyModal";
+import { formatPrice } from "../../../lib/utils/format";
 
 // Rank definitions matching the screenshot tier progression
 export interface RankTier {
@@ -680,7 +681,7 @@ export default function ProfilePage() {
           <div className="my-2">
             <span className="text-sm font-semibold text-slate-400 mr-1.5">Tk</span>
             <span className="text-3xl font-black text-slate-900 dark:text-white">
-              {profile?.balance || 0}
+              {formatPrice(profile?.balance || 0)}
             </span>
           </div>
 
@@ -1065,7 +1066,7 @@ export default function ProfilePage() {
                   <div className="flex items-center gap-3 text-right">
                     <div>
                       <span className="font-black text-xs text-slate-900 dark:text-white block">
-                        ৳ {o.total_amount}
+                        ৳ {formatPrice(o.total_amount)}
                       </span>
                       <span
                         className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${

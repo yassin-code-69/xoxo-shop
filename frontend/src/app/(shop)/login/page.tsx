@@ -68,7 +68,12 @@ export default function LoginPage() {
           email.includes("admin") ? "ADMIN" : "CUSTOMER",
         );
       }
-      router.push("/");
+      const redirectUrl =
+        typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search).get("redirect")
+          : null;
+      const target = redirectUrl || (email.toLowerCase().includes("admin") ? "/admin" : "/");
+      router.push(target);
     } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : "Failed to sign in. Please verify your credentials.";

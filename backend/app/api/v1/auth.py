@@ -222,10 +222,7 @@ async def login(
     if not profile.is_active or profile.status == "BLOCKED":
         raise ForbiddenError(message="Account is deactivated or blocked", code="ACCOUNT_BLOCKED")
 
-    role_result = await db.execute(select(UserRole.role_code).where(UserRole.user_id == profile.id))
-    roles = list(role_result.scalars().all())
-    if not roles:
-        roles = [RoleCode.CUSTOMER.value]
+    roles = [r.role_code for r in profile.roles] if profile.roles else [RoleCode.CUSTOMER.value]
 
     payload = {
         "sub": profile.auth_user_id,

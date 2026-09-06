@@ -25,6 +25,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <html lang="en" suppressHydrationWarning>
       <body
+        suppressHydrationWarning
         className={`${inter.variable} antialiased bg-[#f8fafc] dark:bg-black text-slate-800 dark:text-[#ededed] font-sans min-h-screen transition-colors duration-300`}
       >
         <ThemeProvider

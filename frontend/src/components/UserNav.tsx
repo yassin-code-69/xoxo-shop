@@ -4,10 +4,25 @@ import Link from "next/link";
 import { useAuth } from "../lib/auth/AuthContext";
 import { LogOut, ShoppingBag, ShieldAlert, User } from "lucide-react";
 
-export function UserNav() {
-  const { profile, isAuthenticated, isAdmin, logout } = useAuth();
+import * as React from "react";
 
-  if (!isAuthenticated) {
+export function UserNav() {
+  const { profile, isAuthenticated, isAdmin, logout, isLoading, token } = useAuth();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted || !isAuthenticated) {
+    if (mounted && isLoading && token && !profile) {
+      return (
+        <div className="flex items-center gap-2">
+          <div className="w-16 h-8 rounded-full bg-slate-100 dark:bg-slate-800 opacity-60 animate-pulse" />
+        </div>
+      );
+    }
+
     return (
       <div className="flex items-center gap-2">
         <Link

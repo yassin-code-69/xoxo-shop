@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { Plus, Trash2, Edit2, CheckCircle2, Loader2, Trophy, Eye, EyeOff, ExternalLink } from "lucide-react";
@@ -52,7 +52,10 @@ export default function AdminHomepageServicesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updated),
       });
-      if (!res.ok) throw new Error("Failed to toggle status");
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error || `Failed to toggle status (${res.status})`);
+      }
       setServices(services.map((s) => (s.id === service.id ? updated : s)));
       setNotification({
         type: "success",
@@ -66,8 +69,12 @@ export default function AdminHomepageServicesPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingService?.name || !editingService?.src) {
-      setNotification({ type: "error", text: "Please provide service name and image." });
+    if (!editingService?.name?.trim()) {
+      setNotification({ type: "error", text: "Please provide a valid service name." });
+      return;
+    }
+    if (!editingService?.src?.trim()) {
+      setNotification({ type: "error", text: "Please upload or paste an image graphic URL." });
       return;
     }
 
@@ -81,7 +88,11 @@ export default function AdminHomepageServicesPage() {
         body: JSON.stringify(editingService),
       });
 
-      if (!res.ok) throw new Error("Failed to save service");
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error || `Failed to save service card (${res.status})`);
+      }
+
       setNotification({
         type: "success",
         text: isCreating
@@ -106,7 +117,10 @@ export default function AdminHomepageServicesPage() {
       const res = await fetch(`/api/homepage-services?id=${encodeURIComponent(id)}`, {
         method: "DELETE",
       });
-      if (!res.ok) throw new Error("Failed to delete service");
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error || `Failed to delete service (${res.status})`);
+      }
       setNotification({ type: "success", text: "Service card deleted." });
       await loadServices();
     } catch (err: unknown) {

@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 
-from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Text
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -15,13 +15,19 @@ from app.shared.time import utcnow
 
 class Order(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "orders"
+    __table_args__ = (
+        Index("ix_orders_created_at", "created_at"),
+        Index("ix_orders_payment_status_created_at", "payment_status", "created_at"),
+        Index("ix_orders_order_status_created_at", "order_status", "created_at"),
+        Index("ix_orders_user_id_created_at", "user_id", "created_at"),
+    )
 
     public_order_id: Mapped[str] = mapped_column(String(32), unique=True, index=True, nullable=False)
     user_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("profiles.id", ondelete="CASCADE"), index=True, nullable=False
     )
-    game_id: Mapped[str] = mapped_column(String(36), ForeignKey("games.id"), nullable=False)
-    product_id: Mapped[str] = mapped_column(String(36), ForeignKey("topup_products.id"), nullable=False)
+    game_id: Mapped[str] = mapped_column(String(36), ForeignKey("games.id"), index=True, nullable=False)
+    product_id: Mapped[str] = mapped_column(String(36), ForeignKey("topup_products.id"), index=True, nullable=False)
 
     # Immutability snapshots
     product_name_snapshot: Mapped[str] = mapped_column(String(255), nullable=False)

@@ -35,6 +35,14 @@ async def init_db():
 
 
 async def seed_initial_data(db: AsyncSession):
+    # Fast check: If roles and game are already seeded, skip redundant queries
+    has_roles = (await db.execute(select(Role).limit(1))).scalars().first()
+    has_game = (await db.execute(select(Game).limit(1))).scalars().first()
+    if has_roles and has_game:
+        await seed_bootstrap_admin(db)
+        logger.info("Database is already seeded. Skipped redundant table checks.")
+        return
+
     # 1. Seed Roles
     roles = [
         Role(code=RoleCode.CUSTOMER.value, name="Customer", description="End customer ordering top-ups"),

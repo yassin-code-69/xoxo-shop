@@ -22,6 +22,7 @@ import {
 import { useAuth } from "../lib/auth/AuthContext";
 import { ThemeToggle } from "./ThemeToggle";
 import { AddMoneyModal } from "./AddMoneyModal";
+import { formatPrice } from "../lib/utils/format";
 
 interface ProfileDrawerProps {
   isOpen: boolean;
@@ -117,7 +118,7 @@ export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
                       </button>
                     </div>
                     <span className="text-base font-black text-slate-900 dark:text-white mt-0.5">
-                      ৳ {profile?.balance || 0}
+                      ৳ {formatPrice(profile?.balance || 0)}
                     </span>
                   </div>
                   <button

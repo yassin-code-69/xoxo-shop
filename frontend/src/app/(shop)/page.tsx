@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Banner, OrderPublicFeedItem } from "../../lib/api/types";
 import { getBanners, getSiteSettings, getPublicOrderFeed } from "../../lib/api/endpoints";
+import { formatPrice } from "../../lib/utils/format";
 
 export interface HomepageService {
   id: string;
@@ -399,7 +400,7 @@ export default function Home() {
                   </div>
                   <div className="flex items-center justify-end gap-2 sm:gap-4 shrink-0">
                     <span className="font-black text-slate-900 dark:text-white text-xs sm:text-sm">
-                      ৳ {order.total_amount}
+                      ৳ {formatPrice(order.total_amount)}
                     </span>
                     <span
                       className={`px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-[8px] sm:text-[10px] font-black uppercase ${

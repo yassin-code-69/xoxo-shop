@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -20,6 +20,7 @@ import { Product } from "../lib/api/types";
 import { getProducts, createOrder, payOrderWithWallet, getSiteSettings } from "../lib/api/endpoints";
 import { useAuth } from "../lib/auth/AuthContext";
 import { AddMoneyModal } from "./AddMoneyModal";
+import { formatPrice } from "../lib/utils/format";
 
 interface TopupOrderFormProps {
   category: string;
@@ -254,14 +255,14 @@ export function TopupOrderForm({
                         key={pkg.id}
                         type="button"
                         onClick={() => setSelectedProduct(pkg)}
-                        className={`rounded-xl py-3 px-2.5 sm:px-4 flex items-center justify-center gap-1.5 sm:gap-2 text-center transition-all group outline-none cursor-pointer relative ${
+                        className={`rounded-xl py-3 px-2 sm:px-3.5 flex items-center justify-center gap-1 sm:gap-2 text-center transition-all group outline-none cursor-pointer relative ${
                           isSelected
                             ? "border-2 border-[#663cbc] dark:border-purple-500 bg-purple-50/50 dark:bg-purple-950/30 shadow-xs ring-2 ring-[#663cbc]/20"
                             : "border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-[#111111] hover:border-[#663cbc] hover:shadow-xs"
                         }`}
                       >
                         <span
-                          className={`font-bold text-xs sm:text-sm truncate transition-colors ${
+                          className={`font-bold text-xs sm:text-sm whitespace-nowrap transition-colors ${
                             isSelected
                               ? "text-[#663cbc] dark:text-purple-300 font-black"
                               : "text-slate-900 dark:text-zinc-100 group-hover:text-[#663cbc]"
@@ -269,8 +270,8 @@ export function TopupOrderForm({
                         >
                           {pkg.name}
                         </span>
-                        <span className="font-bold text-xs sm:text-sm text-purple-600 dark:text-purple-400 shrink-0">
-                          ৳ {pkg.selling_price}
+                        <span className="font-bold text-xs sm:text-sm text-purple-600 dark:text-purple-400 shrink-0 whitespace-nowrap">
+                          ৳ {formatPrice(pkg.selling_price)}
                         </span>
                       </button>
                     );
@@ -456,7 +457,7 @@ export function TopupOrderForm({
                     <span>Wallet Pay</span>
                     {isAuthenticated && (
                       <span className="text-purple-600 dark:text-purple-400 font-extrabold">
-                        ৳{profile?.balance || 0}
+                        ৳{formatPrice(profile?.balance || 0)}
                       </span>
                     )}
                   </div>
@@ -500,7 +501,7 @@ export function TopupOrderForm({
                   <span>
                     প্রোডাক্ট কিনতে আপনার প্রয়োজন{" "}
                     <strong className="text-slate-900 dark:text-white font-black">
-                      {currentPrice}
+                      {formatPrice(currentPrice)}
                     </strong>{" "}
                     টাকা।
                   </span>
@@ -515,10 +516,10 @@ export function TopupOrderForm({
                   <p className="flex items-center gap-1.5 text-purple-600 dark:text-purple-400 font-bold">
                     <Wallet size={14} className="shrink-0" />
                     <span>
-                      বর্তমান ওয়ালেট ব্যালেন্স: ৳{currentBalance}
+                      বর্তমান ওয়ালেট ব্যালেন্স: ৳{formatPrice(currentBalance)}
                       {!hasSufficientWalletBalance && (
                         <span className="text-red-500 ml-1">
-                          (আরও ৳{currentPrice - currentBalance} প্রয়োজন)
+                          (আরও ৳{formatPrice(currentPrice - currentBalance)} প্রয়োজন)
                         </span>
                       )}
                     </span>
@@ -545,7 +546,7 @@ export function TopupOrderForm({
                   onClick={() => setShowAddMoney(true)}
                   className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 text-white font-bold py-3 rounded-xl text-xs sm:text-sm transition-all shadow-md active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  + Add Money to Wallet (৳{currentPrice - currentBalance} Short)
+                  + Add Money to Wallet (৳{formatPrice(currentPrice - currentBalance)} Short)
                 </button>
               ) : (
                 <button
@@ -561,7 +562,7 @@ export function TopupOrderForm({
                   ) : (
                     <>
                       {selectedPaymentType === "WALLET" ? "Buy with Wallet" : "Buy Now"} (৳
-                      {currentPrice})
+                      {formatPrice(currentPrice)})
                     </>
                   )}
                 </button>

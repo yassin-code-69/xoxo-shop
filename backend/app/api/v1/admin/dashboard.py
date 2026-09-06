@@ -75,41 +75,69 @@ class DashboardAnalyticsResponse(BaseModel):
     payment_distribution: list[DistributionItem]
 
 
+from app.core.cache import cache
+
 @router.get("", response_model=DashboardMetrics)
 async def get_admin_dashboard(
     current_admin: AuthenticatedUser = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
 ):
+    # Check in-memory cache first to avoid ~5s remote database latency on every dashboard refresh
+    cached = cache.get("admin:dashboard")
+    if cached is not None:
+        return cached
+
     now = datetime.now(UTC)
     today_start = datetime.combine(now.date(), time.min, tzinfo=UTC)
 
-    # 1. Orders today
-    orders_today_res = await db.execute(select(func.count(Order.id)).where(Order.created_at >= today_start))
-    orders_today = orders_today_res.scalar() or 0
+    # Consolidated Query 1: Calculate 7 order metrics in a single round-trip using conditional aggregation
+    from sqlalchemy import case
 
-    # 2. Total orders (All-time)
-    total_orders_res = await db.execute(select(func.count(Order.id)))
-    total_orders = total_orders_res.scalar() or 0
-
-    # 3. Revenue today (from completed or payment-verified orders)
-    rev_res = await db.execute(
-        select(func.coalesce(func.sum(Order.total_amount), 0)).where(
-            (Order.created_at >= today_start)
-            & (Order.payment_status.in_([PaymentStatus.VERIFIED.value, PaymentStatus.SUBMITTED.value]))
-        )
+    order_metrics_stmt = select(
+        func.count().filter(Order.created_at >= today_start).label("orders_today"),
+        func.count().label("total_orders"),
+        func.coalesce(
+            func.sum(
+                case(
+                    (
+                        (Order.created_at >= today_start)
+                        & Order.payment_status.in_([PaymentStatus.VERIFIED.value, PaymentStatus.SUBMITTED.value]),
+                        Order.total_amount,
+                    ),
+                    else_=Decimal("0.00"),
+                )
+            ),
+            Decimal("0.00"),
+        ).label("revenue_today"),
+        func.coalesce(
+            func.sum(
+                case(
+                    (
+                        Order.payment_status.in_([PaymentStatus.VERIFIED.value, PaymentStatus.SUBMITTED.value]),
+                        Order.total_amount,
+                    ),
+                    else_=Decimal("0.00"),
+                )
+            ),
+            Decimal("0.00"),
+        ).label("total_revenue"),
+        func.count().filter(Order.fulfillment_status == FulfillmentStatus.PROCESSING.value).label("processing_fulfillment"),
+        func.count().filter(Order.fulfillment_status == FulfillmentStatus.FAILED.value).label("failed_fulfillment"),
+        func.count().filter(
+            (Order.completed_at >= today_start) & (Order.order_status == OrderStatus.COMPLETED.value)
+        ).label("completed_today"),
     )
-    revenue_today = rev_res.scalar() or Decimal("0.00")
+    om_res = (await db.execute(order_metrics_stmt)).first()
 
-    # 4. Total revenue (All-time)
-    total_rev_res = await db.execute(
-        select(func.coalesce(func.sum(Order.total_amount), 0)).where(
-            Order.payment_status.in_([PaymentStatus.VERIFIED.value, PaymentStatus.SUBMITTED.value])
-        )
-    )
-    total_revenue = total_rev_res.scalar() or Decimal("0.00")
+    orders_today = om_res.orders_today if om_res else 0
+    total_orders = om_res.total_orders if om_res else 0
+    revenue_today = om_res.revenue_today if om_res else Decimal("0.00")
+    total_revenue = om_res.total_revenue if om_res else Decimal("0.00")
+    processing_fulfillment = om_res.processing_fulfillment if om_res else 0
+    failed_fulfillment = om_res.failed_fulfillment if om_res else 0
+    completed_today = om_res.completed_today if om_res else 0
 
-    # 5. Gross profit = SUM(selling_price - provider_cost) for verified orders
-    # Calculate using product provider cost if available
+    # Query 2: Gross profit = SUM(selling_price - provider_cost) for verified orders
     profit_res = await db.execute(
         select(
             func.coalesce(
@@ -125,52 +153,33 @@ async def get_admin_dashboard(
     )
     gross_profit = profit_res.scalar() or Decimal("0.00")
 
-    # 6. Pending payments
+    # Query 3: Pending payments (uses partial index ix_payments_pending_submitted)
     pending_pay_res = await db.execute(
         select(func.count(Payment.id)).where(Payment.status == PaymentStatus.SUBMITTED.value)
     )
     pending_payments = pending_pay_res.scalar() or 0
 
-    # 7. Processing fulfillment
-    proc_res = await db.execute(
-        select(func.count(Order.id)).where(Order.fulfillment_status == FulfillmentStatus.PROCESSING.value)
-    )
-    processing_fulfillment = proc_res.scalar() or 0
-
-    # 8. Failed fulfillment
-    fail_res = await db.execute(
-        select(func.count(Order.id)).where(Order.fulfillment_status == FulfillmentStatus.FAILED.value)
-    )
-    failed_fulfillment = fail_res.scalar() or 0
-
-    # 9. Completed today
-    comp_res = await db.execute(
-        select(func.count(Order.id)).where(
-            (Order.completed_at >= today_start) & (Order.order_status == OrderStatus.COMPLETED.value)
-        )
-    )
-    completed_today = comp_res.scalar() or 0
-
-    # 10. Active customers count
+    # Query 4: Active customers count
     customers_res = await db.execute(
         select(func.count(Profile.id)).where((Profile.status == "ACTIVE") & (Profile.is_active == True))  # noqa: E712
     )
     active_customers = customers_res.scalar() or 0
 
-    # 11. Gateway Health & Diamond Provider Status
-    # bKash
-    bkash_method = (await db.execute(select(PaymentMethod).where(PaymentMethod.code == "BKASH"))).scalars().first()
+    # Query 5: Gateway Health (bKash + Nagad in single query)
+    methods_res = await db.execute(select(PaymentMethod).where(PaymentMethod.code.in_(["BKASH", "NAGAD"])))
+    payment_methods_map = {m.code: m for m in methods_res.scalars().all()}
+
+    bkash_method = payment_methods_map.get("BKASH")
     bkash_active = bool(bkash_method.active) if bkash_method else False
     bkash_mode = bkash_method.type if bkash_method else "MANUAL"
     bkash_account = bkash_method.account_number if bkash_method else settings.BKASH_USERNAME
 
-    # Nagad
-    nagad_method = (await db.execute(select(PaymentMethod).where(PaymentMethod.code == "NAGAD"))).scalars().first()
+    nagad_method = payment_methods_map.get("NAGAD")
     nagad_active = bool(nagad_method.active) if nagad_method else False
     nagad_mode = nagad_method.type if nagad_method else "MANUAL"
     nagad_account = nagad_method.account_number if nagad_method else settings.NAGAD_MERCHANT_ID
 
-    # Diamond Provider
+    # Query 6: Diamond Provider setting
     provider_mode_setting = (
         await db.execute(select(SiteSetting).where(SiteSetting.key == "diamond_api_mode"))
     ).scalars().first()
@@ -199,11 +208,11 @@ async def get_admin_dashboard(
         },
     }
 
-    # 12. Recent 5 orders
+    # Query 7: Recent 5 orders (uses index on created_at DESC)
     order_service = OrderService(db)
     recent_orders = await order_service.list_recent_admin_orders(limit=5)
 
-    return DashboardMetrics(
+    result = DashboardMetrics(
         orders_today=orders_today,
         revenue_today=format_bdt(revenue_today),
         total_revenue=format_bdt(total_revenue),
@@ -217,6 +226,8 @@ async def get_admin_dashboard(
         gateway_status=gateway_status,
         recent_orders=recent_orders,
     )
+    cache.set("admin:dashboard", result, ttl_seconds=20)
+    return result
 
 
 def to_utc(dt: datetime | None) -> datetime | None:

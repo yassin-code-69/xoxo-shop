@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.cache import cache
 from app.core.security import AuthenticatedUser, get_current_admin
 from app.db.session import get_db
 from app.modules.audit.service import AuditService
@@ -28,6 +29,7 @@ async def update_settings(
 ):
     service = SiteSettingService(db)
     res = await service.update_settings(data.settings)
+    cache.invalidate("public_settings")
 
     audit = AuditService(db)
     await audit.log_event(

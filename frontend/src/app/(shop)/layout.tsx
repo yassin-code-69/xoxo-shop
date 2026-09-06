@@ -1,4 +1,4 @@
-﻿import { MobileNav } from "../../components/MobileNav";
+import { MobileNav } from "../../components/MobileNav";
 import { ShopHeader } from "../../components/ShopHeader";
 import { ShopFooter } from "../../components/ShopFooter";
 import type { Metadata } from "next";
@@ -32,6 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
+        suppressHydrationWarning
         className={`${inter.variable} antialiased bg-[#f4f6fb] dark:bg-[#0f0c20] text-slate-800 dark:text-[#ededed] min-h-screen flex flex-col font-sans transition-colors duration-300`}
       >
         <ThemeProvider
