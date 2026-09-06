@@ -9,6 +9,7 @@ from app.integrations.providers.base import ProviderStatus
 from app.integrations.providers.registry import get_active_provider
 from app.modules.fulfillment.model import ProviderOrder
 from app.modules.orders.model import Order, OrderStatusHistory
+from app.modules.settings.model import SiteSetting
 from app.shared.enums import FulfillmentStatus, OrderStatus, PaymentStatus
 from app.shared.time import utcnow
 
@@ -82,8 +83,12 @@ class FulfillmentService:
         await self.db.refresh(order)
         await self.db.refresh(provider_order)
 
-        # 4. Call provider adapter
-        provider = get_active_provider()
+        # 4. Call provider adapter (uses DB diamond_api_key if configured in Admin Panel)
+        key_res = await self.db.execute(select(SiteSetting).where(SiteSetting.key == "diamond_api_key"))
+        key_setting = key_res.scalars().first()
+        db_api_key = key_setting.value if key_setting and key_setting.value else None
+
+        provider = get_active_provider(api_key=db_api_key)
         provider_result = await provider.submit_topup(
             player_uid=order.player_uid,
             player_server=order.player_server,

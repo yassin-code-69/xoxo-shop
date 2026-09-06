@@ -30,8 +30,10 @@ class ExternalTopupProviderService:
             "Accept": "application/json",
         }
         if api_key and api_key.strip():
-            headers["Authorization"] = f"Bearer {api_key.strip()}"
-            headers["x-api-key"] = api_key.strip()
+            clean_key = api_key.strip()
+            headers["X-API-Key"] = clean_key
+            if not clean_key.startswith("fc_"):
+                headers["Authorization"] = f"Bearer {clean_key}"
 
         try:
             safe_url = validate_outbound_url(api_url)
@@ -82,15 +84,17 @@ class ExternalTopupProviderService:
     @staticmethod
     def _extract_packages(data: Any) -> list[dict[str, Any]]:
         """Normalize JSON response structures into standard diamond package dicts."""
+        import re
+
         items: list[Any] = []
         if isinstance(data, list):
             items = data
         elif isinstance(data, dict):
-            for key in ["data", "products", "packages", "items", "results"]:
+            for key in ["offers", "data", "products", "packages", "items", "results"]:
                 if key in data and isinstance(data[key], list):
                     items = data[key]
                     break
-            if not items and "name" in data:
+            if not items and "name" in data and "category_id" not in data:
                 items = [data]
 
         normalized: list[dict[str, Any]] = []
@@ -98,27 +102,43 @@ class ExternalTopupProviderService:
             if not isinstance(item, dict):
                 continue
             name = item.get("name") or item.get("title") or item.get("product_name") or f"Diamond Pack {i + 1}"
-            sku = item.get("provider_sku") or item.get("sku") or item.get("code") or slugify(name).upper()
+            sku = item.get("offer_id") or item.get("provider_sku") or item.get("sku") or item.get("code") or slugify(name).upper()
 
             # Extract diamond amount
             diamonds = item.get("diamond_amount") or item.get("diamonds") or item.get("amount") or 0
             if isinstance(diamonds, str) and diamonds.isdigit():
                 diamonds = int(diamonds)
-            elif not isinstance(diamonds, int):
-                diamonds = 0
+            elif not isinstance(diamonds, int) or diamonds == 0:
+                # Try extracting numbers from name or sku (e.g. '25 Diamonds' -> 25)
+                match = re.search(r"(\d+)\s*(?:Diamonds?|dm|d)?", str(name), re.IGNORECASE)
+                if match:
+                    diamonds = int(match.group(1))
+                else:
+                    diamonds = 0
 
             # Extract price
-            price_raw = item.get("selling_price") or item.get("price") or item.get("bdt") or 0
-            try:
-                price = Decimal(str(price_raw))
-            except Exception:
-                price = Decimal("0.00")
-
-            cost_raw = item.get("provider_cost") or item.get("cost") or (price * Decimal("0.9"))
-            try:
-                cost = Decimal(str(cost_raw))
-            except Exception:
-                cost = Decimal("0.00")
+            price_usd_raw = item.get("price_usd")
+            price_raw = item.get("selling_price") or item.get("price") or item.get("bdt")
+            
+            if price_usd_raw is not None:
+                try:
+                    # Convert USD wholesale to BDT (approx 125 BDT per USD with modest margin)
+                    usd_val = Decimal(str(price_usd_raw))
+                    cost = (usd_val * Decimal("122.00")).quantize(Decimal("1.00"))
+                    price = (usd_val * Decimal("128.00")).quantize(Decimal("1.00"))
+                except Exception:
+                    cost = Decimal("0.00")
+                    price = Decimal("0.00")
+            else:
+                try:
+                    price = Decimal(str(price_raw or 0))
+                except Exception:
+                    price = Decimal("0.00")
+                cost_raw = item.get("provider_cost") or item.get("cost") or (price * Decimal("0.9"))
+                try:
+                    cost = Decimal(str(cost_raw))
+                except Exception:
+                    cost = Decimal("0.00")
 
             normalized.append(
                 {
@@ -144,8 +164,10 @@ class ExternalTopupProviderService:
             "Accept": "application/json",
         }
         if api_key and api_key.strip():
-            headers["Authorization"] = f"Bearer {api_key.strip()}"
-            headers["x-api-key"] = api_key.strip()
+            clean_key = api_key.strip()
+            headers["X-API-Key"] = clean_key
+            if not clean_key.startswith("fc_"):
+                headers["Authorization"] = f"Bearer {clean_key}"
 
         # follow_redirects stays off: a redirect is a second URL we never validated, and
         # it is the standard way to slip past an SSRF check.

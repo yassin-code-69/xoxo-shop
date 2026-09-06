@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import {
@@ -15,6 +15,7 @@ import {
   ImageIcon,
   Wallet,
   CreditCard,
+  Save,
 } from "lucide-react";
 import { PaymentMethodAdmin } from "../../../lib/api/types";
 import {
@@ -147,38 +148,32 @@ export default function AdminPaymentMethodsPage() {
           Payment Gateways & Images
         </h1>
         <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
-          Configure mobile banking accounts (bKash, Nagad, Rocket), upload logos to ImgBB, and customize Topup Step 3 payment option graphics.
+          Configure mobile banking accounts (bKash, Nagad, Rocket), upload logos, and customize Topup Step 3 payment option graphics.
         </p>
       </div>
 
       {notification && (
         <div
-          className={`p-4 rounded-2xl text-xs font-bold flex items-center justify-between shadow-xs ${
+          className={`p-4 rounded-2xl text-xs font-bold border transition-all ${
             notification.type === "success"
-              ? "bg-green-50 dark:bg-green-950/40 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800"
-              : "bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800"
+              ? "bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800"
+              : "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800"
           }`}
         >
-          <span>{notification.text}</span>
-          <button
-            onClick={() => setNotification(null)}
-            className="uppercase text-[10px] ml-4 font-black cursor-pointer"
-          >
-            Dismiss
-          </button>
+          {notification.text}
         </div>
       )}
 
       {/* 1. Topup Step 3 Payment Option Graphics (Wallet Pay & Instant Pay) */}
-      <div className="bg-white dark:bg-[#111111] rounded-3xl p-6 sm:p-8 border border-slate-200/80 dark:border-[#222222] shadow-xs space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-[#1f1f1f]">
+      <div className="bg-white dark:bg-[#111111] rounded-3xl p-6 border border-slate-200/80 dark:border-[#222222] shadow-xs space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 flex items-center justify-center font-black">
+            <div className="w-10 h-10 rounded-2xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center shadow-xs">
               <ImageIcon size={20} />
             </div>
             <div>
               <h2 className="text-base font-black text-slate-900 dark:text-white">
-                Topup Step 3: Payment Option Graphics
+                Step 3 Checkout Payment Options (Graphics)
               </h2>
               <p className="text-xs text-slate-500 dark:text-zinc-400">
                 Change the banner images displayed for Wallet Pay and Instant Pay in the topup order form.
@@ -190,18 +185,18 @@ export default function AdminPaymentMethodsPage() {
             type="button"
             onClick={handleSaveOptionImages}
             disabled={isSavingSettings}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer w-max"
+            className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-sm flex items-center gap-2 transition-all cursor-pointer self-start sm:self-auto disabled:opacity-50"
           >
             {isSavingSettings ? (
-              <Loader2 size={13} className="animate-spin" />
+              <Loader2 className="animate-spin" size={15} />
             ) : (
-              <CheckCircle2 size={13} />
+              <Save size={15} />
             )}
-            Save Option Images
+            Save Option Graphics
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
           {/* Wallet Pay Graphic */}
           <div className="p-4 bg-slate-50/70 dark:bg-[#171717] rounded-2xl border border-slate-200/80 dark:border-[#262626] space-y-3">
             <div className="flex items-center gap-2">
@@ -213,7 +208,7 @@ export default function AdminPaymentMethodsPage() {
             <ImageUpload
               value={settings["wallet_pay_image"] || "/FF/p1.png"}
               onChange={(url) => setSettings({ ...settings, wallet_pay_image: url })}
-              label="Wallet Pay Image (ImgBB)"
+              label="Wallet Pay Image"
               hint="Upload custom wallet pay graphic or leave default /FF/p1.png"
             />
           </div>
@@ -229,7 +224,7 @@ export default function AdminPaymentMethodsPage() {
             <ImageUpload
               value={settings["instant_pay_image"] || "/FF/p2.png"}
               onChange={(url) => setSettings({ ...settings, instant_pay_image: url })}
-              label="Instant Pay Image (ImgBB)"
+              label="Instant Pay Image"
               hint="Upload custom multi-gateway graphic or leave default /FF/p2.png"
             />
           </div>
@@ -401,13 +396,13 @@ export default function AdminPaymentMethodsPage() {
             </p>
 
             <form onSubmit={handleSave} className="space-y-4">
-              {/* Logo Upload via ImgBB */}
+              {/* Logo Upload Component */}
               <div>
                 <ImageUpload
                   value={editingMethod.logo_url || getDefaultLogo(editingMethod.code)}
                   onChange={(url) => setEditingMethod({ ...editingMethod, logo_url: url })}
-                  label="Gateway Logo Image (ImgBB)"
-                  hint="Upload high-res PNG / SVG / JPG logo to ImgBB"
+                  label="Gateway Logo Image"
+                  hint="Upload high-res PNG / SVG / JPG logo"
                 />
               </div>
 

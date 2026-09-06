@@ -478,15 +478,30 @@ export default function AdminSettingsPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1.5">
-                External Diamond API URL / Endpoint <span className="text-red-500">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300">
+                  External Diamond API URL / Endpoint <span className="text-red-500">*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      diamond_api_url:
+                        "https://api.fzr.cards/api/v2/topups/offers?category_id=free_fire_bd",
+                    }))
+                  }
+                  className="text-[10px] font-bold text-purple-600 dark:text-purple-400 hover:underline cursor-pointer bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 rounded-md border border-purple-200 dark:border-purple-800"
+                >
+                  ⚡ Preset: FazerCards (Free Fire BD)
+                </button>
+              </div>
               <div className="relative">
                 <input
                   type="url"
                   value={settings["diamond_api_url"] || ""}
                   onChange={(e) => setSettings({ ...settings, diamond_api_url: e.target.value })}
-                  placeholder="https://api.provider.com/v1/diamonds"
+                  placeholder="https://api.fzr.cards/api/v2/topups/offers?category_id=free_fire_bd"
                   className="w-full pl-9 pr-4 py-2.5 text-xs bg-slate-50 dark:bg-[#171717] border border-slate-200 dark:border-[#262626] rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-600 font-mono text-slate-800 dark:text-zinc-200"
                 />
                 <LinkIcon size={14} className="absolute left-3 top-3 text-slate-400" />

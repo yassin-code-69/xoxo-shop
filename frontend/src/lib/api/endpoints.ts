@@ -38,7 +38,18 @@ export const getPaymentMethods = () => api.get<PaymentMethod[]>("/payment-method
 
 export const getBanners = () => api.get<Banner[]>("/banners");
 
-export const getSiteSettings = () => api.get<Record<string, string>>("/settings");
+export const getSiteSettings = async (): Promise<Record<string, string>> => {
+  try {
+    const res = await fetch("/api/site-settings", { cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && typeof data === "object" && Object.keys(data).length > 0) {
+        return data;
+      }
+    }
+  } catch {}
+  return api.get<Record<string, string>>("/settings");
+};
 
 export const getPublicOrderFeed = (limit: number = 8) =>
   api.get<OrderPublicFeedItem[]>(`/orders/feed/recent?limit=${limit}`);
@@ -211,8 +222,16 @@ export const getAdminSettings = () =>
     "/admin/settings",
   );
 
-export const updateAdminSettings = (settings: Record<string, string>) =>
-  api.patch<Record<string, string>>("/admin/settings", { settings });
+export const updateAdminSettings = async (settings: Record<string, string>) => {
+  try {
+    await fetch("/api/site-settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ settings }),
+    });
+  } catch {}
+  return api.patch<Record<string, string>>("/admin/settings", { settings });
+};
 
 export const getAdminAuditLogs = (params?: {
   page?: number;

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { Plus, Trash2, Edit2, CheckCircle2, Loader2 } from "lucide-react";
@@ -200,7 +200,7 @@ export default function AdminBannersPage() {
               {isCreating ? "Add Promotional Banner" : "Edit Banner"}
             </h3>
             <p className="text-xs text-slate-500 dark:text-zinc-400 mb-6">
-              Upload promotional banner image directly to ImgBB and set action link
+              Upload promotional banner image to Cloud Storage and set action link
             </p>
 
             <form onSubmit={handleSave} className="space-y-4">
@@ -231,12 +231,12 @@ export default function AdminBannersPage() {
                 />
               </div>
 
-              {/* ImgBB Direct Image Upload Component */}
+              {/* Direct Cloud Storage Image Upload Component */}
               <ImageUpload
                 value={editingBanner.image_url || ""}
                 onChange={(url) => setEditingBanner({ ...editingBanner, image_url: url })}
                 label="Banner Image *"
-                hint="Click to upload image directly to ImgBB"
+                hint="Click to upload banner image"
               />
 
               <div>

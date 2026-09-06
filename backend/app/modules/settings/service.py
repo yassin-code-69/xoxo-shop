@@ -11,6 +11,9 @@ PUBLIC_SETTING_KEYS = {
     "support_telegram",
     "support_facebook_group",
     "maintenance_mode",
+    "wallet_pay_image",
+    "instant_pay_image",
+    "homepage_services",
 }
 
 

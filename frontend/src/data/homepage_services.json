@@ -1,8 +1,8 @@
 [
   {
-    "id": "uid-topup-bd",
-    "name": "UID TOPUP (BD)",
-    "src": "/FF/2.jpg",
+    "id": "service-1788713699988",
+    "name": "UID TOPUP",
+    "src": "https://mqrtqldebapvllidkcgs.supabase.co/storage/v1/object/public/public-assets/img-1788713739688-6d32419d7cb9a345.png",
     "href": "/uid-topup",
     "tag": "INSTANT",
     "active": true,

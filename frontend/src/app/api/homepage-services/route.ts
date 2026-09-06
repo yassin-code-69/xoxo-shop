@@ -160,7 +160,13 @@ export async function GET(req: NextRequest) {
     const services = await readServices();
     const result = activeOnly ? services.filter((s) => s.active !== false) : services;
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+        "CDN-Cache-Control": "no-store",
+        "Vercel-CDN-Cache-Control": "no-store",
+      },
+    });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Failed to load services";
     return NextResponse.json({ error: msg }, { status: 500 });

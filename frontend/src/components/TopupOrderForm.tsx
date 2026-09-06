@@ -66,19 +66,46 @@ export function TopupOrderForm({
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [showAddMoney, setShowAddMoney] = useState(false);
   const [siteSettings, setSiteSettings] = useState<Record<string, string>>({});
+  const [dynamicImage, setDynamicImage] = useState<string>(imageSrc);
+  const [dynamicTitle, setDynamicTitle] = useState<string>(title);
+  const [dynamicBadge, setDynamicBadge] = useState<string>(badgeText);
 
   useEffect(() => {
     async function loadData() {
       setIsLoadingProducts(true);
       try {
-        const [prods, settingsData] = await Promise.all([
+        const [prods, settingsData, servicesData] = await Promise.all([
           getProducts(category),
           getSiteSettings().catch(() => ({} as Record<string, string>)),
+          fetch("/api/homepage-services", { cache: "no-store" })
+            .then((res) => (res.ok ? res.json() : []))
+            .catch(() => []),
         ]);
         setProducts(prods);
         if (settingsData) setSiteSettings(settingsData);
         if (prods.length > 0) {
           setSelectedProduct(prods[0]);
+        }
+
+        // Dynamically find matching service for this topup page to use updated admin graphics
+        const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
+        if (Array.isArray(servicesData) && servicesData.length > 0) {
+          const match = servicesData.find((s: { href?: string; name?: string; src?: string; tag?: string }) => {
+            if (s.href && currentPath && currentPath === s.href) return true;
+            if (s.href && currentPath && currentPath.endsWith(s.href)) return true;
+            const normName = (s.name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+            const normTitle = (title || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+            const normCat = (category || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+            return (
+              (normName && normTitle && (normName.includes(normTitle) || normTitle.includes(normName))) ||
+              (normName && normCat && (normName.includes(normCat) || normCat.includes(normName)))
+            );
+          });
+          if (match) {
+            if (match.src) setDynamicImage(match.src);
+            if (match.name) setDynamicTitle(match.name);
+            if (match.tag) setDynamicBadge(match.tag);
+          }
         }
       } catch (err: unknown) {
         console.error("Failed to load products:", err);
@@ -88,7 +115,7 @@ export function TopupOrderForm({
       }
     }
     void loadData();
-  }, [category]);
+  }, [category, imageSrc, title, badgeText]);
 
   const handleRunUidCheck = async () => {
     const uidToTest = playerUid.trim();
@@ -189,8 +216,8 @@ export function TopupOrderForm({
       <div className="bg-gradient-to-r from-purple-50 to-white dark:from-[#170e2c] dark:to-[#120b22] rounded-xl sm:rounded-2xl shadow-xs border border-slate-100 dark:border-purple-950/60 p-3.5 sm:p-6 flex items-center gap-3.5 sm:gap-6">
         <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl overflow-hidden shadow-sm shrink-0 border border-slate-100 dark:border-purple-900/40 bg-purple-900/10">
           <img
-            src={imageSrc}
-            alt={title}
+            src={dynamicImage || imageSrc}
+            alt={dynamicTitle || title}
             className="w-full h-full object-cover"
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).src = "/FF/2.jpg";
@@ -199,10 +226,10 @@ export function TopupOrderForm({
         </div>
         <div className="flex flex-col">
           <h1 className="text-base sm:text-2xl font-black text-[#0b132b] dark:text-white mb-1 sm:mb-2 tracking-tight">
-            {title}
+            {dynamicTitle || title}
           </h1>
           <div className="bg-purple-50 dark:bg-purple-950/50 text-[#663cbc] dark:text-purple-300 text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-full inline-flex items-center gap-1 w-max border border-purple-100 dark:border-purple-900/40 shadow-xs">
-            <Zap size={12} className="text-amber-500 fill-amber-500" /> {badgeText}
+            <Zap size={12} className="text-amber-500 fill-amber-500" /> {dynamicBadge || badgeText}
           </div>
         </div>
       </div>
