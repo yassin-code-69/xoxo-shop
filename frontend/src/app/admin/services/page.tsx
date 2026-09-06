@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Trash2, Edit2, CheckCircle2, Loader2, Trophy, Eye, EyeOff, ExternalLink } from "lucide-react";
+import { Plus, Trash2, Edit2, CheckCircle2, Loader2, Trophy, Eye, EyeOff } from "lucide-react";
 import { ImageUpload } from "../../../components/ImageUpload";
 
 export interface HomepageService {

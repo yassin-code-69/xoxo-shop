@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
+import { createClient } from "@supabase/supabase-js";
 
 export interface HomepageService {
   id: string;
@@ -71,7 +72,39 @@ const defaultServices: HomepageService[] = [
 
 const dataFilePath = path.join(process.cwd(), "src", "data", "homepage_services.json");
 
+const SUPABASE_URL =
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "https://mqrtqldebapvllidkcgs.supabase.co";
+const SUPABASE_SERVICE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xcnRxbGRlYmFwdmxsaWRrY2dzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NzU5MzQzMiwiZXhwIjoyMTAzMTY5NDMyfQ.e_JecxkaenT8OWdIXa-37b4EoPkwlXRp4H9q76eM-n0";
+
+function getSupabaseClient() {
+  return createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+    auth: { persistSession: false },
+  });
+}
+
 async function readServices(): Promise<HomepageService[]> {
+  // 1. Primary: Try reading from Supabase site_settings table (persisted across Vercel deployments)
+  try {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "homepage_services")
+      .maybeSingle();
+
+    if (!error && data?.value) {
+      const parsed = JSON.parse(data.value);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+      }
+    }
+  } catch (supabaseErr) {
+    console.warn("Could not read homepage_services from Supabase:", supabaseErr);
+  }
+
+  // 2. Fallback: Read from local JSON file
   try {
     const data = await fs.readFile(dataFilePath, "utf8");
     const parsed = JSON.parse(data);
@@ -79,20 +112,40 @@ async function readServices(): Promise<HomepageService[]> {
       return parsed.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
     }
   } catch {
-    // If file doesn't exist or read fails, initialize with defaults
-    try {
-      await fs.writeFile(dataFilePath, JSON.stringify(defaultServices, null, 2), "utf8");
-    } catch {}
+    // If local file doesn't exist or read fails, ignore
   }
+
   return defaultServices;
 }
 
 async function writeServices(services: HomepageService[]): Promise<void> {
-  const dir = path.dirname(dataFilePath);
+  // 1. Primary: Persist to Supabase site_settings database (works on Vercel without filesystem access)
   try {
+    const supabase = getSupabaseClient();
+    const { error } = await supabase.from("site_settings").upsert(
+      {
+        key: "homepage_services",
+        value: JSON.stringify(services),
+        is_public: true,
+        description: "Homepage diamond category services cards",
+      },
+      { onConflict: "key" }
+    );
+    if (error) {
+      console.error("Supabase upsert error in writeServices:", error);
+    }
+  } catch (supabaseErr) {
+    console.error("Supabase exception in writeServices:", supabaseErr);
+  }
+
+  // 2. Local fallback / sync: attempt writing to local disk, safely catch EROFS on Vercel
+  try {
+    const dir = path.dirname(dataFilePath);
     await fs.mkdir(dir, { recursive: true });
-  } catch {}
-  await fs.writeFile(dataFilePath, JSON.stringify(services, null, 2), "utf8");
+    await fs.writeFile(dataFilePath, JSON.stringify(services, null, 2), "utf8");
+  } catch {
+    // Silently ignore EROFS (read-only file system) on Vercel/serverless environments
+  }
 }
 
 export const dynamic = "force-dynamic";

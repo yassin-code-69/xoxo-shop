@@ -2,6 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 import crypto from "crypto";
+import { createClient } from "@supabase/supabase-js";
+
+export const dynamic = "force-dynamic";
+
+const SUPABASE_URL =
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "https://mqrtqldebapvllidkcgs.supabase.co";
+const SUPABASE_SERVICE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xcnRxbGRlYmFwdmxsaWRrY2dzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NzU5MzQzMiwiZXhwIjoyMTAzMTY5NDMyfQ.e_JecxkaenT8OWdIXa-37b4EoPkwlXRp4H9q76eM-n0";
+
+function getSupabaseClient() {
+  return createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+    auth: { persistSession: false },
+  });
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,7 +46,55 @@ export async function POST(req: NextRequest) {
     const filename = `img-${Date.now()}-${randomId}.${ext}`;
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // 1. Primary: Save directly to public/uploads for instant local serving (<10ms)
+    // 1. Primary: Upload directly to Supabase Storage bucket 'public-assets' (fast, global CDN, works everywhere)
+    try {
+      const supabase = getSupabaseClient();
+      const mimeType =
+        file.type ||
+        (ext === "jpg" || ext === "jpeg"
+          ? "image/jpeg"
+          : ext === "png"
+          ? "image/png"
+          : ext === "webp"
+          ? "image/webp"
+          : "application/octet-stream");
+
+      const { error: uploadError } = await supabase.storage
+        .from("public-assets")
+        .upload(filename, buffer, {
+          contentType: mimeType,
+          upsert: true,
+        });
+
+      if (!uploadError) {
+        const { data: publicUrlData } = supabase.storage
+          .from("public-assets")
+          .getPublicUrl(filename);
+
+        const cdnUrl = publicUrlData.publicUrl;
+
+        // Optionally cache locally if filesystem is writable (local dev environment)
+        try {
+          const uploadDir = path.join(process.cwd(), "public", "uploads");
+          await fs.mkdir(uploadDir, { recursive: true });
+          await fs.writeFile(path.join(uploadDir, filename), buffer);
+        } catch {
+          // Gracefully ignored on read-only serverless filesystem like Vercel
+        }
+
+        return NextResponse.json({
+          url: cdnUrl,
+          display_url: cdnUrl,
+          filename,
+        });
+      } else {
+        console.warn("Supabase storage upload error, falling back:", uploadError);
+      }
+    } catch (supabaseErr) {
+      console.warn("Supabase storage exception, falling back:", supabaseErr);
+    }
+
+    // 2. Secondary fallback: Save directly to public/uploads if local file system is writable
     try {
       const uploadDir = path.join(process.cwd(), "public", "uploads");
       await fs.mkdir(uploadDir, { recursive: true });
@@ -48,7 +111,7 @@ export async function POST(req: NextRequest) {
       console.warn("Local storage write failed, attempting ImgBB fallback:", fsErr);
     }
 
-    // 2. Fallback: If local file system is read-only (e.g., serverless lambda), fallback to ImgBB
+    // 3. Fallback: ImgBB
     const apiKey =
       process.env.IMGBB_API_KEY ||
       process.env.NEXT_PUBLIC_IMGBB_API_KEY ||
