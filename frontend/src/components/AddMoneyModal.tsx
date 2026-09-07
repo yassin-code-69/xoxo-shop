@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   X,
   Check,
@@ -11,7 +11,8 @@ import {
   ArrowRight,
   ShieldCheck,
 } from "lucide-react";
-import { submitWalletDeposit } from "../lib/api/endpoints";
+import { submitWalletDeposit, getPaymentMethods } from "../lib/api/endpoints";
+import { PaymentMethod } from "../lib/api/types";
 import { useAuth } from "../lib/auth/AuthContext";
 
 interface AddMoneyModalProps {
@@ -20,12 +21,12 @@ interface AddMoneyModalProps {
   onSuccess?: () => void;
 }
 
-const PAYMENT_METHODS = [
+const DEFAULT_PAYMENT_METHODS = [
   {
     code: "BKASH",
     name: "bKash",
     logo: "/images/bkash.svg",
-    number: "01723848471",
+    number: "01352050224",
     type: "Personal (Send Money)",
     color: "from-pink-600 to-rose-600",
     border: "border-pink-500",
@@ -36,7 +37,7 @@ const PAYMENT_METHODS = [
     code: "NAGAD",
     name: "Nagad",
     logo: "/images/nagad.svg",
-    number: "01800000000",
+    number: "01300439379",
     type: "Personal (Send Money)",
     color: "from-orange-600 to-amber-600",
     border: "border-orange-500",
@@ -61,6 +62,7 @@ const PRESET_AMOUNTS = [50, 100, 250, 500, 1000, 2000, 5000];
 export function AddMoneyModal({ isOpen, onClose, onSuccess }: AddMoneyModalProps) {
   const { refreshProfile } = useAuth();
 
+  const [dbMethods, setDbMethods] = useState<PaymentMethod[]>([]);
   const [selectedMethodCode, setSelectedMethodCode] = useState("BKASH");
   const [amount, setAmount] = useState<number | string>(100);
   const [senderNumber, setSenderNumber] = useState("");
@@ -74,13 +76,40 @@ export function AddMoneyModal({ isOpen, onClose, onSuccess }: AddMoneyModalProps
     trxId: string;
   } | null>(null);
 
+  useEffect(() => {
+    if (isOpen) {
+      getPaymentMethods()
+        .then((data) => {
+          if (Array.isArray(data) && data.length > 0) {
+            setDbMethods(data);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
+  // Build active methods merged with database numbers and active states
+  const availableMethods = DEFAULT_PAYMENT_METHODS.filter((pm) => {
+    const dbm = dbMethods.find((m) => m.code.toUpperCase() === pm.code);
+    return dbm ? dbm.active : true;
+  }).map((pm) => {
+    const dbm = dbMethods.find((m) => m.code.toUpperCase() === pm.code);
+    return {
+      ...pm,
+      name: dbm?.name || pm.name,
+      number: dbm?.account_number || pm.number,
+      type: dbm?.account_type || pm.type,
+      logo: dbm?.logo_url || pm.logo,
+    };
+  });
+
   const selectedMethod =
-    PAYMENT_METHODS.find((m) => m.code === selectedMethodCode) || PAYMENT_METHODS[0];
+    availableMethods.find((m) => m.code === selectedMethodCode) || availableMethods[0] || DEFAULT_PAYMENT_METHODS[0];
 
   const handleCopy = () => {
-    if (typeof navigator !== "undefined") {
+    if (typeof navigator !== "undefined" && selectedMethod?.number) {
       navigator.clipboard.writeText(selectedMethod.number);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -224,7 +253,7 @@ export function AddMoneyModal({ isOpen, onClose, onSuccess }: AddMoneyModalProps
                   Select Payment Method
                 </label>
                 <div className="grid grid-cols-3 gap-2">
-                  {PAYMENT_METHODS.map((method) => {
+                  {availableMethods.map((method) => {
                     const isSelected = selectedMethodCode === method.code;
                     return (
                       <button

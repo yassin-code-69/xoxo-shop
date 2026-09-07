@@ -64,6 +64,7 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
     : `${apiBaseUrl}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
 
   let response = await fetch(url, {
+    cache: "no-store",
     ...options,
     headers,
   });

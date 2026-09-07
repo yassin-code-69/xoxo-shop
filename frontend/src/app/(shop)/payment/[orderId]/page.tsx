@@ -672,44 +672,50 @@ function PaymentContent() {
                     1. Select Payment Method
                   </label>
                   <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { code: "BKASH", name: "bKash", logo: "/images/bkash.svg", border: "border-pink-500" },
-                      { code: "NAGAD", name: "Nagad", logo: "/images/nagad.svg", border: "border-orange-500" },
-                      { code: "ROCKET", name: "Rocket", logo: "/images/rocket.svg", border: "border-purple-500" },
-                    ].map((m) => {
-                      const isSelected = selectedManualCode === m.code;
-                      return (
-                        <button
-                          key={m.code}
-                          type="button"
-                          onClick={() => setSelectedManualCode(m.code)}
-                          className={`p-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 group ${
-                            isSelected
-                              ? `${m.border} bg-purple-50/80 dark:bg-purple-950/40 shadow-xs ring-2 ring-purple-500/20`
-                              : "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100 text-slate-600 dark:text-slate-300"
-                          }`}
-                        >
-                          <div className="h-6 flex items-center justify-center">
-                            <img src={m.logo} alt={m.name} className="h-full object-contain" />
-                          </div>
-                          <span className="text-[11px] font-black text-slate-900 dark:text-white">
-                            {m.name}
-                          </span>
-                        </button>
-                      );
-                    })}
+                    {(() => {
+                      const activeManual = paymentMethods.filter((m) => m.active);
+                      const listToRender = activeManual.length > 0 ? activeManual : [
+                        { code: "BKASH", name: "bKash", logo_url: "/images/bkash.svg" },
+                        { code: "NAGAD", name: "Nagad", logo_url: "/images/nagad.svg" },
+                      ];
+                      return listToRender.map((m) => {
+                        const code = m.code.toUpperCase();
+                        const isSelected = selectedManualCode === code;
+                        const logo = m.logo_url || (code === "BKASH" ? "/images/bkash.svg" : code === "NAGAD" ? "/images/nagad.svg" : "/images/rocket.svg");
+                        const border = code === "BKASH" ? "border-pink-500" : code === "NAGAD" ? "border-orange-500" : "border-purple-500";
+                        return (
+                          <button
+                            key={code}
+                            type="button"
+                            onClick={() => setSelectedManualCode(code)}
+                            className={`p-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 group ${
+                              isSelected
+                                ? `${border} bg-purple-50/80 dark:bg-purple-950/40 shadow-xs ring-2 ring-purple-500/20`
+                                : "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-slate-100 text-slate-600 dark:text-slate-300"
+                            }`}
+                          >
+                            <div className="h-6 flex items-center justify-center">
+                              <img src={logo} alt={m.name} className="h-full object-contain" />
+                            </div>
+                            <span className="text-[11px] font-black text-slate-900 dark:text-white">
+                              {m.name}
+                            </span>
+                          </button>
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
 
                 {/* Account Number with Copy */}
                 {(() => {
-                  const dbMethod = paymentMethods.find((m) => m.code === selectedManualCode);
+                  const dbMethod = paymentMethods.find((m) => m.code.toUpperCase() === selectedManualCode);
                   const displayNum =
                     dbMethod?.account_number ||
                     (selectedManualCode === "BKASH"
-                      ? "01723848471"
+                      ? "01352050224"
                       : selectedManualCode === "NAGAD"
-                        ? "01800000000"
+                        ? "01300439379"
                         : "01900000000-0");
                   const displayType = dbMethod?.account_type || "Personal (Send Money)";
 
