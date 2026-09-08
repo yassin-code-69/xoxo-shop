@@ -11,10 +11,19 @@ router = APIRouter(tags=["Health"])
 
 @router.get("/health")
 async def health_check():
+    # Temporary diagnostic: show if JWT secret is configured and its fingerprint
+    # (first 6 chars of SHA256 hash) so we can verify it matches without exposing the secret
+    import hashlib
+    jwt_secret = (settings.SUPABASE_JWT_SECRET or "").strip()
+    jwt_configured = bool(jwt_secret)
+    jwt_fingerprint = hashlib.sha256(jwt_secret.encode()).hexdigest()[:6] if jwt_configured else None
     return {
         "status": "healthy",
         "app_name": settings.APP_NAME,
         "environment": settings.APP_ENV,
+        "jwt_secret_configured": jwt_configured,
+        "jwt_secret_fingerprint": jwt_fingerprint,
+        "jwt_secret_length": len(jwt_secret) if jwt_configured else 0,
     }
 
 
