@@ -4,6 +4,8 @@ import secrets
 from datetime import UTC, datetime, timedelta
 
 import jwt
+from jwt import PyJWKClient
+from jwt.algorithms import ECAlgorithm
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
@@ -44,6 +46,41 @@ def verify_password(plain_password: str, hashed_password: str | None) -> bool:
 
 
 JWT_ALGORITHM = "HS256"
+
+# Known Supabase EC Public Key for this project as immediate static fallback (zero latency)
+_SUPABASE_STATIC_JWK = {
+    "alg": "ES256",
+    "crv": "P-256",
+    "ext": True,
+    "key_ops": ["verify"],
+    "kid": "14d50d4a-effe-437f-9bf2-5207866a5087",
+    "kty": "EC",
+    "use": "sig",
+    "x": "Wwd5EmNJ07eqL3saHJTAy16kMMWm-9SaIrWMAj_3SuU",
+    "y": "2VoTvv6Tjig4y-KsIiId91OPPDyT1P0Xbt8p6vYTCdU",
+}
+try:
+    _STATIC_EC_KEY = ECAlgorithm.from_jwk(_SUPABASE_STATIC_JWK)
+except Exception:
+    _STATIC_EC_KEY = None
+
+_jwks_client: PyJWKClient | None = None
+
+
+def _get_jwks_client() -> PyJWKClient | None:
+    global _jwks_client
+    if _jwks_client is None and settings.SUPABASE_URL and settings.SUPABASE_ANON_KEY:
+        try:
+            jwks_url = f"{settings.SUPABASE_URL.rstrip('/')}/auth/v1/.well-known/jwks.json"
+            _jwks_client = PyJWKClient(
+                jwks_url,
+                headers={"apikey": settings.SUPABASE_ANON_KEY},
+                cache_keys=True,
+                max_cached_keys=16,
+            )
+        except Exception as e:
+            logger.warning(f"Failed to initialize PyJWKClient: {e}")
+    return _jwks_client
 
 # Ephemeral secret used only outside production when none is configured, so that
 # local dev / CI keeps working without ever falling back to a well-known key.
@@ -88,25 +125,70 @@ def create_access_token(
 
 
 def decode_access_token(token: str) -> dict:
-    """Decodes an access token, always verifying the signature and expiry.
+    """Decodes an access token, verifying the signature and expiry.
 
-    There is deliberately no unsigned fallback path: a token whose signature we
-    cannot verify is an untrusted token, no matter which claims it carries.
+    Supports:
+    1. HS256 tokens signed by our backend using SUPABASE_JWT_SECRET.
+    2. ES256/RS256 asymmetric tokens signed by Supabase Auth (e.g. Google OAuth) using JWKS or EC public key.
     """
     try:
-        payload = jwt.decode(
-            token,
-            _get_jwt_secret(),
-            algorithms=[JWT_ALGORITHM],
-            options={
-                "verify_signature": True,
-                "verify_exp": True,
-                "verify_aud": False,  # audience checked manually below
-                "require": ["exp", "sub"],
-            },
-        )
+        header = jwt.get_unverified_header(token)
+    except Exception as exc:
+        raise UnauthorizedError(message="Invalid token format", code="INVALID_TOKEN") from exc
+
+    alg = header.get("alg", "HS256")
+
+    try:
+        if alg == "HS256":
+            payload = jwt.decode(
+                token,
+                _get_jwt_secret(),
+                algorithms=["HS256"],
+                options={
+                    "verify_signature": True,
+                    "verify_exp": True,
+                    "verify_aud": False,  # audience checked manually below
+                    "require": ["exp", "sub"],
+                },
+            )
+        elif alg in ("ES256", "RS256"):
+            # Asymmetric Supabase token: attempt dynamic JWKS, then fallback to static EC key
+            key = None
+            client = _get_jwks_client()
+            if client is not None:
+                try:
+                    signing_key = client.get_signing_key_from_jwt(token)
+                    key = signing_key.key
+                except Exception as jwks_err:
+                    logger.debug(f"JWKS key resolution notice: {jwks_err}")
+
+            if key is None and alg == "ES256" and _STATIC_EC_KEY is not None:
+                key = _STATIC_EC_KEY
+
+            if key is None:
+                raise UnauthorizedError(
+                    message="Could not resolve public key for token verification",
+                    code="TOKEN_KEY_RESOLUTION_FAILED",
+                )
+
+            payload = jwt.decode(
+                token,
+                key,
+                algorithms=[alg],
+                options={
+                    "verify_signature": True,
+                    "verify_exp": True,
+                    "verify_aud": False,  # audience checked manually below
+                    "require": ["exp", "sub"],
+                },
+            )
+        else:
+            raise UnauthorizedError(
+                message=f"Unsupported token algorithm: {alg}",
+                code="UNSUPPORTED_ALGORITHM",
+            )
     except jwt.PyJWTError as exc:
-        logger.debug(f"Rejected access token: {type(exc).__name__}")
+        logger.debug(f"Rejected access token ({alg}): {type(exc).__name__}: {exc}")
         raise UnauthorizedError(message="Invalid or expired access token", code="INVALID_TOKEN") from exc
 
     # Supabase and our own tokens both carry aud="authenticated". Tokens issued for a

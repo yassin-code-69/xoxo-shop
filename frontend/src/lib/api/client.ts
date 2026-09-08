@@ -103,7 +103,18 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
       window.location.pathname.includes("/auth/callback");
 
     if (!refreshed && !response.ok && !isSyncOrCallback) {
-      localStorage.removeItem("xoxo_auth_token");
+      let hasActiveSupabaseSession = false;
+      if (isSupabaseConfigured) {
+        try {
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (sessionData?.session) {
+            hasActiveSupabaseSession = true;
+          }
+        } catch {}
+      }
+      if (!hasActiveSupabaseSession) {
+        localStorage.removeItem("xoxo_auth_token");
+      }
     }
   }
 
