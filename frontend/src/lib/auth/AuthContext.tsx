@@ -314,19 +314,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (typeof window !== "undefined" && window.location.pathname.includes("/auth/callback")) {
             return;
           }
-          // If a backend token is in localStorage, verify before logging out
+          // If a backend token exists, DO NOT auto-logout.
+          // The Supabase SIGNED_OUT event can fire spuriously during OAuth
+          // redirects (race condition). The token will expire naturally and
+          // the user will be prompted to re-login on their next API call.
           const stored = typeof window !== "undefined" ? localStorage.getItem("xoxo_auth_token") : null;
-          if (stored) {
-            getMyProfile()
-              .then((p) => {
-                if (p) updateProfile(p);
-              })
-              .catch(() => {
-                if (!isLoggingOutRef.current) {
-                  void logout();
-                }
-              });
-          } else if (!isLoggingOutRef.current) {
+          const storedProfile = typeof window !== "undefined" ? localStorage.getItem("xoxo_user_profile") : null;
+          if (stored && storedProfile) {
+            // Session is managed by the backend token — keep the user logged in
+            return;
+          }
+          if (!stored && !isLoggingOutRef.current) {
             void logout();
           }
         }
