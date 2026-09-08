@@ -152,6 +152,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               updated_at: prof.updated_at,
             });
             return;
+          } else {
+            // Fallback: If profile row not in database yet, preserve authenticated Google user metadata
+            const fallbackProfile: Profile = {
+              id: u.id,
+              auth_user_id: u.id,
+              email: u.email || "",
+              full_name:
+                u.user_metadata?.full_name ||
+                u.user_metadata?.name ||
+                u.email?.split("@")[0] ||
+                "User",
+              phone: u.phone,
+              avatar_url: u.user_metadata?.avatar_url || u.user_metadata?.picture,
+              status: "ACTIVE",
+              is_active: true,
+              balance: 0,
+              total_spend: 0,
+              current_rank: "Bronze",
+              rank_level: 1,
+              roles: ["CUSTOMER"],
+              created_at: u.created_at || new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            };
+            updateProfile(fallbackProfile);
+            return;
           }
         }
       } catch (supaErr) {
@@ -159,12 +184,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // If both backend and Supabase checks failed, clear invalid token.
-    // BUT: don't clear during OAuth callback flow — the token may be valid
-    // but the backend/Supabase haven't fully synced yet.
+    // If both backend and Supabase checks failed, verify Supabase session before clearing
     if (typeof window !== "undefined") {
       const isCallbackFlow = window.location.pathname.includes("/auth/callback");
       if (!isCallbackFlow) {
+        if (isSupabaseConfigured) {
+          const { data } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }));
+          if (data?.session) {
+            return; // Session is active in Supabase, preserve it
+          }
+        }
         localStorage.removeItem("xoxo_auth_token");
         localStorage.removeItem("xoxo_user_profile");
         setToken(null);
@@ -239,6 +268,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.access_token) {
           localStorage.setItem("xoxo_auth_token", session.access_token);
           setToken(session.access_token);
+
+          // Populate immediate profile so the UI instantly shows user avatar and name
+          if (session.user) {
+            const u = session.user;
+            const userMeta = u.user_metadata || {};
+            const instantProfile: Profile = {
+              id: u.id,
+              auth_user_id: u.id,
+              email: u.email || "",
+              full_name: userMeta.full_name || userMeta.name || u.email?.split("@")[0] || "User",
+              phone: u.phone,
+              avatar_url: userMeta.avatar_url || userMeta.picture,
+              status: "ACTIVE",
+              is_active: true,
+              balance: 0,
+              total_spend: 0,
+              current_rank: "Bronze",
+              rank_level: 1,
+              roles: ["CUSTOMER"],
+              created_at: u.created_at || new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            };
+            updateProfile(instantProfile);
+          }
+
           try {
             await syncProfile({
               email: session.user?.email,

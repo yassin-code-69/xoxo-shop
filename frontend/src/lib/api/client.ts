@@ -98,6 +98,8 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
     const isSyncOrCallback =
       endpoint.includes("/auth/sync") ||
       endpoint.includes("/auth/me") ||
+      endpoint.includes("/me/profile") ||
+      endpoint.includes("/me") ||
       window.location.pathname.includes("/auth/callback");
 
     if (!refreshed && !response.ok && !isSyncOrCallback) {
