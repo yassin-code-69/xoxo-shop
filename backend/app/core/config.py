@@ -21,10 +21,14 @@ class Settings(BaseSettings):
     BACKEND_CORS_ORIGINS: list[str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
         "http://localhost:8000",
         "http://127.0.0.1:8000",
+        "https://www.xoxoshopbd.com",
+        "https://xoxoshopbd.com",
     ]
-    BACKEND_CORS_ORIGIN_REGEX: str | None = r"^https:\/\/.*\.vercel\.app$"
+    BACKEND_CORS_ORIGIN_REGEX: str | None = r"^https:\/\/(.*\.)?(vercel\.app|xoxoshopbd\.com)$"
 
     # Comma-free list of hostnames this API answers to ("*" disables the check).
     ALLOWED_HOSTS: list[str] = ["*"]

@@ -68,11 +68,21 @@ def create_app() -> FastAPI:
     # regex like ".*\.vercel\.app", would let anybody's deployment call this API.
     cors_origins = [str(o).strip() for o in (settings.BACKEND_CORS_ORIGINS or []) if str(o).strip()]
     if not cors_origins:
-        cors_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+        cors_origins = [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:3001",
+            "http://127.0.0.1:3001",
+            "https://www.xoxoshopbd.com",
+            "https://xoxoshopbd.com",
+        ]
     if settings.FRONTEND_URL and settings.FRONTEND_URL not in cors_origins:
         cors_origins.append(settings.FRONTEND_URL)
 
-    origin_regex = settings.BACKEND_CORS_ORIGIN_REGEX or r"^https:\/\/.*\.vercel\.app$"
+    origin_regex = (
+        settings.BACKEND_CORS_ORIGIN_REGEX
+        or r"^https:\/\/(.*\.)?(vercel\.app|xoxoshopbd\.com)$"
+    )
 
     app.add_middleware(
         CORSMiddleware,

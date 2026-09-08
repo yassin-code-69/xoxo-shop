@@ -183,6 +183,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    // Fallback: If Supabase redirects to root (Site URL) with OAuth hash or code instead of /auth/callback
+    if (typeof window !== "undefined" && !window.location.pathname.includes("/auth/callback")) {
+      if (window.location.hash && window.location.hash.includes("access_token")) {
+        window.location.replace(`/auth/callback${window.location.hash}`);
+        return;
+      }
+      const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.get("code")) {
+        window.location.replace(`/auth/callback${window.location.search}`);
+        return;
+      }
+    }
+
     const storedToken =
       typeof window !== "undefined" ? localStorage.getItem("xoxo_auth_token") : null;
     const storedProfile =
